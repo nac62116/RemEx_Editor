@@ -1,0 +1,303 @@
+{
+    "name": "Test Experiment",
+    "encodedResources": [
+        {
+            "fileName": "test_video.mp4",
+            "base64String": "<Very long Base64 String>"
+        },
+        {
+            "fileName": "test_image_1.jpg",
+            "base64String": "<Very long Base64 String>"
+        },
+        {
+            "fileName": "test_image_2.jpg",
+            "base64String": "<Very long Base64 String>"
+        }
+    ],
+    "groups": [
+        {
+            "name": "Test Group",
+            "startTimeInMillis": 0,
+            "surveys": [
+                {
+                    "absoluteStartAtHour": 0,
+                    "absoluteStartAtMinute": 0,
+                    "absoluteStartDaysOffset": 0,
+                    "id": 1,
+                    "maxDurationInMin": 15,
+                    "name": "Test Survey",
+                    "nextSurveyId": 0,
+                    "notificationDurationInMin": 5,
+                    "relativeStartTimeInMin": 0,
+                    "steps": [
+                        {
+                            "id": 1,
+                            "nextStepId": 2,
+                            "@type": "INSTRUCTION",
+                            "waitForStep": 0,
+                            "durationInMin": 0,
+                            "header": "Herzlich Willkommen zum Test Experiment",
+                            "imageFileName": null,
+                            "text": "In den folgenden Schritten wird dir die Funktionalität dieser App anhand eines Test Experiments vorgestellt. Dabei werden dir die verschiedenen Fragentypen und Übungen vorgestellt, damit du bei dem echten Experiment möglichst wenig Schwierigkeiten bekommst. Falls noch Fragen aufkommen brauchst du nicht zu zögern und kannst dich gerne an den Versuchsleiter wenden.",
+                            "videoFileName": null,
+                            "waitingText": null,
+                            "isFinished": false
+                        },
+                        {
+                            "id": 2,
+                            "nextStepId": 3,
+                            "@type": "INSTRUCTION",
+                            "waitForStep": 0,
+                            "durationInMin": 2,
+                            "header": "Watterolle",
+                            "imageFileName": "test_image_1.jpg",
+                            "text": "Nimm nun bitte die Watterolle aus dem Behälter und behalte sie solange im Mund bis du darauf hingewiesen wirst sie heraus zu nehmen.",
+                            "videoFileName": null,
+                            "waitingText": "Die Watterolle ist noch nicht 2 Minuten lang in deinem Mund gewesen. Bitte warte noch einen Moment. Du wirst dann automatisch zum nächsten Schritt weitergeleitet.",
+                            "isFinished": false
+                        },
+                        {
+                            "id": 3,
+                            "nextStepId": 4,
+                            "@type": "INSTRUCTION",
+                            "waitForStep": 0,
+                            "durationInMin": 0,
+                            "header": "Video",
+                            "imageFileName": null,
+                            "text": "Die Watterolle muss einige Zeit in deinem Mund bleiben. Damit du dich nicht langweilst kannst du dir das Video ansehen und danach zum nächsten Schritt über den \"Weiter\" Button fortfahren.",
+                            "videoFileName": "test_video.mp4",
+                            "waitingText": null,
+                            "isFinished": false
+                        },
+                        {
+                            "id": 4,
+                            "nextStepId": 5,
+                            "@type": "INSTRUCTION",
+                            "waitForStep": 2,
+                            "durationInMin": 0,
+                            "header": "Watterolle herausnehmen",
+                            "imageFileName": "test_image_2.jpg",
+                            "text": "Sehr gut, du hast die Watterolle jetzt lange genug im Mund behalten. Nimm sie bitte heraus, stecke sie in den Behälter und beschrifte diesen mit \"Test Experiment\". Danach kannst du auf weiter drücken um die Atemübung kennen zu lernen.",
+                            "videoFileName": null,
+                            "waitingText": null,
+                            "isFinished": false
+                        },
+                        {
+                            "id": 5,
+                            "nextStepId": 6,
+                            "@type": "INSTRUCTION",
+                            "waitForStep": 0,
+                            "durationInMin": 0,
+                            "header": "Erklärung der Atemübung",
+                            "imageFileName": null,
+                            "text": "Wie bereits angekündigt folgt jetzt eine Atemübung. Setze dich entspannt hin und versuche deinen Atem den Bewegungen und Tönen des Kreises folgen zu lassen. Das ganze wird eine Minute dauern und wenn du möchtest, kannst du dabei auch deine Augen schließen. Wenn du bereit bist drücke auf \"Weiter\". Der Kreis wird auftauchen und du wirst sehen in welchem Rythmus dein Atem ihm folgen muss.",
+                            "videoFileName": null,
+                            "waitingText": null,
+                            "isFinished": false
+                        },
+                        {
+                            "id": 6,
+                            "nextStepId": 7,
+                            "@type": "BREATHING_EXERCISE",
+                            "waitForStep": 0,
+                            "breathingFrequencyInSec": 5,
+                            "durationInMin": 1,
+                            "mode": "MOVING_CIRCLE"
+                        },
+                        {
+                            "id": 7,
+                            "nextStepId": 8,
+                            "@type": "INSTRUCTION",
+                            "waitForStep": 0,
+                            "durationInMin": 0,
+                            "header": "Atemübung geschafft",
+                            "imageFileName": null,
+                            "text": "Sehr gut. Du hast die Atemübung erfolgreich absolviert. Zu guter Letzt werden dir jetzt die verschiedenen Fragentypen vorgestellt damit du dich mit deren Funktionalität vertraut machen kannst.",
+                            "videoFileName": null,
+                            "waitingText": null,
+                            "isFinished": false
+                        },
+                        {
+                            "id": 8,
+                            "nextStepId": 9,
+                            "@type": "QUESTIONNAIRE",
+                            "waitForStep": 0,
+                            "questions": [
+                                {
+                                    "hint": "Das hier ist eine Text Frage. Gebe deine Antwort einfach in das untere Feld ein und drücke anschließend auf \"Weiter\".",
+                                    "id": 1,
+                                    "name": "Text Question",
+                                    "text": "Wie fühlst du dich vor deinem Experiment?",
+                                    "@type": "TEXT",
+                                    "nextQuestionId": 2
+                                },
+                                {
+                                    "hint": "Das hier ist eine Einzelauswahl Frage. Das bedeutet, dass du nur eine der Antworten in der unteren Liste auswählen kannst. Nachdem du sie ausgewählt hast kannst du dich natürlich trotzdem nochmal umentscheiden.",
+                                    "id": 2,
+                                    "name": "Single Choice Question",
+                                    "text": "Wie gespannt bist du auf die Fragen in deinem Experiment?",
+                                    "@type": "CHOICE",
+                                    "answers": [
+                                        {
+                                            "code": "1",
+                                            "nextQuestionId": 3,
+                                            "text": "Sehr gespannt"
+                                        },
+                                        {
+                                            "code": "2",
+                                            "nextQuestionId": 3,
+                                            "text": "Ein wenig gespannt"
+                                        },
+                                        {
+                                            "code": "3",
+                                            "nextQuestionId": 3,
+                                            "text": "Ist mir egal"
+                                        },
+                                        {
+                                            "code": "4",
+                                            "nextQuestionId": 3,
+                                            "text": "Eher nicht gespannt"
+                                        },
+                                        {
+                                            "code": "5",
+                                            "nextQuestionId": 3,
+                                            "text": "Gar nicht gespannt"
+                                        }
+                                    ],
+                                    "choiceType": "SINGLE_CHOICE",
+                                    "nextQuestionId": 0
+                                },
+                                {
+                                    "hint": "Das hier ist eine Mehrfachauswahl Frage. Das bedeutet, dass du mehrere Antworten in der unteren Liste auswählen kannst. Durch einen weiteres Drücken auf eine bereits ausgwählte Antwort kannst du sie auch wieder abwählen.",
+                                    "id": 3,
+                                    "name": "Multiple Choice Question",
+                                    "text": "Wofür benutzt du normalerweise dein Smartphone?",
+                                    "@type": "CHOICE",
+                                    "answers": [
+                                        {
+                                            "code": "1",
+                                            "nextQuestionId": 0,
+                                            "text": "Videos anschauen"
+                                        },
+                                        {
+                                            "code": "2",
+                                            "nextQuestionId": 0,
+                                            "text": "Nachrichten schreiben"
+                                        },
+                                        {
+                                            "code": "3",
+                                            "nextQuestionId": 0,
+                                            "text": "Telefonieren"
+                                        },
+                                        {
+                                            "code": "4",
+                                            "nextQuestionId": 0,
+                                            "text": "Spiele spielen"
+                                        },
+                                        {
+                                            "code": "5",
+                                            "nextQuestionId": 0,
+                                            "text": "Fotos machen"
+                                        },
+                                        {
+                                            "code": "6",
+                                            "nextQuestionId": 0,
+                                            "text": "Notizen verfassen"
+                                        }
+                                    ],
+                                    "choiceType": "MULTIPLE_CHOICE",
+                                    "nextQuestionId": 4
+                                },
+                                {
+                                    "hint": "Das hier ist eine Frage nach der Uhrzeit. Wenn du auf das untere Feld drückst erscheint eine Uhr bei der du Stunden und Minuten auf einem Kreis auswählen kannst. Falls du dich korrigieren möchtest, drücke enifach auf die entsprechende Zahl über der Uhr.",
+                                    "id": 4,
+                                    "name": "Daytime Question",
+                                    "text": "Um wie viel Uhr bist du gestern ungefähr ins Bett gegangen?",
+                                    "@type": "POINT_OF_TIME",
+                                    "nextQuestionId": 5,
+                                    "pointOfTimeTypeNames": [
+                                        "DAYTIME"
+                                    ]
+                                },
+                                {
+                                    "hint": "Das hier ist eine Frage nach einem Datum. Wenn du auf das untere Feld drückst erscheint ein Kalender in dem du dein Geburtsdatum auswählen kannst. Drücke einfach auf die Jahreszahl, den Monat oder den Tag den du verändern möchtest.",
+                                    "id": 5,
+                                    "name": "Date Question",
+                                    "text": "Wann hast du Geburtstag?",
+                                    "@type": "POINT_OF_TIME",
+                                    "nextQuestionId": 6,
+                                    "pointOfTimeTypeNames": [
+                                        "DATE"
+                                    ]
+                                },
+                                {
+                                    "hint": "Das hier ist eine Frage über eine Zeitspanne. Gebe einfach die entsprechenden Zeiten in die unteren Felder ein.",
+                                    "id": 6,
+                                    "name": "Time Interval Hours/Minutes Question",
+                                    "text": "Wie lange hast du Freitags Schule?",
+                                    "@type": "TIME_INTERVAL",
+                                    "nextQuestionId": 7,
+                                    "timeIntervalTypeNames": [
+                                        "HOURS",
+                                        "MINUTES"
+                                    ]
+                                },
+                                {
+                                    "hint": "Nochmal eine Frage über ein Zeitintervall. Falls du nicht genau weist wie viel Monate oder Tage du alt bist, kannst du gerne einfach eine \"0\" eintragen.",
+                                    "id": 7,
+                                    "name": "Time Interval Years/Months/Days Question",
+                                    "text": "Wie alt bist du?",
+                                    "@type": "TIME_INTERVAL",
+                                    "nextQuestionId": 8,
+                                    "timeIntervalTypeNames": [
+                                        "YEARS",
+                                        "MONTHS",
+                                        "DAYS"
+                                    ]
+                                },
+                                {
+                                    "hint": "Wieder eine Frage über eine Zeitspanne. Auch hier gilt, falls du nicht genau weißt wie viele Minuten oder Sekunden du die Luft anhalten kannst, trage einfach eine Schätzung ein.",
+                                    "id": 8,
+                                    "name": "Time Interval Minutes/Seconds Question",
+                                    "text": "Wie lange kannst du die Luft anhalten?",
+                                    "@type": "TIME_INTERVAL",
+                                    "nextQuestionId": 9,
+                                    "timeIntervalTypeNames": [
+                                        "MINUTES",
+                                        "SECONDS"
+                                    ]
+                                },
+                                {
+                                    "hint": "Das hier ist eine Skalenfrage. Wähle einen Punkt zwischen 1 und 9 auf der unteren Skala. Je weiter links, desto verständlicher fandest du die Bedienung der App, je weiter rechts desto unverständlicher.",
+                                    "id": 9,
+                                    "name": "Likert Question",
+                                    "text": "Wie verständlich war die Bedienung der App?",
+                                    "@type": "LIKERT",
+                                    "initialValue": 5,
+                                    "itemCount": 9,
+                                    "nextQuestionId": 0,
+                                    "scaleMaximumLabel": "Gar nicht verständlich",
+                                    "scaleMinimumLabel": "Sehr verständlich"
+                                }
+                            ]
+                        },
+                        {
+                            "id": 9,
+                            "nextStepId": 0,
+                            "@type": "INSTRUCTION",
+                            "waitForStep": 0,
+                            "durationInMin": 0,
+                            "header": "Test Experiment absolviert",
+                            "imageFileName": null,
+                            "text": "Sehr gut. Du hast das Test Experiment erfolgreich absolviert. Jetzt kannst du dir hoffentlich vorstellen wie das richtige Experiment abläuft und wie du die App dafür bedienst. Vielen Dank, dass du dabei bist und uns bei unserer Forschung hilfst!",
+                            "videoFileName": null,
+                            "waitingText": null,
+                            "isFinished": false
+                        }
+                    ],
+                    "isRelative": true
+                }
+            ]
+        }
+    ]
+}
