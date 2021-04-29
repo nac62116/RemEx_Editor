@@ -1,0 +1,23 @@
+{
+  "name": "remex_editor",
+  "version": "1.0.0",
+  "description": "Remote experiment editor to create experiments for the RemEx App (https://github.com/nac62116/RemEx_App)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "http-server ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nac62116/RemEx_Editor.git"
+  },
+  "author": "Colin Nash",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/nac62116/RemEx_Editor/issues"
+  },
+  "homepage": "https://github.com/nac62116/RemEx_Editor#Readme",
+  "dependencies": {
+    "http-server": "^0.12.3"
+  }
+}
