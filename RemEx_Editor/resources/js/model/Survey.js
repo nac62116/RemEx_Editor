@@ -130,9 +130,8 @@ class Survey {
         }
     }
 
-    isValid(surveys, previousSurvey, nextSurvey) {
+    isValid(surveys, previousSurveys, nextSurvey) {
         if (this.name === "" || this.name === undefined) {
-            // TODO: Define the Config values
             return Config.SURVEY_NAME_EMPTY;
         }
         // TODO: Calculate the optimal duration for a survey depending on its steps
@@ -156,7 +155,7 @@ class Survey {
                 return Config.SURVEY_NAME_NOT_UNIQUE;
             }
         }
-        if (isOverlapping(this, previousSurvey, nextSurvey)) {
+        if (isOverlapping(this, previousSurveys, nextSurvey)) {
             return Config.SURVEY_OVERLAPS;
         }
         return true;
@@ -164,21 +163,27 @@ class Survey {
 }
 
 function isOverlapping(that, previousSurveys, nextSurvey) {
-    let isOverlapping;
+    let isOverlapping = false,
+    previousSurveysIncludingThisSurvey;
     if (previousSurveys.length !== 0) {
+        // Checking if this survey instance (represented by "that") is overlapping with the previous surveys
         isOverlapping = isOverlappingPreviousSurvey(that, previousSurveys);
     }
     if (nextSurvey !== null) {
-        isOverlapping = isOverlappingNextSurvey(that, nextSurvey);
+        // Checking if this survey instance is overlapping with the next survey. That can be accomplished by doing the same check as above ("isOverlappingPreviousSuvrey()") for the next survey and adding this survey instance to the previous surveys list
+        previousSurveysIncludingThisSurvey = previousSurveys;
+        previousSurveysIncludingThisSurvey.push(that);
+        isOverlapping = isOverlappingPreviousSurvey(nextSurvey, previousSurveysIncludingThisSurvey);
     }
-    return false;
+    return isOverlapping;
 }
 
-function isOverlappingPreviousSurvey(that, previousSurveys) {
-    let previousSurvey, result;
-    if (that.isRelative) {
+function isOverlappingPreviousSurvey(surveyToCheck, previousSurveys) {
+    let previousSurvey,
+    result;
+    if (surveyToCheck.isRelative) {
         previousSurvey = previousSurveys[previousSurveys.length - 1];
-        if ((previousSurvey.getMaxDurationInMin() + previousSurvey.getNotificationDurationInMin()) > that.relativeStartTimeInMin) {
+        if ((previousSurvey.getMaxDurationInMin() + previousSurvey.getNotificationDurationInMin()) > surveyToCheck.relativeStartTimeInMin) {
             return true;
         }
     }
@@ -187,7 +192,7 @@ function isOverlappingPreviousSurvey(that, previousSurveys) {
         // If there is no last absolute survey (all previous surveys are relative) or there is no previous survey at all. So overlapping has to be checked in the RemEx Android application, because there the experiment start time is set (and with that relative surveys can resolve there absolute start time)
         if (result.lastAbsoluteSurvey !== undefined) {
             // If the start time of the last absolute survey plus the time of all relative surveys in between is greater than the start time of this survey, this survey is overlapping with the previous surveys.
-            if ((result.lastAbsoluteSurvey.getAbsoluteStartAtMinute + result.lastAbsoluteSurvey.getAbsoluteStartAtHour * 60 + result.lastAbsoluteSurvey.getAbsoluteStartDaysOffset * 24 * 60 + result.timeIntervalInMin) > (that.getAbsoluteStartAtMinute + that.getAbsoluteStartAtHour * 60 + that.getAbsoluteStartDaysOffset * 24 * 60)) {
+            if ((result.lastAbsoluteSurvey.getAbsoluteStartAtMinute + result.lastAbsoluteSurvey.getAbsoluteStartAtHour * 60 + result.lastAbsoluteSurvey.getAbsoluteStartDaysOffset * 24 * 60 + result.timeIntervalInMin) > (surveyToCheck.getAbsoluteStartAtMinute + surveyToCheck.getAbsoluteStartAtHour * 60 + surveyToCheck.getAbsoluteStartDaysOffset * 24 * 60)) {
                 return true;
             }
         }
@@ -208,10 +213,6 @@ function getTimeIntervalFromLastAbsoluteSurvey(previousSurveys) {
         }
     }
     return result;
-}
-
-function isOverlappingNextSurvey(that, nextSurvey) {
-    //TODO
 }
 
 export default Survey;
