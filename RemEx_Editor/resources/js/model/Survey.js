@@ -4,7 +4,7 @@ import Config from "../utils/Config.js";
 
 class Survey {
 
-    constructor(id) {
+    constructor(id, nextSurveyId) {
         // Unique
         this.id = id;
         // Unique
@@ -16,7 +16,7 @@ class Survey {
         this.absoluteStartAtHour = undefined;
         this.absoluteStartDaysOffset = undefined;
         this.notificationDurationInMin = undefined;
-        this.nextSurveyId = 0;
+        this.nextSurveyId = nextSurveyId;
         this.steps = [];
     }
 
@@ -37,7 +37,7 @@ class Survey {
     }
 
     setMaxDurationInMin(maxDurationInMin) {
-        this.maxDurationInMin = maxDurationInMin;
+        this.maxDurationInMin = Math.round(maxDurationInMin);
     }
 
     getIsRelative() {
@@ -53,7 +53,7 @@ class Survey {
     }
 
     setRelativeStartTimeInMin(relativeStartTimeInMin) {
-        this.relativeStartTimeInMin = relativeStartTimeInMin;
+        this.relativeStartTimeInMin = Math.round(relativeStartTimeInMin);
     }
 
     getAbsoluteStartAtMinute() {
@@ -61,7 +61,7 @@ class Survey {
     }
 
     setAbsoluteStartAtMinute(absoluteStartAtMinute) {
-        this.absoluteStartAtMinute = absoluteStartAtMinute;
+        this.absoluteStartAtMinute = Math.round(absoluteStartAtMinute);
     }
 
     getAbsoluteStartAtHour() {
@@ -69,7 +69,7 @@ class Survey {
     }
 
     setAbsoluteStartAtHour(absoluteStartAtHour) {
-        this.absoluteStartAtHour = absoluteStartAtHour;
+        this.absoluteStartAtHour = Math.round(absoluteStartAtHour);
     }
 
     getAbsoluteStartDaysOffset() {
@@ -77,7 +77,7 @@ class Survey {
     }
 
     setAbsoluteStartDaysOffset(absoluteStartDaysOffset) {
-        this.absoluteStartDaysOffset = absoluteStartDaysOffset;
+        this.absoluteStartDaysOffset = Math.round(absoluteStartDaysOffset);
     }
 
     getNotificationDurationInMin() {
@@ -85,7 +85,7 @@ class Survey {
     }
 
     setNotificationDurationInMin(notificationDurationInMin) {
-        this.notificationDurationInMin = notificationDurationInMin;
+        this.notificationDurationInMin = Math.round(notificationDurationInMin);
     }
 
     getNextSurveyId() {
@@ -131,25 +131,6 @@ class Survey {
     }
 
     isValid(surveys, previousSurveys, nextSurvey) {
-        if (this.name === "" || this.name === undefined) {
-            return Config.SURVEY_NAME_EMPTY;
-        }
-        // TODO: Calculate the optimal duration for a survey depending on its steps
-        if (this.maxDurationInMin === undefined || this.maxDurationInMin <= 0) {
-            return Config.SURVEY_DURATION_INVALID;
-        }
-        if (this.isRelative === undefined || (this.relativeStartTimeInMin === undefined && (this.absoluteStartAtMinute === undefined || this.absoluteStartAtHour === undefined || this.absoluteStartDaysOffset === undefined))) {
-            return Config.SURVEY_TIME_NOT_SET;
-        }
-        if (this.relativeStartTimeInMin <= 0) {
-            return Config.RELATIVE_SURVEY_TIME_INVALID;
-        }
-        if ((this.absoluteStartAtMinute < 0 || this.absoluteStartAtMinute >= 60) || (this.absoluteStartAtHour < 0 || this.absoluteStartAtHour > 24) || this.absoluteStartDaysOffset < 0) {
-            return Config.ABSOLUTE_SURVEY_TIME_INVALID;
-        }
-        if (this.notificationDurationInMin === undefined || this.notificationDurationInMin <= 0) {
-            return Config.SURVEY_NOTIFICATION_DURATION_INVALID;
-        }
         for (let survey of surveys) {
             if (survey.getName() === this.name) {
                 return Config.SURVEY_NAME_NOT_UNIQUE;

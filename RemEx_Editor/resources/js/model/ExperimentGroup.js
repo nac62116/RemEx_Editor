@@ -52,9 +52,6 @@ class ExperimentGroup {
     }
 
     isValid(groups) {
-        if (this.name === "" || this.name === undefined) {
-            return Config.EXPERIMENT_GROUP_NAME_EMPTY;
-        }
         for (let group of groups) {
             if (group.getName() === this.name) {
                 return Config.EXPERIMENT_GROUP_NAME_NOT_UNIQUE;

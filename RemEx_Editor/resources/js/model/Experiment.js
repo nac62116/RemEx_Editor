@@ -69,13 +69,6 @@ class Experiment {
             }
         }
     }
-
-    isValid() {
-        if (this.name === "" || this.name === undefined) {
-            return Config.EXPERIMENT_NAME_EMPTY;
-        }
-        return true;
-    }
 }
 
 function resourceAlreadyExists(that, newResource) {
