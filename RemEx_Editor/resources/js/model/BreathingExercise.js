@@ -11,7 +11,6 @@ class BreathingExercise extends Step {
         this.durationInMin = undefined;
         this.breathingFrequencyInSec = undefined;
         this.mode = undefined;
-        
     }
     
     getDurationInMin() {

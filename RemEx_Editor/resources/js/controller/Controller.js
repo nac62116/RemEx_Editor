@@ -11,7 +11,7 @@ import Experiment from "../model/Experiment.js";
 // - Input fields that allow only one type or type check after input
 // - Format checks inside the views input fields (Delete the ones without usage in the model)
 
-// TODO: Calculate the optimal duration for a survey depending on its steps
+// ENHANCEMENT: Calculate the optimal duration for a survey depending on its steps
 
 class Controller {
 
