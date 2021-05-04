@@ -19,5 +19,8 @@
   "homepage": "https://github.com/nac62116/RemEx_Editor#Readme",
   "dependencies": {
     "http-server": "^0.12.3"
+  },
+  "devDependencies": {
+    "eslint": "^7.25.0"
   }
 }

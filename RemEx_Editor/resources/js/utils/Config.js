@@ -12,6 +12,42 @@ const Config = {
     MAX_ID_ALERT: "Du kannst maximal 10.000 Schritte auf einer Ebene erstellen. Kontaktiere den Support falls du die Grenze erweitern möchtest.",
     STEP_CONSTRUCTOR_ERROR: "Cannot construct Step instances directly. Please construct subclasses of Step.",
     QUESTION_CONSTRUCTOR_ERROR: "Cannot construct Question instances directly. Please construct subclasses of Question.",
+    NODE_VIEW_CONSTRUCTOR_ERROR: "Cannot construct NodeView instances directly. Please construct subclasses of NodeView.",
+
+    // Colors and styles
+
+    // Tree view
+    TREE_VIEW_BACKGROUND_COLOR: "black",
+    TREE_VIEW_BACKGROUND_OPACITY: "0.5",
+
+    // Tree node view
+    TREE_NODE_WIDTH: "100",
+    TREE_NODE_HEIGHT: "150",
+    TREE_NODE_BORDER_RADIUS: "10",
+    TREE_NODE_BACKGROUND_COLOR: "black",
+    TREE_NODE_BACKGROUND_OPACITY: "0.8",
+    TREE_NODE_STROKE_WIDTH: "5",
+    TREE_NODE_STROKE_COLOR: "black",
+    TREE_NODE_STROKE_OPACITY: "1",
+    TREE_NODE_PATH_STROKE_WIDTH: "2",
+    TREE_NODE_PATH_STROKE_COLOR: "black",
+    TREE_NODE_PATH_STROKE_OPACITY: "1",
+
+    // DOM Element ids
+
+    TREE_VIEW_CONTAINER_ID: "treeContainer",
+    NODE_TEMPLATE_ID: "nodeTemplate",
+
+    // Tree node types
+
+    TREE_NODE_TYPE_EXPERIMENT: "experimentNode",
+    TREE_NODE_TYPE_EXPERIMENT_GROUP: "experimentGroupNode",
+    TREE_NODE_TYPE_INSTRUCTION: "instructionNode",
+    TREE_NODE_TYPE_BREATHING_EXERCISE: "breathingExerciseNode",
+    TREE_NODE_TYPE_QUESTIONNAIRE: "questionnaireNode",
+    TREE_NODE_TYPE_QUESTION: "questionNode",
+
+    // TODO
 
     // Step types 
     // If you change these values, change them accordingly in the RemEx_App model

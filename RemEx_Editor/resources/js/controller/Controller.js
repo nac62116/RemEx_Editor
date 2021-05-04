@@ -1,6 +1,8 @@
-/* eslint-env browser */
+/* eslint-env broswer */
 
-import Experiment from "../model/Experiment.js";
+import Config from "../utils/Config.js";
+import TreeNodeView from "../views/TreeNodeView.js";
+import TreeView from "../views/TreeView.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
@@ -16,14 +18,39 @@ import Experiment from "../model/Experiment.js";
 class Controller {
 
     init() {
-        let experiment = new Experiment();
-        if (experiment.isValid() !== true) {
-            console.log(experiment.isValid());
+        let treeViewContainerElement,
+        testNode,
+        testNode1,
+        testNode2,
+        testNode3,
+        testNode4,
+        testNode5,
+        parentOutputPoint;
+
+        // TODO: Get experiment from local storage
+
+        // Init TreeView
+        treeViewContainerElement = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID);
+        TreeView.setElement(treeViewContainerElement);
+
+        // Create test node
+        parentOutputPoint = {
+            x: TreeView.getWidth() / 2,
+            y: 0,
         }
-        experiment.setName("Experiment");
-        if (experiment.isValid() === true) {
-            console.log(experiment.getName());
-        }
+        testNode = new TreeNodeView(1, 100, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT);
+        testNode1 = new TreeNodeView(1, 250, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT_GROUP);
+        testNode2 = new TreeNodeView(1, 400, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_INSTRUCTION);
+        testNode3 = new TreeNodeView(1, 550, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_BREATHING_EXERCISE);
+        testNode4 = new TreeNodeView(1, 700, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTIONNAIRE);
+        testNode5 = new TreeNodeView(1, 850, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTION);
+        TreeView.insertNodeView(testNode.getElements());
+        TreeView.insertNodeView(testNode1.getElements());
+        TreeView.insertNodeView(testNode2.getElements());
+        TreeView.insertNodeView(testNode3.getElements());
+        TreeView.insertNodeView(testNode4.getElements());
+        TreeView.insertNodeView(testNode5.getElements());
+
     }
     
 }
