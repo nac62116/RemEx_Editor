@@ -14,6 +14,12 @@ body {
     height: 60%;
 }
 
+.tree {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
 .info-container {
     position: absolute;
     top: 60%;

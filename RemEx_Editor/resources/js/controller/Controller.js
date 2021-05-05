@@ -25,6 +25,7 @@ class Controller {
         testNode3,
         testNode4,
         testNode5,
+        testNode6,
         parentOutputPoint;
 
         // TODO: Get experiment from local storage
@@ -38,18 +39,22 @@ class Controller {
             x: TreeView.getWidth() / 2,
             y: 0,
         }
-        testNode = new TreeNodeView(1, 100, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT);
-        testNode1 = new TreeNodeView(1, 250, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT_GROUP);
-        testNode2 = new TreeNodeView(1, 400, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_INSTRUCTION);
-        testNode3 = new TreeNodeView(1, 550, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_BREATHING_EXERCISE);
-        testNode4 = new TreeNodeView(1, 700, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTIONNAIRE);
-        testNode5 = new TreeNodeView(1, 850, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTION);
+        testNode = new TreeNodeView(1, 75, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT);
+        testNode1 = new TreeNodeView(1, 200, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT_GROUP);
+        testNode2 = new TreeNodeView(1, 325, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_INSTRUCTION);
+        testNode3 = new TreeNodeView(1, 450, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_BREATHING_EXERCISE);
+        testNode4 = new TreeNodeView(1, 575, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTIONNAIRE);
+        testNode5 = new TreeNodeView(1, 700, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTION);
+        testNode6 = new TreeNodeView(1, 825, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_NEW);
         TreeView.insertNodeView(testNode.getElements());
         TreeView.insertNodeView(testNode1.getElements());
         TreeView.insertNodeView(testNode2.getElements());
         TreeView.insertNodeView(testNode3.getElements());
         TreeView.insertNodeView(testNode4.getElements());
         TreeView.insertNodeView(testNode5.getElements());
+        TreeView.insertNodeView(testNode6.getElements());
+        testNode2.hide();
+        testNode3.emphasize();
 
     }
     
