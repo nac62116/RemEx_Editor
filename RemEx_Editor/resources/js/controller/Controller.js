@@ -34,18 +34,19 @@ class Controller {
         treeViewContainerElement = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID);
         TreeView.setElement(treeViewContainerElement);
 
-        // Create test node
+        // Create test nodes
         parentOutputPoint = {
             x: TreeView.getWidth() / 2,
             y: 0,
         }
-        testNode = new TreeNodeView(1, 75, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT);
-        testNode1 = new TreeNodeView(1, 200, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_EXPERIMENT_GROUP);
-        testNode2 = new TreeNodeView(1, 325, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_INSTRUCTION);
-        testNode3 = new TreeNodeView(1, 450, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_BREATHING_EXERCISE);
-        testNode4 = new TreeNodeView(1, 575, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTIONNAIRE);
-        testNode5 = new TreeNodeView(1, 700, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_QUESTION);
-        testNode6 = new TreeNodeView(1, 825, TreeView.getHeight() / 2, parentOutputPoint, Config.TREE_NODE_TYPE_NEW);
+        // If description.length > 25 -> cut to 20 -> append "..."
+        testNode = new TreeNodeView(1, 75, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_EXPERIMENT, "Name");
+        testNode1 = new TreeNodeView(1, 200, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_EXPERIMENT_GROUP, "Längerer Name");
+        testNode2 = new TreeNodeView(1, 325, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_INSTRUCTION, "Ziemlich langer Name");
+        testNode3 = new TreeNodeView(1, 450, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_BREATHING_EXERCISE, "Längster erlaubter Name f...");
+        testNode4 = new TreeNodeView(1, 575, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_QUESTIONNAIRE, "1 34 678 1234 56789 123456 789");
+        testNode5 = new TreeNodeView(1, 700, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_QUESTION, "Name");
+        testNode6 = new TreeNodeView(1, 825, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_NEW, Config.NODE_TYPE_NEW_DESCRIPTION);
         TreeView.insertNodeView(testNode.getElements());
         TreeView.insertNodeView(testNode1.getElements());
         TreeView.insertNodeView(testNode2.getElements());
@@ -53,9 +54,10 @@ class Controller {
         TreeView.insertNodeView(testNode4.getElements());
         TreeView.insertNodeView(testNode5.getElements());
         TreeView.insertNodeView(testNode6.getElements());
-        testNode2.hide();
-        testNode3.emphasize();
-
+        // Testing interaction
+        testNode3.hide();
+        testNode5.emphasize();
+        testNode5.updatePosition(700, TreeView.getHeight() / 1.5);
     }
     
 }

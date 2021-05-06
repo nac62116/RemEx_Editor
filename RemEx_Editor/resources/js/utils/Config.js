@@ -6,7 +6,7 @@
 
 const Config = {
 
-    // General app settings
+    // General app settings:
 
     MAX_ID_SIZE: 10000,
     MAX_ID_ALERT: "Du kannst maximal 10.000 Schritte auf einer Ebene erstellen. Kontaktiere den Support falls du die Grenze erweitern möchtest.",
@@ -14,11 +14,30 @@ const Config = {
     QUESTION_CONSTRUCTOR_ERROR: "Cannot construct Question instances directly. Please construct subclasses of Question.",
     NODE_VIEW_CONSTRUCTOR_ERROR: "Cannot construct NodeView instances directly. Please construct subclasses of NodeView.",
 
-    // Colors and styles
+    
+    // View related:
+
+    // DOM Element ids:
+
+    TREE_VIEW_CONTAINER_ID: "treeContainer",
+    NODE_TEMPLATE_ID: "nodeTemplate",
+
+    // Selfmade attributes:
+
+    EMPHASIZE_FILL_OPACITY_BY: "emphasize-fill-opacity-by",
+    EMPHASIZE_STROKE_OPACITY_BY: "emphasize-stroke-opacity-by",
+
+    // Colors, styles and dimensions:
 
     // Tree view
     TREE_VIEW_BACKGROUND_COLOR: "black",
     TREE_VIEW_BACKGROUND_OPACITY: "0.5",
+
+    // Tree node input path
+    NODE_INPUT_PATH_STROKE_WIDTH: "2",
+    NODE_INPUT_PATH_STROKE_COLOR: "black",
+    NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED: "0.3",
+    NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED: "1",
 
     // Tree node 
     NODE_WIDTH: "100",
@@ -30,68 +49,55 @@ const Config = {
     NODE_BODY_WIDTH: "96%",
     NODE_BODY_HEIGHT: "96%",
     NODE_BODY_BORDER_RADIUS: "10%",
-    NODE_BODY_BACKGROUND_COLOR: "black",
-    NODE_BODY_BACKGROUND_OPACITY_DEEMPHASIZED: "0.1",
-    NODE_BODY_BACKGROUND_OPACITY_EMPHASIZED: "0.5",
+    NODE_BODY_FILL_COLOR: "black",
+    NODE_BODY_FILL_OPACITY_DEEMPHASIZED: "0.1",
+    NODE_BODY_FILL_OPACITY_EMPHASIZE_BY: "0.4",
     NODE_BODY_STROKE_WIDTH: "2%",
     NODE_BODY_STROKE_COLOR: "black",
     NODE_BODY_STROKE_OPACITY_DEEMPHASIZED: "0.3",
-    NODE_BODY_STROKE_OPACITY_EMPHASIZED: "1",
-    NODE_PATH_STROKE_WIDTH: "2",
-    NODE_PATH_STROKE_COLOR: "black",
-    NODE_PATH_STROKE_OPACITY_DEEMPHASIZED: "0.3",
-    NODE_PATH_STROKE_OPACITY_EMPHASIZED: "1",
+    NODE_BODY_STROKE_OPACITY_EMPHASIZE_BY: "0.7",
 
-    // DOM Element ids
+    // Tree node description (Sizes are relative to the tree node)
+    NODE_DESCRIPTION_X: "50%",
+    NODE_DESCRIPTION_Y: "70%",
+    NODE_DESCRIPTION_TEXT_ANCHOR: "middle",
+    // How many symbols until a linebreak is inserted
+    NODE_DESCRIPTION_LINE_BREAK_COUNT: 12,
+    NODE_DESCRIPTION_LINE_SPACING: "1.2em",
+    NODE_DESCRIPTION_COLOR: "white",
+    NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED: "0.3",
+    NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZE_BY: "0.7",
+    NODE_DESCRIPTION_STROKE_OPACITY_DEEMPHASIZED: "0",
+    NODE_DESCRIPTION_STROKE_OPACITY_EMPHASIZE_BY: "0",
+    NODE_DESCRIPTION_FONT_FAMILY: "Helvetica",
+    NODE_DESCRIPTION_FONT_SIZE: "80%",
+    NODE_DESCRIPTION_FONT_WEIGHT: "bold",
 
-    TREE_VIEW_CONTAINER_ID: "treeContainer",
-    NODE_TEMPLATE_ID: "nodeTemplate",
+    // Tree node types (Sizes are relative to the tree node):
 
-    // Tree node types
+    // New node
+    NODE_TYPE_NEW: "newNode",
+    NODE_TYPE_NEW_DESCRIPTION: "Hinzufügen",
 
-    TREE_NODE_TYPE_EXPERIMENT: "experimentNode",
-    TREE_NODE_TYPE_EXPERIMENT_GROUP: "experimentGroupNode",
-    TREE_NODE_TYPE_INSTRUCTION: "instructionNode",
-    TREE_NODE_TYPE_BREATHING_EXERCISE: "breathingExerciseNode",
-    TREE_NODE_TYPE_QUESTIONNAIRE: "questionnaireNode",
-    TREE_NODE_TYPE_QUESTION: "questionNode",
-    TREE_NODE_TYPE_NEW: "newNode",
+    // Experiment node
+    NODE_TYPE_EXPERIMENT: "experimentNode",
 
-    // TODO
+    // Experiment group node
+    NODE_TYPE_EXPERIMENT_GROUP: "experimentGroupNode",
 
-    // Step types 
-    // If you change these values, change them accordingly in the RemEx_App model
-    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    // Instruction node
+    NODE_TYPE_INSTRUCTION: "instructionNode",
 
-    STEP_TYPE_INSTRUCTION: "INSTRUCTION",
-    STEP_TYPE_BREATHING_EXERCISE: "BREATHING_EXERCISE",
-    STEP_TYPE_QUESTIONNAIRE: "QUESTIONNAIRE",
+    // Breathing exercise node
+    NODE_TYPE_BREATHING_EXERCISE: "breathingExerciseNode",
 
-    // Question types 
-    // If you change these values, change them accordingly in the RemEx_App model
-    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    // Questionnaire node
+    NODE_TYPE_QUESTIONNAIRE: "questionnaireNode",
 
-    QUESTION_TYPE_CHOICE: "CHOICE",
-    QUESTION_TYPE_TEXT: "TEXT",
-    QUESTION_TYPE_LIKERT: "LIKERT",
-    QUESTION_TYPE_TIME_INTERVAL: "TIME_INTERVAL",
-    QUESTION_TYPE_POINT_OF_TIME: "POINT_OF_TIME",
+    // Question node
+    NODE_TYPE_QUESTION: "questionNode",
 
-    // Breathing modes 
-    // If you change these values, change them accordingly in the RemEx_App model
-    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
-
-    BREATHING_MODE_MOVING_CIRCLE: "MOVING_CIRCLE",
-    BREATHING_MODE_STATIC_CIRCLE: "STATIC_CIRCLE",
-
-    // Choice types
-    // If you change these values, change them accordingly in the RemEx_App model
-    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
-
-    CHOICE_TYPE_SINGLE_CHOICE: "SINGLE_CHOICE",
-    CHOICE_TYPE_MULTIPLE_CHOICE: "MULTIPLE_CHOICE",
-
-    // Input invalid messages
+    // Input invalid messages:
 
     EXPERIMENT_NAME_EMPTY: "Bitte wähle einen geeigneten Namen für dein Experiment um fortzufahren.",
     EXPERIMENT_GROUP_NAME_EMPTY: "Bitte wähle einen geeigneten Namen für deine Experiment Gruppe um fortzufahren.",
@@ -106,6 +112,41 @@ const Config = {
     SURVEY_OVERLAPS: "Die gewählte Startzeit und Dauer der Befragung überlappt mit dem Zeitfenster einer anderen Befragungen. Das Zeitfenster einer Befragung berechnet sich aus der Erinnerungsdauer und der Befragungsdauer. In diesem Zeitfenster sollten keine weiteren Befragungen geplant werden.",
     QUESTION_NAME_NOT_UNIQUE: "Der gewählte Name deiner Frage existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
     ANSWER_CODE_NOT_UNIQUE: "Der gewählte Code deiner Antwort existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
+    
+
+    // Model related:
+    
+    // Step types:
+
+    // If you change these values, change them accordingly in the RemEx_App model
+    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    STEP_TYPE_INSTRUCTION: "INSTRUCTION",
+    STEP_TYPE_BREATHING_EXERCISE: "BREATHING_EXERCISE",
+    STEP_TYPE_QUESTIONNAIRE: "QUESTIONNAIRE",
+
+    // Question types:
+
+    // If you change these values, change them accordingly in the RemEx_App model
+    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    QUESTION_TYPE_CHOICE: "CHOICE",
+    QUESTION_TYPE_TEXT: "TEXT",
+    QUESTION_TYPE_LIKERT: "LIKERT",
+    QUESTION_TYPE_TIME_INTERVAL: "TIME_INTERVAL",
+    QUESTION_TYPE_POINT_OF_TIME: "POINT_OF_TIME",
+
+    // Breathing modes:
+
+    // If you change these values, change them accordingly in the RemEx_App model
+    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    BREATHING_MODE_MOVING_CIRCLE: "MOVING_CIRCLE",
+    BREATHING_MODE_STATIC_CIRCLE: "STATIC_CIRCLE",
+
+    // Choice types:
+
+    // If you change these values, change them accordingly in the RemEx_App model
+    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    CHOICE_TYPE_SINGLE_CHOICE: "SINGLE_CHOICE",
+    CHOICE_TYPE_MULTIPLE_CHOICE: "MULTIPLE_CHOICE",
 };
 
 Object.freeze(Config);

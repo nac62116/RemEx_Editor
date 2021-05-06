@@ -5,7 +5,7 @@ import {Observable, Event} from "../utils/Observable.js";
 
 class TreeNodeView extends Observable {
 
-    constructor(id, centerX, centerY, parentOutputPoint, type) {
+    constructor(id, centerX, centerY, parentOutputPoint, type, description) {
         super();
         this.id = id;
         this.elements = [];
@@ -14,7 +14,7 @@ class TreeNodeView extends Observable {
             this.inputPath = createInputPath();
             this.elements.push(this.inputPath);
         }
-        this.nodeSvg = createNodeSvg();
+        this.nodeSvg = createNodeSvg(type, description);
         this.elements.push(this.nodeSvg);
         this.updatePosition(centerX, centerY);
     }
@@ -32,36 +32,48 @@ class TreeNodeView extends Observable {
     }
 
     show() {
-        this.deemphasize();
+        if (this.inputPath !== null) {
+            this.inputPath.removeAttribute("display");
+        }
+        for (let element of this.nodeSvg.children) {
+            element.removeAttribute("display");
+            element.removeAttribute("display");
+        }
     }
 
     hide() {
         if (this.inputPath !== null) {
-            this.inputPath.setAttribute("stroke-opacity", "0");
+            this.inputPath.setAttribute("display", "none");
         }
         for (let element of this.nodeSvg.children) {
-            element.setAttribute("fill-opacity", "0");
-            element.setAttribute("stroke-opacity", "0");
+            element.setAttribute("display", "none");
+            element.setAttribute("display", "none");
         }
     }
 
     emphasize() {
+        let newFillOpacity, newStrokeOpacity;
         if (this.inputPath !== null) {
-            this.inputPath.setAttribute("stroke-opacity", Config.NODE_PATH_STROKE_OPACITY_EMPHASIZED);
+            this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
         }
         for (let element of this.nodeSvg.children) {
-            element.setAttribute("fill-opacity", Config.NODE_BODY_BACKGROUND_OPACITY_EMPHASIZED);
-            element.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_EMPHASIZED);
+            newFillOpacity = element.getAttribute("fill-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
+            newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
+            element.setAttribute("fill-opacity", newFillOpacity);
+            element.setAttribute("stroke-opacity", newStrokeOpacity);
         }
     }
 
     deemphasize() {
+        let newFillOpacity, newStrokeOpacity;
         if (this.inputPath !== null) {
-            this.inputPath.setAttribute("stroke-opacity", Config.NODE_PATH_STROKE_OPACITY_DEEMPHASIZED);
+            this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
         }
         for (let element of this.nodeSvg.children) {
-            element.setAttribute("fill-opacity", Config.NODE_BODY_BACKGROUND_OPACITY_DEEMPHASIZED);
-            element.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
+            newFillOpacity = element.getAttribute("fill-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
+            newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
+            element.setAttribute("fill-opacity", newFillOpacity);
+            element.setAttribute("stroke-opacity", newStrokeOpacity);
         }
     }
 
@@ -98,25 +110,25 @@ class TreeNodeView extends Observable {
 
 function createInputPath() {
     let inputPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    inputPath.setAttribute("stroke-width", Config.NODE_PATH_STROKE_WIDTH);
-    inputPath.setAttribute("stroke", Config.NODE_PATH_STROKE_COLOR);
-    inputPath.setAttribute("stroke-opacity", Config.NODE_PATH_STROKE_OPACITY_DEEMPHASIZED);
+    inputPath.setAttribute("stroke-width", Config.NODE_INPUT_PATH_STROKE_WIDTH);
+    inputPath.setAttribute("stroke", Config.NODE_INPUT_PATH_STROKE_COLOR);
+    inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
     inputPath.setAttribute("fill", "transparent");
     return inputPath;
 }
 
-function createNodeSvg(type) {
+function createNodeSvg(type, description) {
     let nodeSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-    nodeBody = createBody();
-    //nodeIcon = createIcon(type),
-    //nodeDescription = createDescription(type);
+    nodeBody = createBody(),
+    nodeIcon = createIcon(type),
+    nodeDescription = createDescription(description);
 
     nodeSvg.setAttribute("viewBox", "0 0 " + Config.NODE_WIDTH + " " + Config.NODE_HEIGHT);
     nodeSvg.setAttribute("width", Config.NODE_WIDTH);
     nodeSvg.setAttribute("height", Config.NODE_HEIGHT);
     nodeSvg.appendChild(nodeBody);
     //nodeSvg.appendChild(nodeIcon);
-    //nodeSvg.appendChild(nodeDescription);
+    nodeSvg.appendChild(nodeDescription);
     return nodeSvg;
 }
 
@@ -128,44 +140,108 @@ function createBody() {
     nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
     nodeBody.setAttribute("rx", Config.NODE_BODY_BORDER_RADIUS);
     nodeBody.setAttribute("ry", Config.NODE_BODY_BORDER_RADIUS);
-    nodeBody.setAttribute("fill", Config.NODE_BODY_BACKGROUND_COLOR);
-    nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_BACKGROUND_OPACITY_DEEMPHASIZED);
+    nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
+    nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
+    nodeBody.setAttribute(Config.EMPHASIZE_FILL_OPACITY_BY, Config.NODE_BODY_FILL_OPACITY_EMPHASIZE_BY);
     nodeBody.setAttribute("stroke-width", Config.NODE_BODY_STROKE_WIDTH);
     nodeBody.setAttribute("stroke", Config.NODE_BODY_STROKE_COLOR);
     nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
+    nodeBody.setAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY, Config.NODE_BODY_STROKE_OPACITY_EMPHASIZE_BY);
     return nodeBody;
 }
 
-function createIcon(that, type) {
+function createIcon(type) {
     let nodeIcon;
     switch(type) {
-
-        case Config.TREE_NODE_TYPE_NEW:
-            nodeIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        // TODO
+        case Config.NODE_TYPE_NEW:
             break;
         
-        case Config.TREE_NODE_TYPE_EXPERIMENT:
+        case Config.NODE_TYPE_EXPERIMENT:
             break;
 
-        case Config.TREE_NODE_TYPE_EXPERIMENT_GROUP:
+        case Config.NODE_TYPE_EXPERIMENT_GROUP:
             break;
         
-        case Config.TREE_NODE_TYPE_INSTRUCTION:
+        case Config.NODE_TYPE_INSTRUCTION:
             break;
 
-        case Config.TREE_NODE_TYPE_BREATHING_EXERCISE:
+        case Config.NODE_TYPE_BREATHING_EXERCISE:
             break;
 
-        case Config.TREE_NODE_TYPE_QUESTIONNAIRE:
+        case Config.NODE_TYPE_QUESTIONNAIRE:
             break;
 
-        case Config.TREE_NODE_TYPE_QUESTION:
+        case Config.NODE_TYPE_QUESTION:
             break;
 
         default:
             break;
     }
     return nodeIcon;
+}
+
+function createDescription(description) {
+    let nodeDescription = document.createElementNS("http://www.w3.org/2000/svg", "text"),
+    newLine,
+    lastWhitespaceIndex,
+    substring,
+    currentIndex;
+    nodeDescription.setAttribute("x", Config.NODE_DESCRIPTION_X);
+    nodeDescription.setAttribute("y", Config.NODE_DESCRIPTION_Y);
+    nodeDescription.setAttribute("text-anchor", Config.NODE_DESCRIPTION_TEXT_ANCHOR);
+    nodeDescription.setAttribute("fill", Config.NODE_DESCRIPTION_COLOR);
+    nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
+    nodeDescription.setAttribute(Config.EMPHASIZE_FILL_OPACITY_BY, Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZE_BY);
+    nodeDescription.setAttribute("stroke-opacity", Config.NODE_DESCRIPTION_STROKE_OPACITY_DEEMPHASIZED);
+    nodeDescription.setAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY, Config.NODE_DESCRIPTION_STROKE_OPACITY_EMPHASIZE_BY);
+    nodeDescription.setAttribute("font-family", Config.NODE_DESCRIPTION_FONT_FAMILY);
+    nodeDescription.setAttribute("font-size", Config.NODE_DESCRIPTION_FONT_SIZE);
+    nodeDescription.setAttribute("font-weight", Config.NODE_DESCRIPTION_FONT_WEIGHT);
+    // Description fits in one line
+    if (description.length <= Config.NODE_DESCRIPTION_LINE_BREAK_COUNT) {
+        nodeDescription.innerHTML = description;
+    }
+    // Description does not fit. It is breaked into several lines, if possible at whitespace positions.
+    else {
+        // First line
+        substring = description.substr(0, Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
+        lastWhitespaceIndex = substring.lastIndexOf(" ");
+        if (lastWhitespaceIndex !== -1) {
+            nodeDescription.innerHTML = description.slice(0, lastWhitespaceIndex);
+            currentIndex = lastWhitespaceIndex + 1;
+        }
+        else {
+            nodeDescription.innerHTML = substring;
+            currentIndex = Config.NODE_DESCRIPTION_LINE_BREAK_COUNT;
+        }
+        while (currentIndex < description.length) {
+            newLine = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            newLine.setAttribute("x", Config.NODE_DESCRIPTION_X);
+            newLine.setAttribute("dy", Config.NODE_DESCRIPTION_LINE_SPACING);
+            // Last line
+            if (currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT > description.length) {
+                substring = description.slice(currentIndex, description.length);
+                currentIndex = description.length;
+            }
+            // All other lines
+            else {
+                substring = description.substr(0, currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
+                lastWhitespaceIndex = substring.lastIndexOf(" ");
+                if (lastWhitespaceIndex !== -1) {
+                    substring = description.slice(currentIndex, lastWhitespaceIndex);
+                    currentIndex += substring.length + 1;
+                }
+                else {
+                    substring = description.substr(currentIndex, Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
+                    currentIndex += Config.NODE_DESCRIPTION_LINE_BREAK_COUNT;
+                }
+            }
+            newLine.innerHTML = substring;
+            nodeDescription.appendChild(newLine);
+        }
+    }
+    return nodeDescription;
 }
 
 export default TreeNodeView;
