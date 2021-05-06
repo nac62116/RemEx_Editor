@@ -54,10 +54,6 @@ class Controller {
         TreeView.insertNodeView(testNode4.getElements());
         TreeView.insertNodeView(testNode5.getElements());
         TreeView.insertNodeView(testNode6.getElements());
-        // Testing interaction
-        testNode3.hide();
-        testNode5.emphasize();
-        testNode5.updatePosition(700, TreeView.getHeight() / 1.5);
     }
     
 }

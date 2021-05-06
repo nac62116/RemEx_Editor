@@ -17,6 +17,10 @@ const Config = {
     
     // View related:
 
+    // View events:
+
+    EVENT_NODE_CLICKED: "nodeclicked",
+
     // DOM Element ids:
 
     TREE_VIEW_CONTAINER_ID: "treeContainer",

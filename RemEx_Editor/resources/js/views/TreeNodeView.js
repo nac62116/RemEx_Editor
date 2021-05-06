@@ -8,6 +8,8 @@ class TreeNodeView extends Observable {
     constructor(id, centerX, centerY, parentOutputPoint, type, description) {
         super();
         this.id = id;
+        this.type = type;
+        this.isFocused = false;
         this.elements = [];
         this.parentOutputPoint = parentOutputPoint;
         if (parentOutputPoint !== null) {
@@ -15,6 +17,12 @@ class TreeNodeView extends Observable {
             this.elements.push(this.inputPath);
         }
         this.nodeSvg = createNodeSvg(type, description);
+        this.nodeSvg.addEventListener("click", onClick.bind(this));
+        this.nodeSvg.addEventListener("mouseenter", onMouseEnter.bind(this));
+        this.nodeSvg.addEventListener("mouseleave", onMouseLeave.bind(this));
+        this.nodeSvg.addEventListener('mousedown', onStartDrag.bind(this));
+        this.nodeSvg.addEventListener('mousemove', onDrag.bind(this));
+        this.nodeSvg.addEventListener('mouseup', onDrop.bind(this));
         this.elements.push(this.nodeSvg);
         this.updatePosition(centerX, centerY);
     }
@@ -49,6 +57,15 @@ class TreeNodeView extends Observable {
             element.setAttribute("display", "none");
             element.setAttribute("display", "none");
         }
+    }
+
+    focus() {
+        this.isFocused = true;
+    }
+
+    defocus() {
+        this.isFocused = false;
+        this.deemphasize();
     }
 
     emphasize() {
@@ -107,6 +124,48 @@ class TreeNodeView extends Observable {
         this.nodeSvg.setAttribute("y", this.topLeft.y);
     }
 }
+
+// Event callback functions:
+
+function onClick() {
+    let data, event;
+
+    if (!this.isFocused) {
+        data = {
+            id: this.id,
+            type: this.type
+        };
+        event = new Event(Config.EVENT_NODE_CLICKED, data);
+        this.focus();
+        this.notifyAll(event);
+    }
+}
+
+function onMouseEnter(event) {
+    if (!this.isFocused) {
+        this.emphasize();
+    }
+}
+
+function onMouseLeave(event) {
+    if (!this.isFocused) {
+        this.deemphasize();
+    }
+}
+
+function onStartDrag(event) {
+    console.log(event);
+}
+
+function onDrag(event) {
+    console.log(event);
+}
+
+function onDrop(event) {
+    console.log(event);
+}
+
+// Svg element creation:
 
 function createInputPath() {
     let inputPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
