@@ -20,6 +20,11 @@ const Config = {
     // View events:
 
     EVENT_NODE_CLICKED: "nodeclicked",
+    EVENT_NODE_MOUSE_ENTER: "nodemouseenter",
+    EVENT_NODE_MOUSE_LEAVE: "nodemouseleave",
+    EVENT_NODE_START_DRAG: "nodestartdrag",
+    EVENT_NODE_ON_DRAG: "nodeondrag",
+    EVENT_NODE_ON_DROP: "nodeondrop",
 
     // DOM Element ids:
 
@@ -45,7 +50,7 @@ const Config = {
 
     // Tree node 
     NODE_WIDTH: "100",
-    NODE_HEIGHT: "150",
+    NODE_HEIGHT: "120",
 
     // Tree node body (Sizes are relative to the tree node)
     NODE_BODY_X: "2%",
@@ -79,30 +84,32 @@ const Config = {
 
     // Tree node types (Sizes are relative to the tree node):
 
-    // New node
-    NODE_TYPE_NEW: "newNode",
-    NODE_TYPE_NEW_DESCRIPTION: "Hinzufügen",
-
+    // New nodes
+    NODE_TYPE_NEW_EXPERIMENT: "newExperimentNode",
+    NODE_TYPE_NEW_EXPERIMENT_DESCRIPTION: "Neues Experiment",
+    NODE_TYPE_NEW_STEP: "newStepNode",
+    NODE_TYPE_NEW_STEP_DESCRIPTION: "Neuer Schritt",
+    NODE_TYPE_NEW_QUESTION: "newQuestionNode",
+    NODE_TYPE_NEW_QUESTION_DESCRIPTION: "Neue Frage",
+    
     // Experiment node
     NODE_TYPE_EXPERIMENT: "experimentNode",
 
-    // Experiment group node
-    NODE_TYPE_EXPERIMENT_GROUP: "experimentGroupNode",
-
+    
     // Instruction node
     NODE_TYPE_INSTRUCTION: "instructionNode",
-
+    
     // Breathing exercise node
     NODE_TYPE_BREATHING_EXERCISE: "breathingExerciseNode",
-
+    
     // Questionnaire node
     NODE_TYPE_QUESTIONNAIRE: "questionnaireNode",
-
+    
     // Question node
     NODE_TYPE_QUESTION: "questionNode",
 
     // Input invalid messages:
-
+    
     EXPERIMENT_NAME_EMPTY: "Bitte wähle einen geeigneten Namen für dein Experiment um fortzufahren.",
     EXPERIMENT_GROUP_NAME_EMPTY: "Bitte wähle einen geeigneten Namen für deine Experiment Gruppe um fortzufahren.",
     EXPERIMENT_GROUP_NAME_NOT_UNIQUE: "Der gewählte Name deiner Experiment Gruppe existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",

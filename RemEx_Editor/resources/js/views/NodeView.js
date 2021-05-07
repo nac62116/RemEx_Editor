@@ -3,28 +3,39 @@
 import Config from "../utils/Config.js";
 import {Observable, Event} from "../utils/Observable.js";
 
-class TreeNodeView extends Observable {
+const UNDRAGGABLE_TYPES = [Config.NODE_TYPE_EXPERIMENT, Config.NODE_TYPE_NEW_EXPERIMENT, Config.NODE_TYPE_NEW_STEP, Config.NODE_TYPE_NEW_QUESTION];
 
-    constructor(id, centerX, centerY, parentOutputPoint, type, description) {
+class NodeView extends Observable {
+
+    constructor(id, /*centerX, centerY,*/ parentOutputPoint, type, description) {
         super();
         this.id = id;
         this.type = type;
         this.isFocused = false;
+        this.isFocusable = true;
+        this.isDraggable = false;
         this.elements = [];
+        this.centerOffsetVector = {
+            x: undefined,
+            y: undefined
+        };
         this.parentOutputPoint = parentOutputPoint;
         if (parentOutputPoint !== null) {
             this.inputPath = createInputPath();
             this.elements.push(this.inputPath);
+        }
+        else {
+            this.inputPath = null;
         }
         this.nodeSvg = createNodeSvg(type, description);
         this.nodeSvg.addEventListener("click", onClick.bind(this));
         this.nodeSvg.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeSvg.addEventListener("mouseleave", onMouseLeave.bind(this));
         this.nodeSvg.addEventListener('mousedown', onStartDrag.bind(this));
-        this.nodeSvg.addEventListener('mousemove', onDrag.bind(this));
+        document.addEventListener('mousemove', onDrag.bind(this));
         this.nodeSvg.addEventListener('mouseup', onDrop.bind(this));
         this.elements.push(this.nodeSvg);
-        this.updatePosition(centerX, centerY);
+        //this.updatePosition(centerX, centerY, true);
     }
 
     getId() {
@@ -35,8 +46,16 @@ class TreeNodeView extends Observable {
         return this.elements;
     }
 
+    getCenter() {
+        return this.center;
+    }
+
     getBottom() {
         return this.bottom;
+    }
+
+    setIsFocusable(isFocusable) {
+        this.isFocusable = isFocusable;
     }
 
     show() {
@@ -60,12 +79,16 @@ class TreeNodeView extends Observable {
     }
 
     focus() {
-        this.isFocused = true;
+        if (!this.isFocused) {
+            this.isFocused = true;
+        }
     }
 
     defocus() {
-        this.isFocused = false;
-        this.deemphasize();
+        if (this.isFocused) {
+            this.isFocused = false;
+            this.deemphasize();
+        }
     }
 
     emphasize() {
@@ -94,8 +117,18 @@ class TreeNodeView extends Observable {
         }
     }
 
-    updatePosition(centerX, centerY) {
+    returnToLastStaticPosition() {
+        this.updatePosition(this.lastStaticPosition.x, this.lastStaticPosition.y, false);
+    }
+
+    updatePosition(centerX, centerY, makeStatic) {
         // Recalculate points
+        if (makeStatic) {
+            this.lastStaticPosition = {
+                x: centerX,
+                y: centerY
+            }
+        }
         this.center = {
             x: centerX,
             y: centerY
@@ -125,45 +158,99 @@ class TreeNodeView extends Observable {
     }
 }
 
+
 // Event callback functions:
 
-function onClick() {
-    let data, event;
-
-    if (!this.isFocused) {
+function onMouseEnter() {
+    let data, controllerEvent;
+    
+    if (!this.isFocused && this.isFocusable) {
+        this.emphasize();
         data = {
             id: this.id,
             type: this.type
         };
-        event = new Event(Config.EVENT_NODE_CLICKED, data);
-        this.focus();
-        this.notifyAll(event);
+        controllerEvent = new Event(Config.EVENT_NODE_MOUSE_ENTER, data);
+        this.notifyAll(controllerEvent);
     }
 }
 
-function onMouseEnter(event) {
-    if (!this.isFocused) {
-        this.emphasize();
-    }
-}
-
-function onMouseLeave(event) {
-    if (!this.isFocused) {
+function onMouseLeave() {
+    let data, controllerEvent;
+    
+    if (!this.isFocused && this.isFocusable) {
         this.deemphasize();
+        data = {
+            id: this.id,
+            type: this.type
+        };
+        controllerEvent = new Event(Config.EVENT_NODE_MOUSE_LEAVE, data);
+        this.notifyAll(controllerEvent);
+    }
+}
+
+function onClick() {
+    let data, controllerEvent;
+
+    if (!this.isFocused) {
+        this.focus();
+        data = {
+            id: this.id,
+            type: this.type
+        };
+        controllerEvent = new Event(Config.EVENT_NODE_CLICKED, data);
+        this.notifyAll(controllerEvent);
     }
 }
 
 function onStartDrag(event) {
-    console.log(event);
+    let controllerEvent, data;
+
+    if (!UNDRAGGABLE_TYPES.includes(this.type)) {
+        this.centerOffsetVector.x = this.center.x - event.clientX;
+        this.centerOffsetVector.y = this.center.y - event.clientY;
+        this.isDraggable = true;
+        data = {
+            id: this.id,
+            type: this.type
+        };
+        controllerEvent = new Event(Config.EVENT_NODE_START_DRAG, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onDrag(event) {
-    console.log(event);
+    let x, y, controllerEvent, data;
+
+    if (this.isDraggable) {
+        x = event.clientX + this.centerOffsetVector.x;
+        y = event.clientY + this.centerOffsetVector.y;
+        this.updatePosition(x, y);
+        data = {
+            id: this.id,
+            type: this.type,
+            dragX: x,
+            dragY: y
+        };
+        controllerEvent = new Event(Config.EVENT_NODE_ON_DRAG, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onDrop(event) {
-    console.log(event);
+    let controllerEvent, data;
+
+    this.isDraggable = false;
+    data = {
+        id: this.id,
+        type: this.type,
+        dropX: event.clientX + this.centerOffsetVector.x,
+        dropY: event.clientY + this.centerOffsetVector.y
+    };
+    controllerEvent = new Event(Config.EVENT_NODE_ON_DROP, data);
+    this.notifyAll(controllerEvent);
 }
+
 
 // Svg element creation:
 
@@ -212,14 +299,13 @@ function createBody() {
 function createIcon(type) {
     let nodeIcon;
     switch(type) {
-        // TODO
-        case Config.NODE_TYPE_NEW:
+        // TODO If else instead of switch
+        case Config.NODE_TYPE_NEW_EXPERIMENT:
+        case Config.NODE_TYPE_NEW_STEP:
+        case Config.NODE_TYPE_NEW_QUESTION:
             break;
         
         case Config.NODE_TYPE_EXPERIMENT:
-            break;
-
-        case Config.NODE_TYPE_EXPERIMENT_GROUP:
             break;
         
         case Config.NODE_TYPE_INSTRUCTION:
@@ -303,4 +389,4 @@ function createDescription(description) {
     return nodeDescription;
 }
 
-export default TreeNodeView;
+export default NodeView;

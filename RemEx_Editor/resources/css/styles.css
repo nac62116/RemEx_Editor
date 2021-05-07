@@ -20,11 +20,21 @@ body {
     height: 100%;
 }
 
+.input-container {
+    position: absolute;
+    top: 60%;
+    width: 60%;
+    height: 40%;
+    background-color: black;
+    box-shadow: 0 -2px 2px black;
+}
+
 .info-container {
     position: absolute;
     top: 60%;
-    width: 100%;
+    left: 60%;
+    width: 40%;
     height: 40%;
-    background-color: black;
-    box-shadow: 0 -10px 10px 10px black;
+    background-color: darkgray;
+    box-shadow: 0 -2px 2px darkgray;
 }

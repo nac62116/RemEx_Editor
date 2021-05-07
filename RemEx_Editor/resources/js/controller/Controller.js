@@ -1,7 +1,7 @@
 /* eslint-env broswer */
 
 import Config from "../utils/Config.js";
-import TreeNodeView from "../views/TreeNodeView.js";
+import NodeView from "../views/NodeView.js";
 import TreeView from "../views/TreeView.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
@@ -19,43 +19,75 @@ class Controller {
 
     init() {
         let treeViewContainerElement,
-        testNode,
-        testNode1,
-        testNode2,
-        testNode3,
-        testNode4,
-        testNode5,
-        testNode6,
-        parentOutputPoint;
+        experiment;
 
         // TODO: Get experiment from local storage
+        experiment = null;
 
         // Init TreeView
         treeViewContainerElement = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID);
-        TreeView.setElement(treeViewContainerElement);
+        TreeView.init(treeViewContainerElement);
+        
+        // TODO: Init InputView
+        
+        // TODO: Init InfoView
 
-        // Create test nodes
-        parentOutputPoint = {
-            x: TreeView.getWidth() / 2,
-            y: 0,
-        }
-        // If description.length > 25 -> cut to 20 -> append "..."
-        testNode = new TreeNodeView(1, 75, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_EXPERIMENT, "Name");
-        testNode1 = new TreeNodeView(1, 200, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_EXPERIMENT_GROUP, "Längerer Name");
-        testNode2 = new TreeNodeView(1, 325, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_INSTRUCTION, "Ziemlich langer Name");
-        testNode3 = new TreeNodeView(1, 450, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_BREATHING_EXERCISE, "Längster erlaubter Name f...");
-        testNode4 = new TreeNodeView(1, 575, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_QUESTIONNAIRE, "1 34 678 1234 56789 123456 789");
-        testNode5 = new TreeNodeView(1, 700, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_QUESTION, "Name");
-        testNode6 = new TreeNodeView(1, 825, TreeView.getHeight() / 2, parentOutputPoint, Config.NODE_TYPE_NEW, Config.NODE_TYPE_NEW_DESCRIPTION);
-        TreeView.insertNodeView(testNode.getElements());
-        TreeView.insertNodeView(testNode1.getElements());
-        TreeView.insertNodeView(testNode2.getElements());
-        TreeView.insertNodeView(testNode3.getElements());
-        TreeView.insertNodeView(testNode4.getElements());
-        TreeView.insertNodeView(testNode5.getElements());
-        TreeView.insertNodeView(testNode6.getElements());
+        createInitialNodes(experiment);
     }
     
+}
+
+function createInitialNodes(experiment) {
+    let node;
+    if (experiment === null) {
+        node = createNode(Config.NODE_TYPE_NEW_EXPERIMENT);
+        TreeView.insertExperimentNode(node);
+    }
+}
+
+function createNode(type) {
+    let node;
+    if (type === Config.NODE_TYPE_NEW_EXPERIMENT) {
+        node = new NodeView(null, null, type, Config.NODE_TYPE_NEW_EXPERIMENT_DESCRIPTION);
+    }
+    node.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onNodeMouseEnter);
+    node.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onNodeMouseLeave);
+    node.addEventListener(Config.EVENT_NODE_CLICKED, onNodeClicked);
+    node.addEventListener(Config.EVENT_NODE_START_DRAG, onNodeStartDrag);
+    node.addEventListener(Config.EVENT_NODE_ON_DRAG, onNodeDrag);
+    node.addEventListener(Config.EVENT_NODE_ON_DROP, onNodeDrop);
+    return node;
+}
+
+function onNodeMouseEnter(event) {
+    // InputView -> show inputFields
+    // InfoView -> show Info
+}
+
+function onNodeMouseLeave(event) {
+    // InputView -> show focused inputFields
+    // InfoView -> show focused Info
+}
+
+function onNodeClicked(event) {
+    // TreeView -> Defocus all other nodes in the same row
+    // If type new -> InputView -> show editable inputFields
+    // else -> TreeView -> create/show Subnodes
+}
+
+function onNodeStartDrag(event) {
+    // TreeView -> Make all other items unfocusable
+    // TreeView -> Bring this node to front
+}
+
+function onNodeDrag(event) {
+    // TreeView -> create empty spaces inside the current row
+}
+
+function onNodeDrop(event) {
+    // TreeView -> check for valid dropzone -> if valid (updatePosition(x, y, true))
+    // -> if not valid (returnToLastStaticPosition)
+    // -> Make all other items focusable
 }
 
 export default new Controller();
