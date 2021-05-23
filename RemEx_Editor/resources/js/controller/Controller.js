@@ -1,6 +1,7 @@
 /* eslint-env broswer */
 
 import Config from "../utils/Config.js";
+import InputView from "../views/InputView.js";
 import NodeView from "../views/NodeView.js";
 import TreeView from "../views/TreeView.js";
 
@@ -19,9 +20,11 @@ class Controller {
 
     init() {
         let treeViewContainerElement,
+        inputViewContainerElement,
         experiment;
 
-        // TODO: Get experiment from local storage
+        // TODO: Get experiment from local storage / Update local storage experiment with each input
+        // Handle the image and video file sizes
         experiment = null;
 
         // Init TreeView
@@ -29,19 +32,47 @@ class Controller {
         TreeView.init(treeViewContainerElement);
         
         // TODO: Init InputView
-        
+        inputViewContainerElement = document.querySelector("#" + Config.INPUT_VIEW_CONTAINER_ID);
+        InputView.init(inputViewContainerElement);
+
+        /* Test section:
+        let newExperimentNode = new NodeView(null, null, Config.NODE_TYPE_NEW_EXPERIMENT, Config.NODE_TYPE_NEW_EXPERIMENT_DESCRIPTION);
+        addListener(newExperimentNode);
+        TreeView.insertNode(newExperimentNode);
+        let newStepNode = new NodeView(null, newExperimentNode.getBottom(), Config.NODE_TYPE_NEW_STEP, Config.NODE_TYPE_NEW_STEP_DESCRIPTION);
+        addListener(newStepNode);
+        TreeView.insertNode(newStepNode);
+        let newQuestionNode = new NodeView(null, newStepNode.getBottom(), Config.NODE_TYPE_QUESTION, Config.NODE_TYPE_NEW_QUESTION_DESCRIPTION);
+        addListener(newQuestionNode);
+        TreeView.insertNode(newQuestionNode);
+        */
+
         // TODO: Init InfoView
 
-        createInitialNodes(experiment);
+        createInitialExperiment(experiment);
     }
     
 }
 
-function createInitialNodes(experiment) {
+// Test section:
+function addListener(node) {
+    node.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onNodeMouseEnter);
+    node.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onNodeMouseLeave);
+    node.addEventListener(Config.EVENT_NODE_CLICKED, onNodeClicked);
+    node.addEventListener(Config.EVENT_NODE_START_DRAG, onNodeStartDrag);
+    node.addEventListener(Config.EVENT_NODE_ON_DRAG, onNodeDrag);
+    node.addEventListener(Config.EVENT_NODE_ON_DROP, onNodeDrop);
+}
+//
+
+function createInitialExperiment(experiment) {
     let node;
     if (experiment === null) {
         node = createNode(Config.NODE_TYPE_NEW_EXPERIMENT);
-        TreeView.insertExperimentNode(node);
+        TreeView.insertNode(node);
+    }
+    else {
+        // TODO: Create all nodes from the current experiment
     }
 }
 
@@ -59,20 +90,29 @@ function createNode(type) {
     return node;
 }
 
+// Node events
+
 function onNodeMouseEnter(event) {
+    event.data.target.emphasize();
+    InputView.show(event.data.target.getType(), null);
     // InputView -> show inputFields
     // InfoView -> show Info
 }
 
 function onNodeMouseLeave(event) {
-    // InputView -> show focused inputFields
-    // InfoView -> show focused Info
+    event.data.target.deemphasize();
+    InputView.hide();
+    // InputView -> show deepest focused node
+    // InfoView -> show deepest focused info
 }
 
 function onNodeClicked(event) {
-    // TreeView -> Defocus all other nodes in the same row
+    TreeView.defocusNodes(event.data.target.getType());
+    event.data.target.focus();
+    // TreeView -> center the clicked node and move all other nodes of the same row in x and y direction and nodes of different rows just in y direction
+    // TreeView -> remove all subnodes by type
     // If type new -> InputView -> show editable inputFields
-    // else -> TreeView -> create/show Subnodes
+    // else -> Controller -> create subnodes with model and target.getId() -> TreeView -> insert those Subnodes
 }
 
 function onNodeStartDrag(event) {
@@ -85,9 +125,27 @@ function onNodeDrag(event) {
 }
 
 function onNodeDrop(event) {
+    // Test section:
+    event.data.target.returnToLastStaticPosition();
+    //
+
     // TreeView -> check for valid dropzone -> if valid (updatePosition(x, y, true))
     // -> if not valid (returnToLastStaticPosition)
     // -> Make all other items focusable
+}
+
+// InputView events
+
+function onEditButtonClicked(event) {
+
+}
+
+function onRemoveButtonClicked(event) {
+    
+}
+
+function onCreateButtonClicked(event) {
+    
 }
 
 export default new Controller();

@@ -8,10 +8,14 @@ body {
     min-height: 100vh;
 }
 
+.hidden {
+    display: none;
+}
+
 .tree-container {
     position: absolute;
     width: 100%;
-    height: 60%;
+    height: 70%;
 }
 
 .tree {
@@ -22,19 +26,67 @@ body {
 
 .input-container {
     position: absolute;
-    top: 60%;
+    top: 70%;
     width: 60%;
-    height: 40%;
+    height: 30%;
     background-color: black;
-    box-shadow: 0 -2px 2px black;
+    text-align: center;
+    color: cornsilk;
+    overflow: auto;
+    scrollbar-color: rgb(155, 155, 155) rgb(53, 53, 53);
+    scrollbar-width: thin;
+}
+
+.input-fields-container {
+    position: relative;
+    width: 100%;
+    height: auto;
+    text-align: start;
+}
+
+.input-field {
+    margin: 2%;
+}
+
+.input-field input {
+    width: 100%;
+    padding: 5px;
+    margin-top: 2px;
+    border: 2px solid rgb(50, 50, 50);
+    border-radius: 5px;
+    background-color: darkgray;
+}
+
+.input-header {
+    position: relative;
+    width: 100%;
+}
+
+.input-edit-button {
+    position: absolute;
+    top: 8px;
+    right: 5px;
+    width: 25px;
+    height: 25px;
+}
+
+.input-edit-button img {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    padding: 15%;
+    cursor: pointer;
+}
+
+.input-edit-button img:hover {
+    padding: 0;
 }
 
 .info-container {
     position: absolute;
-    top: 60%;
+    top: 70%;
     left: 60%;
     width: 40%;
-    height: 40%;
+    height: 30%;
     background-color: darkgray;
-    box-shadow: 0 -2px 2px darkgray;
 }

@@ -30,6 +30,20 @@ const Config = {
 
     TREE_VIEW_CONTAINER_ID: "treeContainer",
     NODE_TEMPLATE_ID: "nodeTemplate",
+    INPUT_VIEW_CONTAINER_ID: "inputContainer",
+    INPUT_VIEW_FIELDS_CONTAINER_ID: "inputFieldsContainer",
+    INPUT_VIEW_HEADER_ID: "inputHeader",
+    INPUT_VIEW_EDIT_BUTTON_ID: "inputEditButton",
+    INPUT_VIEW_SAVE_BUTTON_ID: "inputSaveButton",
+
+    // CSS Class names:
+
+    HIDDEN_CSS_CLASS_NAME: "hidden",
+    INPUT_FIELD_CSS_CLASS_NAME: "input-field",
+
+    // Input view
+    INPUT_EXPERIMENT_NAME_ID: "experimentNameInput",
+    INPUT_EXPERIMENT_NAME_LABEL: "Name des Experiments:",
 
     // Selfmade attributes:
 
@@ -95,7 +109,6 @@ const Config = {
     // Experiment node
     NODE_TYPE_EXPERIMENT: "experimentNode",
 
-    
     // Instruction node
     NODE_TYPE_INSTRUCTION: "instructionNode",
     

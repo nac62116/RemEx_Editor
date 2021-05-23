@@ -43,8 +43,14 @@ function getUnusedId(ids) {
         if (!ids.includes(id)) {
             return id;
         }
+        else {
+            // Id already in use.
+        }
         if (id === Config.MAX_ID_SIZE) {
             return Config.MAX_ID_ALERT;
+        }
+        else {
+            // Id is inside the given boundary.
         }
         id++;
     }

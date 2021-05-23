@@ -42,6 +42,10 @@ class NodeView extends Observable {
         return this.id;
     }
 
+    getType() {
+        return this.type;
+    }
+
     getElements() {
         return this.elements;
     }
@@ -62,6 +66,9 @@ class NodeView extends Observable {
         if (this.inputPath !== null) {
             this.inputPath.removeAttribute("display");
         }
+        else {
+            // No input path to show.
+        }
         for (let element of this.nodeSvg.children) {
             element.removeAttribute("display");
             element.removeAttribute("display");
@@ -71,6 +78,9 @@ class NodeView extends Observable {
     hide() {
         if (this.inputPath !== null) {
             this.inputPath.setAttribute("display", "none");
+        }
+        else {
+            // No input path to hide.
         }
         for (let element of this.nodeSvg.children) {
             element.setAttribute("display", "none");
@@ -82,6 +92,9 @@ class NodeView extends Observable {
         if (!this.isFocused) {
             this.isFocused = true;
         }
+        else {
+            // This node is already focused.
+        }
     }
 
     defocus() {
@@ -89,31 +102,49 @@ class NodeView extends Observable {
             this.isFocused = false;
             this.deemphasize();
         }
+        else {
+            // This node is already defocused.
+        }
     }
 
     emphasize() {
         let newFillOpacity, newStrokeOpacity;
-        if (this.inputPath !== null) {
-            this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
+
+        if (!this.isFocused && this.isFocusable) {
+            if (this.inputPath !== null) {
+                this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
+            }
+            else {
+                // No input path to emphasize.
+            }
+            for (let element of this.nodeSvg.children) {
+                newFillOpacity = element.getAttribute("fill-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
+                newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
+                element.setAttribute("fill-opacity", newFillOpacity);
+                element.setAttribute("stroke-opacity", newStrokeOpacity);
+            }
         }
-        for (let element of this.nodeSvg.children) {
-            newFillOpacity = element.getAttribute("fill-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
-            newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
-            element.setAttribute("fill-opacity", newFillOpacity);
-            element.setAttribute("stroke-opacity", newStrokeOpacity);
+        else {
+            // This node is either already focused or it is not focusable (nodes are not focusable if other nodes are currently dragged arround).
         }
     }
 
     deemphasize() {
         let newFillOpacity, newStrokeOpacity;
-        if (this.inputPath !== null) {
-            this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
+
+        if (!this.isFocused && this.isFocusable) {
+            if (this.inputPath !== null) {
+                this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
+            }
+            for (let element of this.nodeSvg.children) {
+                newFillOpacity = element.getAttribute("fill-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
+                newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
+                element.setAttribute("fill-opacity", newFillOpacity);
+                element.setAttribute("stroke-opacity", newStrokeOpacity);
+            }
         }
-        for (let element of this.nodeSvg.children) {
-            newFillOpacity = element.getAttribute("fill-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
-            newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
-            element.setAttribute("fill-opacity", newFillOpacity);
-            element.setAttribute("stroke-opacity", newStrokeOpacity);
+        else {
+            // This node is either already focused or it is not focusable (nodes are not focusable if other nodes are currently dragged arround).
         }
     }
 
@@ -128,6 +159,9 @@ class NodeView extends Observable {
                 x: centerX,
                 y: centerY
             }
+        }
+        else {
+            // This node is currently moving. It has not yet a new static position.
         }
         this.center = {
             x: centerX,
@@ -145,13 +179,16 @@ class NodeView extends Observable {
             x: centerX - this.nodeSvg.getAttribute("width") / 2,
             y: centerY - this.nodeSvg.getAttribute("height") / 2
         }
-        if (this.parentOutputPoint !== null) {
+        if (this.inputPath !== null) {
             this.bezierReferencePoint = {
                 x: this.parentOutputPoint.x,
                 y: (this.parentOutputPoint.y + ((this.top.y - this.parentOutputPoint.y) / 4))
             }
             // Update Positions
             this.inputPath.setAttribute("d", "M " + this.parentOutputPoint.x + " " + this.parentOutputPoint.y + " Q " + this.bezierReferencePoint.x + " " + this.bezierReferencePoint.y + ", " + (this.parentOutputPoint.x + ((this.top.x - this.parentOutputPoint.x) / 2)) + " " + (this.parentOutputPoint.y + ((this.top.y - this.parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + this.top.y);
+        }
+        else {
+            // No input path which postion has to be updated.
         }
         this.nodeSvg.setAttribute("x", this.topLeft.x);
         this.nodeSvg.setAttribute("y", this.topLeft.y);
@@ -164,43 +201,31 @@ class NodeView extends Observable {
 function onMouseEnter() {
     let data, controllerEvent;
     
-    if (!this.isFocused && this.isFocusable) {
-        this.emphasize();
-        data = {
-            id: this.id,
-            type: this.type
-        };
-        controllerEvent = new Event(Config.EVENT_NODE_MOUSE_ENTER, data);
-        this.notifyAll(controllerEvent);
-    }
+    data = {
+        target: this
+    };
+    controllerEvent = new Event(Config.EVENT_NODE_MOUSE_ENTER, data);
+    this.notifyAll(controllerEvent);
 }
 
 function onMouseLeave() {
     let data, controllerEvent;
     
-    if (!this.isFocused && this.isFocusable) {
-        this.deemphasize();
-        data = {
-            id: this.id,
-            type: this.type
-        };
-        controllerEvent = new Event(Config.EVENT_NODE_MOUSE_LEAVE, data);
-        this.notifyAll(controllerEvent);
-    }
+    data = {
+        target: this
+    };
+    controllerEvent = new Event(Config.EVENT_NODE_MOUSE_LEAVE, data);
+    this.notifyAll(controllerEvent);
 }
 
 function onClick() {
     let data, controllerEvent;
 
-    if (!this.isFocused) {
-        this.focus();
-        data = {
-            id: this.id,
-            type: this.type
-        };
-        controllerEvent = new Event(Config.EVENT_NODE_CLICKED, data);
-        this.notifyAll(controllerEvent);
-    }
+    data = {
+        target: this
+    };
+    controllerEvent = new Event(Config.EVENT_NODE_CLICKED, data);
+    this.notifyAll(controllerEvent);
 }
 
 function onStartDrag(event) {
@@ -211,11 +236,13 @@ function onStartDrag(event) {
         this.centerOffsetVector.y = this.center.y - event.clientY;
         this.isDraggable = true;
         data = {
-            id: this.id,
-            type: this.type
+            target: this
         };
         controllerEvent = new Event(Config.EVENT_NODE_START_DRAG, data);
         this.notifyAll(controllerEvent);
+    }
+    else {
+        // This node type is not draggable at all
     }
 }
 
@@ -225,27 +252,24 @@ function onDrag(event) {
     if (this.isDraggable) {
         x = event.clientX + this.centerOffsetVector.x;
         y = event.clientY + this.centerOffsetVector.y;
-        this.updatePosition(x, y);
+        this.updatePosition(x, y, false);
         data = {
-            id: this.id,
-            type: this.type,
-            dragX: x,
-            dragY: y
+            target: this
         };
         controllerEvent = new Event(Config.EVENT_NODE_ON_DRAG, data);
         this.notifyAll(controllerEvent);
     }
+    else {
+        // This node is currently not draggable
+    }
 }
 
-function onDrop(event) {
+function onDrop() {
     let controllerEvent, data;
 
     this.isDraggable = false;
     data = {
-        id: this.id,
-        type: this.type,
-        dropX: event.clientX + this.centerOffsetVector.x,
-        dropY: event.clientY + this.centerOffsetVector.y
+        target: this
     };
     controllerEvent = new Event(Config.EVENT_NODE_ON_DROP, data);
     this.notifyAll(controllerEvent);
@@ -352,10 +376,12 @@ function createDescription(description) {
         // First line
         substring = description.substr(0, Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
         lastWhitespaceIndex = substring.lastIndexOf(" ");
+        // There is a whitespace where the line can be broken
         if (lastWhitespaceIndex !== -1) {
             nodeDescription.innerHTML = description.slice(0, lastWhitespaceIndex);
             currentIndex = lastWhitespaceIndex + 1;
         }
+        // There is not whitespace and the line gets broken after the defined character count (no hyphenation yet)
         else {
             nodeDescription.innerHTML = substring;
             currentIndex = Config.NODE_DESCRIPTION_LINE_BREAK_COUNT;
