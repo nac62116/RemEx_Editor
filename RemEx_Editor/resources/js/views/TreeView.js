@@ -5,9 +5,9 @@ import NodeView from "./NodeView.js";
 
 class TreeView {
 
-    init(element) {
-        this.treeViewContainer = element;
-        this.treeView = element.firstElementChild;
+    init() {
+        this.treeViewContainer = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID);
+        this.treeView = this.treeViewContainer.firstElementChild;
         initTreeViewBox(this);
 
         this.center = {
@@ -33,61 +33,74 @@ class TreeView {
     }
 
     insertNode(node) {
-        if (node.getType() === Config.NODE_TYPE_NEW_EXPERIMENT) {
+        if (node.getType() === Config.TYPE_EXPERIMENT) {
             this.experimentRootNode.node = node;
             node.updatePosition(this.experimentRootNode.x, this.experimentRootNode.y, true);
         }
-        else if (node.getType() === Config.NODE_TYPE_EXPERIMENT) {
-            removeNodeFromDOM(this.experimentRootNode.node);
-            this.experimentRootNode.node = node;
-            node.updatePosition(this.experimentRootNode.x, this.experimentRootNode.y, true);
-        }
-        else if (node.getType() === Config.NODE_TYPE_NEW_STEP || node.getType() === Config.NODE_TYPE_INSTRUCTION || node.getType() === Config.NODE_TYPE_BREATHING_EXERCISE || node.getType() === Config.NODE_TYPE_QUESTIONNAIRE) {
+        else if (node.getType() === Config.TYPE_INSTRUCTION ||
+            node.getType() === Config.TYPE_BREATHING_EXERCISE ||
+            node.getType() === Config.TYPE_QUESTIONNAIRE) {
             //TODO
             node.updatePosition(this.center.x, this.currentStepNodes.y, true);
         }
-        else if (node.getType() === Config.NODE_TYPE_NEW_QUESTION || node.getType() === Config.NODE_TYPE_QUESTION) {
+        else if (node.getType() === Config.TYPE_QUESTION) {
             //TODO
             node.updatePosition(this.center.x, this.currentQuestionNodes.y, true);
         }
         else {
-            throw "TreeView: Node type \"" + node.getType() + "\" is not defined for insertion.";
+            throw "TreeView: Node with type \"" + node.getType() + "\" is not defined for insertion.";
         }
         insertNodeIntoDOM(this, node);
     }
 
     removeNode(node) {
-        // If the root node gets removed a new root node must be created as a replacement
-        if (node.getType() === Config.NODE_TYPE_EXPERIMENT) {
-            this.experimentRootNode.node = new NodeView(null, null, Config.NODE_TYPE_NEW_EXPERIMENT, Config.NODE_TYPE_NEW_EXPERIMENT_DESCRIPTION);
-            this.experimentRootNode.node.updatePosition(this.experimentRootNode.x, this.experimentRootNode.y, true);
-            insertNodeIntoDOM(this, this.experimentRootNode.node);
-        }
-        else if (node.getType() === Config.NODE_TYPE_INSTRUCTION || node.getType() === Config.NODE_TYPE_BREATHING_EXERCISE || node.getType() === Config.NODE_TYPE_QUESTIONNAIRE) {
+        if (node.getType() === Config.TYPE_INSTRUCTION ||
+            node.getType() === Config.TYPE_BREATHING_EXERCISE ||
+            node.getType() === Config.TYPE_QUESTIONNAIRE) {
             //TODO
         }
-        else if (node.getType() === Config.NODE_TYPE_QUESTION) {
+        else if (node.getType() === Config.TYPE_QUESTION) {
             //TODO
         }
         else {
-            throw "TreeView: Node type \"" + node.getType() + "\" is not defined for removal.";
+            throw "TreeView: Node with type \"" + node.getType() + "\" is not defined for removal.";
         }
         removeNodeFromDOM(node);
     }
 
     defocusNodes(type) {
-        if (type === Config.NODE_TYPE_NEW_STEP || type === Config.NODE_TYPE_INSTRUCTION || type === Config.NODE_TYPE_BREATHING_EXERCISE || type === Config.NODE_TYPE_QUESTIONNAIRE) {
+        if (type === Config.TYPE_INSTRUCTION ||
+            type === Config.TYPE_BREATHING_EXERCISE ||
+            type === Config.TYPE_QUESTIONNAIRE) {
             for (let node of this.currentStepNodes.nodes) {
                 node.defocus();
             }
         }
-        else if (type === Config.NODE_TYPE_NEW_QUESTION || type === Config.NODE_TYPE_QUESTION) {
+        else if (type === Config.TYPE_QUESTION) {
             for (let node of this.currentQuestionNodes.nodes) {
                 node.defocus();
             }
         }
         else {
-            // No need to defocus other nodes for the given node type
+            // No need to defocus other nodes for the given type
+        }
+    }
+
+    updateNodeDescription(type, id, description) {
+        if (type === Config.TYPE_EXPERIMENT) {
+            console.log(this.experimentRootNode);
+            this.experimentRootNode.node.updateDescription(description);
+        }
+        else if (type === Config.TYPE_INSTRUCTION ||
+            type === Config.TYPE_BREATHING_EXERCISE ||
+            type === Config.TYPE_QUESTIONNAIRE) {
+            //TODO
+        }
+        else if (type === Config.TYPE_QUESTION) {
+            //TODO
+        }
+        else {
+            throw "TreeView: Node with type \"" + node.getType() + "\" is not defined.";
         }
     }
 }

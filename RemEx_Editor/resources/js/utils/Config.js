@@ -25,6 +25,7 @@ const Config = {
     EVENT_NODE_START_DRAG: "nodestartdrag",
     EVENT_NODE_ON_DRAG: "nodeondrag",
     EVENT_NODE_ON_DROP: "nodeondrop",
+    EVENT_INPUT_CHANGED: "inputchanged",
 
     // DOM Element ids:
 
@@ -33,7 +34,7 @@ const Config = {
     INPUT_VIEW_CONTAINER_ID: "inputContainer",
     INPUT_VIEW_FIELDS_CONTAINER_ID: "inputFieldsContainer",
     INPUT_VIEW_HEADER_ID: "inputHeader",
-    INPUT_VIEW_EDIT_BUTTON_ID: "inputEditButton",
+    INPUT_VIEW_DELETE_BUTTON_ID: "inputDeleteButton",
     INPUT_VIEW_SAVE_BUTTON_ID: "inputSaveButton",
 
     // CSS Class names:
@@ -81,6 +82,7 @@ const Config = {
     NODE_BODY_STROKE_OPACITY_EMPHASIZE_BY: "0.7",
 
     // Tree node description (Sizes are relative to the tree node)
+    NODE_DESCRIPTION_ID: "nodeDescription",
     NODE_DESCRIPTION_X: "50%",
     NODE_DESCRIPTION_Y: "70%",
     NODE_DESCRIPTION_TEXT_ANCHOR: "middle",
@@ -96,30 +98,31 @@ const Config = {
     NODE_DESCRIPTION_FONT_SIZE: "80%",
     NODE_DESCRIPTION_FONT_WEIGHT: "bold",
 
-    // Tree node types (Sizes are relative to the tree node):
+    // New node descriptions
+    NEW_EXPERIMENT_DESCRIPTION: "Neues Experiment",
+    NEW_EXPERIMENT_GROUP_DESCRIPTION: "Neue Experiment Gruppe",
+    NEW_STEP_DESCRIPTION: "Neuer Schritt",
+    NEW_QUESTION_DESCRIPTION: "Neue Frage",
+    
+    // Model types
 
-    // New nodes
-    NODE_TYPE_NEW_EXPERIMENT: "newExperimentNode",
-    NODE_TYPE_NEW_EXPERIMENT_DESCRIPTION: "Neues Experiment",
-    NODE_TYPE_NEW_STEP: "newStepNode",
-    NODE_TYPE_NEW_STEP_DESCRIPTION: "Neuer Schritt",
-    NODE_TYPE_NEW_QUESTION: "newQuestionNode",
-    NODE_TYPE_NEW_QUESTION_DESCRIPTION: "Neue Frage",
-    
-    // Experiment node
-    NODE_TYPE_EXPERIMENT: "experimentNode",
+    // Experiment
+    TYPE_EXPERIMENT: "experiment",
 
-    // Instruction node
-    NODE_TYPE_INSTRUCTION: "instructionNode",
+    // Experiment group
+    TYPE_EXPERIMENT_GROUP: "experimentGroup",
+
+    // Instruction
+    TYPE_INSTRUCTION: "instruction",
     
-    // Breathing exercise node
-    NODE_TYPE_BREATHING_EXERCISE: "breathingExerciseNode",
+    // Breathing exercise
+    TYPE_BREATHING_EXERCISE: "breathingExercise",
     
-    // Questionnaire node
-    NODE_TYPE_QUESTIONNAIRE: "questionnaireNode",
+    // Questionnaire
+    TYPE_QUESTIONNAIRE: "questionnaire",
     
-    // Question node
-    NODE_TYPE_QUESTION: "questionNode",
+    // Question
+    TYPE_QUESTION: "question",
 
     // Input invalid messages:
     

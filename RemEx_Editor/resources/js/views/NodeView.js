@@ -3,11 +3,11 @@
 import Config from "../utils/Config.js";
 import {Observable, Event} from "../utils/Observable.js";
 
-const UNDRAGGABLE_TYPES = [Config.NODE_TYPE_EXPERIMENT, Config.NODE_TYPE_NEW_EXPERIMENT, Config.NODE_TYPE_NEW_STEP, Config.NODE_TYPE_NEW_QUESTION];
+const UNDRAGGABLE_TYPES = [Config.TYPE_EXPERIMENT, Config.TYPE_EXPERIMENT_GROUP];
 
 class NodeView extends Observable {
 
-    constructor(id, /*centerX, centerY,*/ parentOutputPoint, type, description) {
+    constructor(id, parentOutputPoint, type, description) {
         super();
         this.id = id;
         this.type = type;
@@ -31,9 +31,9 @@ class NodeView extends Observable {
         this.nodeSvg.addEventListener("click", onClick.bind(this));
         this.nodeSvg.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeSvg.addEventListener("mouseleave", onMouseLeave.bind(this));
-        this.nodeSvg.addEventListener('mousedown', onStartDrag.bind(this));
-        document.addEventListener('mousemove', onDrag.bind(this));
-        this.nodeSvg.addEventListener('mouseup', onDrop.bind(this));
+        this.nodeSvg.addEventListener("mousedown", onStartDrag.bind(this));
+        document.addEventListener("mousemove", onDrag.bind(this));
+        this.nodeSvg.addEventListener("mouseup", onDrop.bind(this));
         this.elements.push(this.nodeSvg);
         //this.updatePosition(centerX, centerY, true);
     }
@@ -58,8 +58,8 @@ class NodeView extends Observable {
         return this.bottom;
     }
 
-    setIsFocusable(isFocusable) {
-        this.isFocusable = isFocusable;
+    getIsFocused() {
+        return this.isFocused;
     }
 
     show() {
@@ -193,6 +193,13 @@ class NodeView extends Observable {
         this.nodeSvg.setAttribute("x", this.topLeft.x);
         this.nodeSvg.setAttribute("y", this.topLeft.y);
     }
+
+    updateDescription(description) {
+        let descriptionElement = this.nodeSvg.querySelector("#" + Config.NODE_DESCRIPTION_ID);
+        descriptionElement.remove();
+        descriptionElement = createDescription(description, true);
+        this.nodeSvg.appendChild(descriptionElement);
+    }
 }
 
 
@@ -290,8 +297,8 @@ function createInputPath() {
 function createNodeSvg(type, description) {
     let nodeSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
     nodeBody = createBody(),
-    nodeIcon = createIcon(type),
-    nodeDescription = createDescription(description);
+    //nodeIcon = createIcon(type),
+    nodeDescription = createDescription(description, false);
 
     nodeSvg.setAttribute("viewBox", "0 0 " + Config.NODE_WIDTH + " " + Config.NODE_HEIGHT);
     nodeSvg.setAttribute("width", Config.NODE_WIDTH);
@@ -322,51 +329,33 @@ function createBody() {
 
 function createIcon(type) {
     let nodeIcon;
-    switch(type) {
-        // TODO If else instead of switch
-        case Config.NODE_TYPE_NEW_EXPERIMENT:
-        case Config.NODE_TYPE_NEW_STEP:
-        case Config.NODE_TYPE_NEW_QUESTION:
-            break;
-        
-        case Config.NODE_TYPE_EXPERIMENT:
-            break;
-        
-        case Config.NODE_TYPE_INSTRUCTION:
-            break;
-
-        case Config.NODE_TYPE_BREATHING_EXERCISE:
-            break;
-
-        case Config.NODE_TYPE_QUESTIONNAIRE:
-            break;
-
-        case Config.NODE_TYPE_QUESTION:
-            break;
-
-        default:
-            break;
-    }
     return nodeIcon;
 }
 
-function createDescription(description) {
+function createDescription(description, isEmphasized) {
     let nodeDescription = document.createElementNS("http://www.w3.org/2000/svg", "text"),
     newLine,
     lastWhitespaceIndex,
     substring,
     currentIndex;
+    nodeDescription.setAttribute("id", Config.NODE_DESCRIPTION_ID);
     nodeDescription.setAttribute("x", Config.NODE_DESCRIPTION_X);
     nodeDescription.setAttribute("y", Config.NODE_DESCRIPTION_Y);
     nodeDescription.setAttribute("text-anchor", Config.NODE_DESCRIPTION_TEXT_ANCHOR);
     nodeDescription.setAttribute("fill", Config.NODE_DESCRIPTION_COLOR);
-    nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
     nodeDescription.setAttribute(Config.EMPHASIZE_FILL_OPACITY_BY, Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZE_BY);
-    nodeDescription.setAttribute("stroke-opacity", Config.NODE_DESCRIPTION_STROKE_OPACITY_DEEMPHASIZED);
     nodeDescription.setAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY, Config.NODE_DESCRIPTION_STROKE_OPACITY_EMPHASIZE_BY);
     nodeDescription.setAttribute("font-family", Config.NODE_DESCRIPTION_FONT_FAMILY);
     nodeDescription.setAttribute("font-size", Config.NODE_DESCRIPTION_FONT_SIZE);
     nodeDescription.setAttribute("font-weight", Config.NODE_DESCRIPTION_FONT_WEIGHT);
+    if (isEmphasized) {
+        nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED + Config.EMPHASIZE_FILL_OPACITY_BY);
+        nodeDescription.setAttribute("stroke-opacity", Config.NODE_DESCRIPTION_STROKE_OPACITY_DEEMPHASIZED + Config.EMPHASIZE_STROKE_OPACITY_BY);
+    }
+    else {
+        nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
+        nodeDescription.setAttribute("stroke-opacity", Config.NODE_DESCRIPTION_STROKE_OPACITY_DEEMPHASIZED);
+    }
     // Description fits in one line
     if (description.length <= Config.NODE_DESCRIPTION_LINE_BREAK_COUNT) {
         nodeDescription.innerHTML = description;

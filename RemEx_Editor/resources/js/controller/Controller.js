@@ -1,9 +1,11 @@
 /* eslint-env broswer */
 
 import Config from "../utils/Config.js";
-import InputView from "../views/InputView.js";
+import ExperimentInputView from "../views/InputView/ExperimentInputView.js";
 import NodeView from "../views/NodeView.js";
 import TreeView from "../views/TreeView.js";
+import Storage from "../utils/Storage.js";
+import Experiment from "../model/Experiment.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
@@ -19,21 +21,17 @@ import TreeView from "../views/TreeView.js";
 class Controller {
 
     init() {
-        let treeViewContainerElement,
-        inputViewContainerElement,
-        experiment;
-
-        // TODO: Get experiment from local storage / Update local storage experiment with each input
-        // Handle the image and video file sizes
-        experiment = null;
 
         // Init TreeView
-        treeViewContainerElement = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID);
-        TreeView.init(treeViewContainerElement);
+        TreeView.init();
         
-        // TODO: Init InputView
-        inputViewContainerElement = document.querySelector("#" + Config.INPUT_VIEW_CONTAINER_ID);
-        InputView.init(inputViewContainerElement);
+        // TODO: Init InputViews
+        this.focusedInputView = undefined;
+        this.focusedInputViewData = undefined;
+        this.inputViews = [];
+        ExperimentInputView.init();
+        ExperimentInputView.addEventListener(Config.EVENT_INPUT_CHANGED, onInputChanged.bind(this));
+        this.inputViews.push(ExperimentInputView);
 
         /* Test section:
         let newExperimentNode = new NodeView(null, null, Config.NODE_TYPE_NEW_EXPERIMENT, Config.NODE_TYPE_NEW_EXPERIMENT_DESCRIPTION);
@@ -49,26 +47,30 @@ class Controller {
 
         // TODO: Init InfoView
 
-        createInitialExperiment(experiment);
+        createInitialExperiment(this);
     }
     
 }
 
-// Test section:
-function addListener(node) {
-    node.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onNodeMouseEnter);
-    node.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onNodeMouseLeave);
-    node.addEventListener(Config.EVENT_NODE_CLICKED, onNodeClicked);
-    node.addEventListener(Config.EVENT_NODE_START_DRAG, onNodeStartDrag);
-    node.addEventListener(Config.EVENT_NODE_ON_DRAG, onNodeDrag);
-    node.addEventListener(Config.EVENT_NODE_ON_DROP, onNodeDrop);
-}
-//
+function createInitialExperiment(that) {
+    let node,
+    nodeProperties = {},
+    experiment;
 
-function createInitialExperiment(experiment) {
-    let node;
-    if (experiment === null) {
-        node = createNode(Config.NODE_TYPE_NEW_EXPERIMENT);
+    // TODO: Remove this
+    Storage.clear();
+
+    experiment = Storage.load();
+
+    if (experiment === undefined) {
+        experiment = new Experiment();
+        experiment.name = Config.NEW_EXPERIMENT_DESCRIPTION;
+        Storage.save(experiment);
+        nodeProperties.id = null;
+        nodeProperties.parentOutputPoint = null;
+        nodeProperties.type = Config.TYPE_EXPERIMENT;
+        nodeProperties.description = Config.NEW_EXPERIMENT_DESCRIPTION;
+        node = createNode(that, nodeProperties);
         TreeView.insertNode(node);
     }
     else {
@@ -76,14 +78,12 @@ function createInitialExperiment(experiment) {
     }
 }
 
-function createNode(type) {
+function createNode(that, nodeProperties) {
     let node;
-    if (type === Config.NODE_TYPE_NEW_EXPERIMENT) {
-        node = new NodeView(null, null, type, Config.NODE_TYPE_NEW_EXPERIMENT_DESCRIPTION);
-    }
-    node.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onNodeMouseEnter);
-    node.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onNodeMouseLeave);
-    node.addEventListener(Config.EVENT_NODE_CLICKED, onNodeClicked);
+    node = new NodeView(nodeProperties.id, nodeProperties.parentOutputPoint, nodeProperties.type, nodeProperties.description);
+    node.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onNodeMouseEnter.bind(that));
+    node.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onNodeMouseLeave.bind(that));
+    node.addEventListener(Config.EVENT_NODE_CLICKED, onNodeClicked.bind(that));
     node.addEventListener(Config.EVENT_NODE_START_DRAG, onNodeStartDrag);
     node.addEventListener(Config.EVENT_NODE_ON_DRAG, onNodeDrag);
     node.addEventListener(Config.EVENT_NODE_ON_DROP, onNodeDrop);
@@ -93,26 +93,39 @@ function createNode(type) {
 // Node events
 
 function onNodeMouseEnter(event) {
-    event.data.target.emphasize();
-    InputView.show(event.data.target.getType(), null);
-    // InputView -> show inputFields
+    let node = event.data.target,
+    inputData = getInputData(node.getType(), node.getId());
+    node.emphasize();
+    showInputView(this, node.getType(), inputData, false);
     // InfoView -> show Info
 }
 
 function onNodeMouseLeave(event) {
-    event.data.target.deemphasize();
-    InputView.hide();
-    // InputView -> show deepest focused node
-    // InfoView -> show deepest focused info
+    let node = event.data.target;
+
+    node.deemphasize();
+    for (let inputView of this.inputViews) {
+        inputView.hide();
+    }
+    if (this.focusedInputView !== undefined) {
+        this.focusedInputView.show(this.focusedInputViewData);
+    }
+    //InputView.hide();
+    //InputView.showLastFocus();
+    // InfoView -> show last focused info
 }
 
 function onNodeClicked(event) {
-    TreeView.defocusNodes(event.data.target.getType());
-    event.data.target.focus();
-    // TreeView -> center the clicked node and move all other nodes of the same row in x and y direction and nodes of different rows just in y direction
-    // TreeView -> remove all subnodes by type
-    // If type new -> InputView -> show editable inputFields
-    // else -> Controller -> create subnodes with model and target.getId() -> TreeView -> insert those Subnodes
+    let node = event.data.target,
+    inputData = getInputData(node.getType(), node.getId());
+
+    for (let inputView of this.inputViews) {
+        inputView.hide();
+    }
+    showInputView(this, node.getType(), inputData, true);
+
+    TreeView.defocusNodes(node.getType());
+    node.focus();
 }
 
 function onNodeStartDrag(event) {
@@ -134,18 +147,46 @@ function onNodeDrop(event) {
     // -> Make all other items focusable
 }
 
-// InputView events
+// Node events helper functions
 
-function onEditButtonClicked(event) {
-
+function getInputData(type, id) {
+    let data = {},
+    experiment = Storage.load();;
+    if (type === Config.TYPE_EXPERIMENT) {
+        data.experimentName = experiment.name;
+        return data;
+    }
+    else {
+        // Get input data from current experiment
+    }
 }
+
+function showInputView(that, type, inputData, focus) {
+    if (type === Config.TYPE_EXPERIMENT) {
+        ExperimentInputView.show(inputData);
+        if (focus) {
+            that.focusedInputView = ExperimentInputView;
+            that.focusedInputViewData = inputData;
+        }
+    }
+}
+
+// InputView events
 
 function onRemoveButtonClicked(event) {
     
 }
 
-function onCreateButtonClicked(event) {
-    
+function onInputChanged(event) {
+    let experiment = Storage.load(),
+    description;
+    if (event.data.type === Config.TYPE_EXPERIMENT) {
+        experiment.name = event.data.experimentName;
+        description = event.data.experimentName;
+    }
+    Storage.save(experiment);
+    this.focusedInputViewData = event.data;
+    TreeView.updateNodeDescription(event.data.type, event.data.id, description);
 }
 
 export default new Controller();
