@@ -27,7 +27,7 @@ class ExperimentInputView extends InputView {
         inputField = super.createTextInput(Config.INPUT_EXPERIMENT_NAME_LABEL, Config.INPUT_EXPERIMENT_NAME_ID);
         inputElement = inputField.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID);
         inputElement.value = data.experimentName;
-        inputElement.addEventListener("keypress", onInput.bind(this));
+        inputElement.addEventListener("keyup", onInput.bind(this));
 
         this.inputFieldsContainer.appendChild(inputField);
     }
@@ -38,7 +38,7 @@ function onInput(event) {
     controllerEvent;
     
     data.type = Config.TYPE_EXPERIMENT;
-    data.experimentName = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID).value + event.key;
+    data.experimentName = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID).value;
     this.header.innerHTML = data.experimentName;
 
     controllerEvent = new Event(Config.EVENT_INPUT_CHANGED, data);

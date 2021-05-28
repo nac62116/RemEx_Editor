@@ -10,9 +10,6 @@ class InputView extends Observable {
         this.inputFieldsContainer = document.querySelector("#" + Config.INPUT_VIEW_FIELDS_CONTAINER_ID);
         this.header = document.querySelector("#" + Config.INPUT_VIEW_HEADER_ID);
         this.deleteButton = document.querySelector("#" + Config.INPUT_VIEW_DELETE_BUTTON_ID);
-        this.saveButton = document.querySelector("#" + Config.INPUT_VIEW_SAVE_BUTTON_ID);
-        this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-        this.saveButton.addEventListener("click", onSaveButtonClicked.bind(this));
         // TODO: Fullscreen Button
         this.hide();
     }
@@ -21,7 +18,6 @@ class InputView extends Observable {
         // Show the input view elements
         this.header.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         this.inputFieldsContainer.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-        this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         this.deleteButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
@@ -30,7 +26,6 @@ class InputView extends Observable {
         this.header.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         this.inputFieldsContainer.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-        this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
     createTextInput(label, id) {
@@ -51,12 +46,6 @@ class InputView extends Observable {
     
         return inputField;
     }
-}
-
-function onSaveButtonClicked(event) {
-    console.log("click");
-    let inputField = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID);
-    console.log(inputField.value);
 }
 
 export default InputView;

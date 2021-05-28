@@ -88,7 +88,6 @@ class TreeView {
 
     updateNodeDescription(type, id, description) {
         if (type === Config.TYPE_EXPERIMENT) {
-            console.log(this.experimentRootNode);
             this.experimentRootNode.node.updateDescription(description);
         }
         else if (type === Config.TYPE_INSTRUCTION ||
