@@ -5,8 +5,8 @@ import Step from "./Step.js";
 
 class BreathingExercise extends Step {
 
-    constructor(id, nextStepId) {
-        super(id, Config.STEP_TYPE_BREATHING_EXERCISE, nextStepId);
+    constructor(id, name, nextStepId) {
+        super(id, name, Config.STEP_TYPE_BREATHING_EXERCISE, nextStepId);
         // Max duration = 60
         this.durationInMin = undefined;
         this.breathingFrequencyInSec = undefined;

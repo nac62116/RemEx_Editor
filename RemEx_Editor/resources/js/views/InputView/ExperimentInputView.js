@@ -37,7 +37,7 @@ function onInput(event) {
     let data = {},
     controllerEvent;
     
-    data.type = Config.TYPE_EXPERIMENT;
+    data.node = this.correspondingNode;
     data.experimentName = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID).value;
     this.header.innerHTML = data.experimentName;
 

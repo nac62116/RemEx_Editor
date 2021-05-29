@@ -1,7 +1,6 @@
 /* eslint-env broswer */
 
 import Config from "../utils/Config.js";
-import NodeView from "./NodeView.js";
 
 class TreeView {
 
@@ -14,93 +13,73 @@ class TreeView {
             x: this.treeViewContainer.clientWidth / 2,
             y: this.treeViewContainer.clientHeight / 2
         }
-        this.experimentRootNode = {
-            x: this.center.x,
-            y: this.center.y * 0.3,
-            node: undefined
-        }
-        // TODO: Groups and Surveys
-        this.currentStepNodes = {
-            // TODO: Outsource the row distances in Config
-            y: this.center.y,
-            nodes: []
-        }
-        this.currentQuestionNodes = {
-            // TODO: Outsource the row distances in Config
-            y: this.center.y * 1.7,
-            nodes: []
+        this.experimentPositionY = this.center.y;
+        this.experimentGroupsPositionY = this.center.y * (1 + Config.TREE_VIEW_ROW_DISTANCE_FACTOR);
+        this.surveysPositionY = this.center.y * (1 + 2 * Config.TREE_VIEW_ROW_DISTANCE_FACTOR);
+        this.stepsPositionY = this.center.y * (1 + 3 * Config.TREE_VIEW_ROW_DISTANCE_FACTOR);
+        this.questionsPositionY = this.center.y * (1 + 4 * Config.TREE_VIEW_ROW_DISTANCE_FACTOR);
+        this.experimentRootNode = undefined;
+    }
+
+    setInitialTree(rootNode) {
+        let groupX = this.center.x,
+        stepX = this.center.x,
+        surveyX = this.center.x,
+        questionX = this.center.x;
+
+        this.experimentRootNode = rootNode;
+        this.experimentRootNode.setInputPath(null);
+        this.experimentRootNode.updatePosition(this.center.x, this.experimentPositionY, true);
+        insertNodeIntoDOM(this, this.experimentRootNode);
+        for (let groupNode of this.experimentRootNode.childNodes) {
+            groupNode.setInputPath(this.experimentRootNode.bottom);
+            groupNode.updatePosition(groupX, this.experimentGroupsPositionY, true);
+            insertNodeIntoDOM(this, groupNode);
+            groupX = groupX + Config.NODE_DISTANCE;
+            for (let surveyNode of groupNode.childNodes) {
+                surveyNode.setInputPath(groupNode.bottom);
+                surveyNode.updatePosition(surveyX, this.surveysPositionY, true);
+                insertNodeIntoDOM(this, surveyNode);
+                surveyX = surveyX + Config.NODE_DISTANCE;
+                for (let stepNode of surveyNode.childNodes) {
+                    stepNode.setInputPath(surveyNode.bottom);
+                    stepNode.updatePosition(stepX, this.stepsPositionY, true);
+                    insertNodeIntoDOM(this, stepNode);
+                    stepX = stepX + Config.NODE_DISTANCE;
+                    if (stepNode.type = Config.NODE_TYPE_QUESTIONNAIRE) {
+                        for (questionNode of stepNode.childNodes) {
+                            questionNode.setInputPath(stepNode.bottom);
+                            questionNode.updatePosition(questionX, this.questionsPositionY, true);
+                            insertNodeIntoDOM(this, questionNode);
+                            questionX = questionX + Config.NODE_DISTANCE;
+                        }
+                    }
+                }
+            }
         }
     }
 
-    insertNode(node) {
-        if (node.getType() === Config.TYPE_EXPERIMENT) {
-            this.experimentRootNode.node = node;
-            node.updatePosition(this.experimentRootNode.x, this.experimentRootNode.y, true);
+    insertExperimentGroupNode(node, previousNode, nextNode) {
+        let x;
+        if (previousNode !== null) {
+            x = previousNode.center.x + Config.NODE_DISTANCE;
         }
-        else if (node.getType() === Config.TYPE_INSTRUCTION ||
-            node.getType() === Config.TYPE_BREATHING_EXERCISE ||
-            node.getType() === Config.TYPE_QUESTIONNAIRE) {
-            //TODO
-            node.updatePosition(this.center.x, this.currentStepNodes.y, true);
-        }
-        else if (node.getType() === Config.TYPE_QUESTION) {
-            //TODO
-            node.updatePosition(this.center.x, this.currentQuestionNodes.y, true);
+        else if (nextNode !== null) {
+            x = nextNode.center.x - Config.NODE_DISTANCE;
         }
         else {
-            throw "TreeView: Node with type \"" + node.getType() + "\" is not defined for insertion.";
+            x = this.center.x;
         }
+        node.setInputPath(this.experimentRootNode.bottom);
+        node.updatePosition(x, this.experimentGroupsPositionY, true);
         insertNodeIntoDOM(this, node);
     }
 
-    removeNode(node) {
-        if (node.getType() === Config.TYPE_INSTRUCTION ||
-            node.getType() === Config.TYPE_BREATHING_EXERCISE ||
-            node.getType() === Config.TYPE_QUESTIONNAIRE) {
-            //TODO
+    moveTo(node) {
+        if (node === this.experimentRootNode) {
+            // TODO
         }
-        else if (node.getType() === Config.TYPE_QUESTION) {
-            //TODO
-        }
-        else {
-            throw "TreeView: Node with type \"" + node.getType() + "\" is not defined for removal.";
-        }
-        removeNodeFromDOM(node);
-    }
-
-    defocusNodes(type) {
-        if (type === Config.TYPE_INSTRUCTION ||
-            type === Config.TYPE_BREATHING_EXERCISE ||
-            type === Config.TYPE_QUESTIONNAIRE) {
-            for (let node of this.currentStepNodes.nodes) {
-                node.defocus();
-            }
-        }
-        else if (type === Config.TYPE_QUESTION) {
-            for (let node of this.currentQuestionNodes.nodes) {
-                node.defocus();
-            }
-        }
-        else {
-            // No need to defocus other nodes for the given type
-        }
-    }
-
-    updateNodeDescription(type, id, description) {
-        if (type === Config.TYPE_EXPERIMENT) {
-            this.experimentRootNode.node.updateDescription(description);
-        }
-        else if (type === Config.TYPE_INSTRUCTION ||
-            type === Config.TYPE_BREATHING_EXERCISE ||
-            type === Config.TYPE_QUESTIONNAIRE) {
-            //TODO
-        }
-        else if (type === Config.TYPE_QUESTION) {
-            //TODO
-        }
-        else {
-            throw "TreeView: Node with type \"" + node.getType() + "\" is not defined.";
-        }
+        node.focus();
     }
 }
 
@@ -117,17 +96,13 @@ function initTreeViewBox(that) {
 }
 
 function insertNodeIntoDOM(that, node) {
-    let nodeElements = node.getElements();
-
-    for (let element of nodeElements) {
+    for (let element of node.elements) {
         that.treeView.appendChild(element);
     }
 }
 
 function removeNodeFromDOM(node) {
-    let nodeElements = node.getElements();
-
-    for (let element of nodeElements) {
+    for (let element of node.elements) {
         element.remove();
     }
 }

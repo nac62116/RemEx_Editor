@@ -5,8 +5,8 @@ import Step from "./Step.js";
 
 class Instruction extends Step {
 
-    constructor(id, nextStepId) {
-        super(id, Config.STEP_TYPE_INSTRUCTION, nextStepId);
+    constructor(id, name, nextStepId) {
+        super(id, name, Config.STEP_TYPE_INSTRUCTION, nextStepId);
         // Max characters: 50
         this.header = undefined;
         // Max characters: 350 (with image), 500 (without image)

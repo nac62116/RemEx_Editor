@@ -4,13 +4,14 @@ import Config from "../utils/Config.js";
 
 class Step {
 
-    constructor(id, type, nextStepId) {
+    constructor(id, name, type, nextStepId) {
         // Can't be instantiated
         if (new.target === Step) {
             throw new TypeError(Config.STEP_CONSTRUCTOR_ERROR);
         }
         // Unique
         this.id = id;
+        this.name = name;
         // TODO: JSON value should be named "@type"
         this.type = type;
         this.waitForStep = 0;

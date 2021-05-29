@@ -3,11 +3,11 @@
 import Config from "../utils/Config.js";
 import {Observable, Event} from "../utils/Observable.js";
 
-const UNDRAGGABLE_TYPES = [Config.TYPE_EXPERIMENT, Config.TYPE_EXPERIMENT_GROUP];
+const UNDRAGGABLE_TYPES = [Config.NODE_TYPE_EXPERIMENT, Config.NODE_TYPE_EXPERIMENT_GROUP];
 
 class NodeView extends Observable {
 
-    constructor(id, parentOutputPoint, type, description) {
+    constructor(id, type, description) {
         super();
         this.id = id;
         this.type = type;
@@ -19,14 +19,6 @@ class NodeView extends Observable {
             x: undefined,
             y: undefined
         };
-        this.parentOutputPoint = parentOutputPoint;
-        if (parentOutputPoint !== null) {
-            this.inputPath = createInputPath();
-            this.elements.push(this.inputPath);
-        }
-        else {
-            this.inputPath = null;
-        }
         this.nodeSvg = createNodeSvg(type, description);
         this.nodeSvg.addEventListener("click", onClick.bind(this));
         this.nodeSvg.addEventListener("mouseenter", onMouseEnter.bind(this));
@@ -35,31 +27,18 @@ class NodeView extends Observable {
         document.addEventListener("mousemove", onDrag.bind(this));
         this.nodeSvg.addEventListener("mouseup", onDrop.bind(this));
         this.elements.push(this.nodeSvg);
-        //this.updatePosition(centerX, centerY, true);
+        this.childNodes = [];
     }
 
-    getId() {
-        return this.id;
-    }
-
-    getType() {
-        return this.type;
-    }
-
-    getElements() {
-        return this.elements;
-    }
-
-    getCenter() {
-        return this.center;
-    }
-
-    getBottom() {
-        return this.bottom;
-    }
-
-    getIsFocused() {
-        return this.isFocused;
+    setInputPath(parentOutputPoint) {
+        this.parentOutputPoint = parentOutputPoint;
+        if (parentOutputPoint !== null) {
+            this.inputPath = createInputPath();
+            this.elements.push(this.inputPath);
+        }
+        else {
+            this.inputPath = null;
+        }
     }
 
     show() {
@@ -152,7 +131,7 @@ class NodeView extends Observable {
         this.updatePosition(this.lastStaticPosition.x, this.lastStaticPosition.y, false);
     }
 
-    updatePosition(centerX, centerY, makeStatic) {
+    updatePosition(centerX, centerY, parentOutputPoint, makeStatic) {
         // Recalculate points
         if (makeStatic) {
             this.lastStaticPosition = {

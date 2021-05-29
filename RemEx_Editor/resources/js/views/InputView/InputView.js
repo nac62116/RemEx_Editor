@@ -10,6 +10,7 @@ class InputView extends Observable {
         this.inputFieldsContainer = document.querySelector("#" + Config.INPUT_VIEW_FIELDS_CONTAINER_ID);
         this.header = document.querySelector("#" + Config.INPUT_VIEW_HEADER_ID);
         this.deleteButton = document.querySelector("#" + Config.INPUT_VIEW_DELETE_BUTTON_ID);
+        this.correspondingNode = undefined;
         // TODO: Fullscreen Button
         this.hide();
     }

@@ -56,6 +56,7 @@ const Config = {
     // Tree view
     TREE_VIEW_BACKGROUND_COLOR: "black",
     TREE_VIEW_BACKGROUND_OPACITY: "0.5",
+    TREE_VIEW_ROW_DISTANCE_FACTOR: 0.7,
 
     // Tree node input path
     NODE_INPUT_PATH_STROKE_WIDTH: "2",
@@ -66,6 +67,7 @@ const Config = {
     // Tree node 
     NODE_WIDTH: "100",
     NODE_HEIGHT: "120",
+    NODE_DISTANCE: "120",
 
     // Tree node body (Sizes are relative to the tree node)
     NODE_BODY_X: "2%",
@@ -83,8 +85,9 @@ const Config = {
 
     // Tree node description (Sizes are relative to the tree node)
     NODE_DESCRIPTION_ID: "nodeDescription",
+    NODE_DESCRIPTION_MAX_LENGTH: 25,
     NODE_DESCRIPTION_X: "50%",
-    NODE_DESCRIPTION_Y: "70%",
+    NODE_DESCRIPTION_Y: "66%",
     NODE_DESCRIPTION_TEXT_ANCHOR: "middle",
     // How many symbols until a linebreak is inserted
     NODE_DESCRIPTION_LINE_BREAK_COUNT: 11,
@@ -98,31 +101,39 @@ const Config = {
     NODE_DESCRIPTION_FONT_SIZE: "80%",
     NODE_DESCRIPTION_FONT_WEIGHT: "bold",
 
-    // New node descriptions
+    // Node descriptions
     NEW_EXPERIMENT_DESCRIPTION: "Neues Experiment",
     NEW_EXPERIMENT_GROUP_DESCRIPTION: "Neue Experiment Gruppe",
     NEW_STEP_DESCRIPTION: "Neuer Schritt",
     NEW_QUESTION_DESCRIPTION: "Neue Frage",
+    BREATHING_EXERCISE_DESCRIPTION: "Atemübung",
     
-    // Model types
+    // Node types
 
     // Experiment
-    TYPE_EXPERIMENT: "experiment",
+    NODE_TYPE_EXPERIMENT: "experimentNode",
 
     // Experiment group
-    TYPE_EXPERIMENT_GROUP: "experimentGroup",
+    NODE_TYPE_EXPERIMENT_GROUP: "experimentGroupNode",
+
+
+
+    NODE_TYPE_SURVEY: "surveyNode",
+
+
+
 
     // Instruction
-    TYPE_INSTRUCTION: "instruction",
+    NODE_TYPE_INSTRUCTION: "instructionNode",
     
     // Breathing exercise
-    TYPE_BREATHING_EXERCISE: "breathingExercise",
+    NODE_TYPE_BREATHING_EXERCISE: "breathingExerciseNode",
     
     // Questionnaire
-    TYPE_QUESTIONNAIRE: "questionnaire",
+    NODE_TYPE_QUESTIONNAIRE: "questionnaireNode",
     
     // Question
-    TYPE_QUESTION: "question",
+    NODE_TYPE_QUESTION: "questionNode",
 
     // Input invalid messages:
     

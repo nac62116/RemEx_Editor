@@ -5,8 +5,8 @@ import Step from "./Step.js";
 
 class Questionnaire extends Step {
 
-    constructor(id, nextStepId) {
-        super(id, Config.STEP_TYPE_QUESTIONNAIRE, nextStepId);
+    constructor(id, name, nextStepId) {
+        super(id, name, Config.STEP_TYPE_QUESTIONNAIRE, nextStepId);
         this.questions = [];
     }
 
