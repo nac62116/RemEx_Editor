@@ -1,10 +1,12 @@
 /* eslint-env broswer */
 
 import Config from "../utils/Config.js";
+import Storage from "../utils/Storage.js";
+import IdFinder from "../utils/IdFinder.js";
 import ExperimentInputView from "../views/InputView/ExperimentInputView.js";
+import ExperimentGroupInputView from "../views/InputView/ExperimentGroupInputView.js";
 import NodeView from "../views/NodeView.js";
 import TreeView from "../views/TreeView.js";
-import Storage from "../utils/Storage.js";
 import Experiment from "../model/Experiment.js";
 import ExperimentGroup from "../model/ExperimentGroup.js";
 
@@ -32,7 +34,12 @@ class Controller {
         this.inputViews = [];
         ExperimentInputView.init();
         ExperimentInputView.addEventListener(Config.EVENT_INPUT_CHANGED, onInputChanged.bind(this));
+        ExperimentInputView.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNode.bind(this));
         this.inputViews.push(ExperimentInputView);
+        ExperimentGroupInputView.init();
+        ExperimentGroupInputView.addEventListener(Config.EVENT_INPUT_CHANGED, onInputChanged.bind(this));
+        ExperimentGroupInputView.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNode.bind(this));
+        this.inputViews.push(ExperimentGroupInputView);
 
         // TODO: Init InfoView
 
@@ -62,19 +69,24 @@ function createNewExperiment() {
     return experiment;
 }
 
-function createNewExperimentGroup(that, experiment) {
+function createNewExperimentGroup(that, experiment, parentNode, previousNode, nextNode) {
     let group = new ExperimentGroup(),
+    id = IdFinder.getUnusedGroupId(),
     groupNode,
     nodeProperties = {};
 
+    group.id = id;
     group.name = Config.NEW_EXPERIMENT_GROUP_DESCRIPTION;
     experiment.groups.push(group);
     Storage.save(experiment);
 
-    nodeProperties.id = null;
+    nodeProperties.id = id;
     nodeProperties.type = Config.NODE_TYPE_EXPERIMENT_GROUP;
     nodeProperties.description = group.name;
+    nodeProperties.parentNode = parentNode;
+    nodeProperties.previousNode = previousNode;
     groupNode = createNode(that, nodeProperties);
+    groupNode.nextNode = nextNode;
 
     return groupNode;
 }
@@ -82,30 +94,52 @@ function createNewExperimentGroup(that, experiment) {
 function createInitialExperimentTree(that, experiment) {
     let experimentRootNode,
     groupNode,
+    previousGroupNode = undefined,
     surveyNode,
+    previousSurveyNode = undefined,
     stepNode,
+    previousStepNode = undefined,
     questionNode,
+    previousQuestionNode = undefined,
     nodeProperties = {};
 
     nodeProperties.id = null;
     nodeProperties.type = Config.NODE_TYPE_EXPERIMENT;
     nodeProperties.description = experiment.name;
+    nodeProperties.parentNode = null;
+    nodeProperties.previousNode = undefined;
     experimentRootNode = createNode(that, nodeProperties);
+    experimentRootNode.nextNode = undefined;
     for (let group of experiment.groups) {
+        nodeProperties.id = group.id;
         nodeProperties.type = Config.NODE_TYPE_EXPERIMENT_GROUP;
         nodeProperties.description = group.name;
+        nodeProperties.parentNode = experimentRootNode;
+        nodeProperties.previousNode = previousGroupNode;
         groupNode = createNode(that, nodeProperties);
         experimentRootNode.childNodes.push(groupNode);
+        if (previousGroupNode !== undefined) {
+            previousGroupNode.nextNode = groupNode;
+        }
+        previousGroupNode = groupNode;
         for (let survey of group.surveys) {
             // TODO: Create Survey Timeline
-            nodeProperties.id = null;
+            nodeProperties.id = survey.id;
             nodeProperties.type = Config.NODE_TYPE_SURVEY;
             nodeProperties.description = survey.name;
+            nodeProperties.parentNode = groupNode;
+            nodeProperties.previousNode = previousSurveyNode;
             surveyNode = createNode(that, nodeProperties);
             groupNode.childNodes.push(surveyNode);
+            if (previousSurveyNode !== undefined) {
+                previousSurveyNode.nextNode = surveyNode;
+            }
+            previousSurveyNode = surveyNode;
             for (let step of survey.steps) {
                 nodeProperties.id = step.id;
                 nodeProperties.description = step.name;
+                nodeProperties.parentNode = surveyNode;
+                nodeProperties.previousNode = previousStepNode;
                 if (step.type === Config.STEP_TYPE_INSTRUCTION) {
                     nodeProperties.type = Config.NODE_TYPE_INSTRUCTION;
                 }
@@ -120,13 +154,23 @@ function createInitialExperimentTree(that, experiment) {
                 }
                 stepNode = createNode(that, nodeProperties);
                 surveyNode.childNodes.push(stepNode);
+                if (previousStepNode !== undefined) {
+                    previousStepNode.nextNode = stepNode;
+                }
+                previousStepNode = stepNode;
                 if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
                     for (let question of step.questions) {
                         nodeProperties.id = question.id;
                         nodeProperties.type = Config.NODE_TYPE_QUESTION;
                         nodeProperties.description = question.name;
+                        nodeProperties.parentNode = stepNode;
+                        nodeProperties.previousNode = previousQuestionNode;
                         questionNode = createNode(that, nodeProperties);
                         stepNode.childNodes.push(questionNode);
+                        if (previousQuestionNode !== undefined) {
+                            previousQuestionNode.nextNode = questionNode;
+                        }
+                        previousQuestionNode = questionNode;
                     }
                 }
                 else {
@@ -143,7 +187,7 @@ function createNode(that, nodeProperties) {
     if (nodeProperties.description.length >= Config.NODE_DESCRIPTION_MAX_LENGTH) {
         nodeProperties.description = nodeProperties.description.substring(0, Config.NODE_DESCRIPTION_MAX_LENGTH) + "...";
     }
-    node = new NodeView(nodeProperties.id, nodeProperties.type, nodeProperties.description);
+    node = new NodeView(nodeProperties.id, nodeProperties.type, nodeProperties.description, nodeProperties.parentNode, nodeProperties.previousNode);
     node.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onNodeMouseEnter.bind(that));
     node.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onNodeMouseLeave.bind(that));
     node.addEventListener(Config.EVENT_NODE_CLICKED, onNodeClicked.bind(that));
@@ -157,7 +201,7 @@ function createNode(that, nodeProperties) {
 
 function onNodeMouseEnter(event) {
     let node = event.data.target,
-    inputData = getInputData(node.type, node.id);
+    inputData = getInputData(node);
     // Node actions
     node.emphasize();
     // InputView actions
@@ -181,7 +225,7 @@ function onNodeMouseLeave(event) {
 
 function onNodeClicked(event) {
     let node = event.data.target,
-    inputData = getInputData(node.type, node.id),
+    inputData = getInputData(node),
     experiment,
     newNode;
     // TreeView actions
@@ -189,8 +233,8 @@ function onNodeClicked(event) {
     if (node.childNodes.length === 0) {
         experiment = Storage.load();
         if (node.type === Config.NODE_TYPE_EXPERIMENT) {
-            newNode = createNewExperimentGroup(this, experiment);
-            TreeView.insertNode(newNode, null, null);
+            newNode = createNewExperimentGroup(this, experiment, node, undefined, undefined);
+            TreeView.insertNode(newNode);
             node.childNodes.push(newNode);
         }
         // TODO
@@ -220,12 +264,20 @@ function onNodeDrop(event) {
 
 // Node events helper functions
 
-function getInputData(type, id) {
+function getInputData(node) {
     let data = {},
     experiment = Storage.load();
-    if (type === Config.NODE_TYPE_EXPERIMENT) {
+    if (node.type === Config.NODE_TYPE_EXPERIMENT) {
         data.experimentName = experiment.name;
         return data;
+    }
+    else if (node.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        for (let group of experiment.groups) {
+            if (group.id === node.id) {
+                data.experimentGroupName = group.name;
+                return data;
+            }
+        }
     }
     else {
         // Get input data from current experiment
@@ -233,20 +285,51 @@ function getInputData(type, id) {
 }
 
 function showInputView(that, node, inputData, focus) {
+    let inputView;
+
     if (node.type === Config.NODE_TYPE_EXPERIMENT) {
-        ExperimentInputView.show(inputData);
-        ExperimentInputView.correspondingNode = node;
-        if (focus) {
-            that.focusedInputView = ExperimentInputView;
-            that.focusedInputViewData = inputData;
-        }
+        inputView = ExperimentInputView;
+    }
+    else if (node.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        inputView = ExperimentGroupInputView;
+    }
+    else {
+        // No InputView defined for node.type
+        return;
+    }
+    inputView.show(inputData);
+    inputView.correspondingNode = node;
+    if (focus) {
+        that.focusedInputView = inputView;
+        that.focusedInputViewData = inputData;
     }
 }
 
 // InputView events
 
-function onRemoveButtonClicked(event) {
-    
+function onRemoveNode(event) {
+    let inputData, nextFocusedNode, index;
+
+    if (event.data.correspondingNode.nextNode !== undefined) {
+        nextFocusedNode = event.data.correspondingNode.nextNode;
+    }
+    else if (event.data.correspondingNode.previousNode !== undefined) {
+        nextFocusedNode = event.data.correspondingNode.previousNode;
+    }
+    else {
+        nextFocusedNode = event.data.correspondingNode.parentNode;
+    }
+    nextFocusedNode.focus();
+    inputData = getInputData(nextFocusedNode);
+    for (let inputView of this.inputViews) {
+        inputView.hide();
+    }
+    showInputView(this, nextFocusedNode, inputData, true);
+    index = event.data.correspondingNode.parentNode.childNodes.indexOf(event.data.correspondingNode);
+    if (index !== -1) {
+        event.data.correspondingNode.parentNode.childNodes.splice(index, 1);
+    }
+    TreeView.removeNode(event.data.correspondingNode);
 }
 
 function onInputChanged(event) {
@@ -256,10 +339,25 @@ function onInputChanged(event) {
         experiment.name = event.data.experimentName;
         description = event.data.experimentName;
     }
+    else if (event.data.node.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        for (let group of experiment.groups) {
+            if (group.id === event.data.node.id) {
+                group.name = event.data.experimentGroupName;
+                description = event.data.experimentGroupName;
+                break;
+            }
+        }
+    }
+    else {
+        // node.type is not defined
+    }
     Storage.save(experiment);
     this.focusedInputViewData = event.data;
     if (description.length > Config.NODE_DESCRIPTION_MAX_LENGTH) {
         description = description.substring(0, Config.NODE_DESCRIPTION_MAX_LENGTH) + "...";
+    }
+    else {
+        // Description is short enough
     }
     event.data.node.updateDescription(description);
 }

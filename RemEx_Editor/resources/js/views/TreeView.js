@@ -59,13 +59,16 @@ class TreeView {
         }
     }
 
-    insertNode(node, previousNode, nextNode) {
-        let x;
-        if (previousNode !== null) {
-            x = previousNode.center.x + Config.NODE_DISTANCE;
+    insertNode(node) {
+        let x,
+        isInsertion = true;
+        if (node.previousNode !== undefined) {
+            x = node.previousNode.center.x + Config.NODE_DISTANCE;
+            updateNextNodePosition(node.nextNode, isInsertion);
         }
-        else if (nextNode !== null) {
-            x = nextNode.center.x - Config.NODE_DISTANCE;
+        else if (node.nextNode !== undefined) {
+            x = node.nextNode.center.x - Config.NODE_DISTANCE;
+            updatePreviousNodePosition(node.previousNode, isInsertion);
         }
         else {
             x = this.center.x;
@@ -76,6 +79,20 @@ class TreeView {
         }
         // else if TODO
         insertNodeIntoDOM(this, node);
+    }
+
+    removeNode(node) {
+        let isInsertion = false;
+        if (node.previousNode !== undefined) {
+            updateNextNodePosition(node.nextNode, isInsertion);
+        }
+        else if (node.nextNode !== undefined) {
+            updatePreviousNodePosition(node.previousNode, isInsertion);
+        }
+        else {
+            // No other nodes in this row which have to be updated
+        }
+        removeNodeFromDOM(node);
     }
 
     setFocusOn(node) {
@@ -108,6 +125,32 @@ function removeNodeFromDOM(node) {
     for (let element of node.elements) {
         element.remove();
     }
+}
+
+function updateNextNodePosition(node, isInsertion) {
+    if (node === undefined) {
+        return;
+    }
+    if (isInsertion) {
+        node.updatePosition(node.x + Config.NODE_DISTANCE, node.y + Config.NODE_DISTANCE, true);
+    }
+    else {
+        node.updatePosition(node.x - Config.NODE_DISTANCE, node.y - Config.NODE_DISTANCE, true);
+    }
+    updateNextNodePosition(node.nextNode);
+}
+
+function updatePreviousNodePosition(node, isInsertion) {
+    if (node === undefined) {
+        return;
+    }
+    if (isInsertion) {
+        node.updatePosition(node.x - Config.NODE_DISTANCE, node.y - Config.NODE_DISTANCE, true);
+    }
+    else {
+        node.updatePosition(node.x + Config.NODE_DISTANCE, node.y + Config.NODE_DISTANCE, true);
+    }
+    updatePreviousNodePosition(node.previousNode);
 }
 
 function getCenterOffsetVector(that, node) {

@@ -7,7 +7,7 @@ const UNDRAGGABLE_TYPES = [Config.NODE_TYPE_EXPERIMENT, Config.NODE_TYPE_EXPERIM
 
 class NodeView extends Observable {
 
-    constructor(id, type, description) {
+    constructor(id, type, description, parent, previousNode, nextNode) {
         super();
         this.id = id;
         this.type = type;
@@ -28,7 +28,10 @@ class NodeView extends Observable {
         document.addEventListener("mousemove", onDrag.bind(this));
         this.nodeSvg.addEventListener("mouseup", onDrop.bind(this));
         this.elements.push(this.nodeSvg);
+        this.previousNode = previousNode;
+        this.nextNode = nextNode;
         this.childNodes = [];
+        this.parentNode = parent;
     }
 
     setInputPath(parentOutputPoint) {
@@ -134,7 +137,7 @@ class NodeView extends Observable {
         this.updatePosition(this.lastStaticPosition.x, this.lastStaticPosition.y, false);
     }
 
-    updatePosition(centerX, centerY, parentOutputPoint, makeStatic) {
+    updatePosition(centerX, centerY, makeStatic) {
         // Recalculate points
         if (makeStatic) {
             this.lastStaticPosition = {

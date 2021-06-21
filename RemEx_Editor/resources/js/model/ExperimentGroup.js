@@ -5,6 +5,7 @@ import Config from "../utils/Config.js";
 class ExperimentGroup {
 
     constructor() {
+        this.id = undefined;
         // Unique
         this.name = undefined;
         this.startTimeInMillis = 0;

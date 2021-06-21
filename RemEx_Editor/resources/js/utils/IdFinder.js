@@ -7,29 +7,38 @@ import Config from "./Config.js";
 class IdFinder {
 
     constructor() {
+        this.currentGroupIds = [];
         this.currentSurveyIds = [];
         this.currentStepIds = [];
         this.currentQuestionIds = [];
     }
 
-    setCurrentSurveyIds(currentSurveyIds) {
-        this.currentSurveyIds = currentSurveyIds;
+    addGroupId(groupId) {
+        this.currentGroupIds.push(groupId);
+    }
+
+    getUnusedGroupId() {
+        return getUnusedId(this.currentGroupIds)
+    }
+
+    addSurveyId(surveyId) {
+        this.currentSurveyIds.push(surveyId);
     }
 
     getUnusedSurveyId() {
         return getUnusedId(this.currentSurveyIds)
     }
 
-    setCurrentStepIds(currentStepIds) {
-        this.currentStepIds = currentStepIds;
+    addStepId(stepId) {
+        this.currentStepIds.push(stepId);
     }
 
     getUnusedStepId() {
         return getUnusedId(this.currentStepIds)
     }
 
-    setCurrentQuestionIds(currentQuestionIds) {
-        this.currentQuestionIds = currentQuestionIds;
+    addQuestionId(questionId) {
+        this.currentQuestionIds.push(questionId);
     }
 
     getUnusedQuestionId() {
@@ -41,6 +50,7 @@ function getUnusedId(ids) {
     let id = 0;
     while (true) {
         if (!ids.includes(id)) {
+            ids.push(id);
             return id;
         }
         else {

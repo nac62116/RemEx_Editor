@@ -26,6 +26,7 @@ const Config = {
     EVENT_NODE_ON_DRAG: "nodeondrag",
     EVENT_NODE_ON_DROP: "nodeondrop",
     EVENT_INPUT_CHANGED: "inputchanged",
+    EVENT_REMOVE_NODE: "removeNode",
 
     // DOM Element ids:
 
@@ -45,6 +46,8 @@ const Config = {
     // Input view
     INPUT_EXPERIMENT_NAME_ID: "experimentNameInput",
     INPUT_EXPERIMENT_NAME_LABEL: "Name des Experiments:",
+    INPUT_EXPERIMENT_GROUP_NAME_ID: "experimentGroupNameInput",
+    INPUT_EXPERIMENT_GROUP_NAME_LABEL: "Name der Experimentgruppe:",
 
     // Selfmade attributes:
 
