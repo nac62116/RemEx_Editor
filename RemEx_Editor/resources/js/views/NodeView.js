@@ -11,6 +11,7 @@ class NodeView extends Observable {
         super();
         this.id = id;
         this.type = type;
+        this.isEmphasized = false;
         this.isFocused = false;
         this.isFocusable = true;
         this.isDraggable = false;
@@ -89,7 +90,8 @@ class NodeView extends Observable {
     emphasize() {
         let newFillOpacity, newStrokeOpacity;
 
-        if (!this.isFocused && this.isFocusable) {
+        if (!this.isEmphasized && !this.isFocused && this.isFocusable) {
+            this.isEmphasized = true;
             if (this.inputPath !== null) {
                 this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
             }
@@ -111,7 +113,8 @@ class NodeView extends Observable {
     deemphasize() {
         let newFillOpacity, newStrokeOpacity;
 
-        if (!this.isFocused && this.isFocusable) {
+        if (this.isEmphasized && !this.isFocused && this.isFocusable) {
+            this.isEmphasized = false;
             if (this.inputPath !== null) {
                 this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
             }

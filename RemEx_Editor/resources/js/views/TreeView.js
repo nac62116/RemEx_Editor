@@ -59,7 +59,7 @@ class TreeView {
         }
     }
 
-    insertExperimentGroupNode(node, previousNode, nextNode) {
+    insertNode(node, previousNode, nextNode) {
         let x;
         if (previousNode !== null) {
             x = previousNode.center.x + Config.NODE_DISTANCE;
@@ -70,15 +70,18 @@ class TreeView {
         else {
             x = this.center.x;
         }
-        node.setInputPath(this.experimentRootNode.bottom);
-        node.updatePosition(x, this.experimentGroupsPositionY, true);
+        if (node.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+            node.setInputPath(this.experimentRootNode.bottom);
+            node.updatePosition(x, this.experimentGroupsPositionY, true);
+        }
+        // else if TODO
         insertNodeIntoDOM(this, node);
     }
 
-    moveTo(node) {
-        if (node === this.experimentRootNode) {
-            // TODO
-        }
+    setFocusOn(node) {
+        let centerOffsetVector = getCenterOffsetVector(this, node);
+        moveTree(this.experimentRootNode, null, centerOffsetVector);
+        showChildNodes(node, true);
         node.focus();
     }
 }
@@ -104,6 +107,56 @@ function insertNodeIntoDOM(that, node) {
 function removeNodeFromDOM(node) {
     for (let element of node.elements) {
         element.remove();
+    }
+}
+
+function getCenterOffsetVector(that, node) {
+    let centerOffsetVector = {
+        x: undefined,
+        y: undefined
+    }
+
+    centerOffsetVector.x = that.center.x - node.center.x;
+    centerOffsetVector.y = that.center.y - node.center.y;
+
+    return centerOffsetVector;
+}
+
+function moveTree(node, previousNode, vector) {
+    let x, y;
+
+    if (node === undefined) {
+        return;
+    }
+    x = node.center.x + vector.x;
+    y = node.center.y + vector.y;
+    if (previousNode !== null) {
+        node.parentOutputPoint.x = previousNode.bottom.x;
+        node.parentOutputPoint.y = previousNode.bottom.y;
+    }
+    node.updatePosition(x, y, true);
+    for (let childNode of node.childNodes) {
+        moveTree(childNode, node, vector);
+    }
+}
+
+function showChildNodes(node, isFirstIteration) {
+    let childNode;
+    if (node.childNodes.length === 0) {
+        return;
+    }
+    if (isFirstIteration) {
+        for (childNode of node.childNodes) {
+            childNode.show();
+            childNode.defocus();
+            childNode.deemphasize();
+        }
+    }
+    else {
+        for (childNode of node.childNodes) {
+            childNode.hide();
+            showChildNodes(childNode, false);
+        }
     }
 }
 

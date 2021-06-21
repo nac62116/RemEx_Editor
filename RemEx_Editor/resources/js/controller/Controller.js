@@ -185,14 +185,15 @@ function onNodeClicked(event) {
     experiment,
     newNode;
     // TreeView actions
-    TreeView.moveTo(node);
+    TreeView.setFocusOn(node);
     if (node.childNodes.length === 0) {
         experiment = Storage.load();
         if (node.type === Config.NODE_TYPE_EXPERIMENT) {
             newNode = createNewExperimentGroup(this, experiment);
-            TreeView.insertExperimentGroupNode(newNode, null, null);
+            TreeView.insertNode(newNode, null, null);
+            node.childNodes.push(newNode);
         }
-        node.childNodes.push(newNode);
+        // TODO
     }
     // InputView actions
     for (let inputView of this.inputViews) {
