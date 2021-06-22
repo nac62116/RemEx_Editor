@@ -60,6 +60,8 @@ const Config = {
     TREE_VIEW_BACKGROUND_COLOR: "black",
     TREE_VIEW_BACKGROUND_OPACITY: "0.5",
     TREE_VIEW_ROW_DISTANCE_FACTOR: 0.7,
+    TREE_MOVEMENT_ANIMATION_STEPS: 10,
+    TREE_MOVEMENT_ANIMATION_FRAME_RATE_MS: 10,
 
     // Tree node input path
     NODE_INPUT_PATH_STROKE_WIDTH: "2",
@@ -70,7 +72,7 @@ const Config = {
     // Tree node 
     NODE_WIDTH: "100",
     NODE_HEIGHT: "120",
-    NODE_DISTANCE: "120",
+    NODE_DISTANCE_HORIZONTAL: "120",
 
     // Tree node body (Sizes are relative to the tree node)
     NODE_BODY_X: "2%",
