@@ -20,7 +20,7 @@ class NodeView extends Observable {
             x: undefined,
             y: undefined
         };
-        this.nodeSvg = createNodeSvg(type, description);
+        this.nodeSvg = createNodeSvg(description);
         this.nodeSvg.addEventListener("click", onClick.bind(this));
         this.nodeSvg.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeSvg.addEventListener("mouseleave", onMouseLeave.bind(this));
@@ -28,6 +28,12 @@ class NodeView extends Observable {
         document.addEventListener("mousemove", onDrag.bind(this));
         this.nodeSvg.addEventListener("mouseup", onDrop.bind(this));
         this.elements.push(this.nodeSvg);
+        if (type !== Config.NODE_TYPE_EXPERIMENT) {
+            this.addNextNodeButton = createAddButton(this, true);
+            this.addPrevNodeButton = createAddButton(this, false);
+            this.elements.push(this.addNextNodeButton);
+            this.elements.push(this.addPrevNodeButton);
+        }
         this.previousNode = previousNode;
         this.nextNode = nextNode;
         this.childNodes = [];
@@ -74,6 +80,14 @@ class NodeView extends Observable {
     focus() {
         if (!this.isFocused) {
             this.isFocused = true;
+            this.emphasize();
+            if (this.type !== Config.NODE_TYPE_EXPERIMENT) {
+                this.addNextNodeButton.removeAttribute("display");
+                this.addPrevNodeButton.removeAttribute("display");
+            }
+            else {
+                // No add buttons to hide
+            }
         }
         else {
             // This node is already focused.
@@ -84,6 +98,13 @@ class NodeView extends Observable {
         if (this.isFocused) {
             this.isFocused = false;
             this.deemphasize();
+            if (this.type !== Config.NODE_TYPE_EXPERIMENT) {
+                this.addNextNodeButton.setAttribute("display", "none");
+                this.addPrevNodeButton.setAttribute("display", "none");
+            }
+            else {
+                // No add buttons to hide
+            }
         }
         else {
             // This node is already defocused.
@@ -93,7 +114,7 @@ class NodeView extends Observable {
     emphasize() {
         let newFillOpacity, newStrokeOpacity;
 
-        if (!this.isEmphasized && !this.isFocused && this.isFocusable) {
+        if (!this.isEmphasized && this.isFocusable) {
             this.isEmphasized = true;
             if (this.inputPath !== null) {
                 this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
@@ -120,6 +141,9 @@ class NodeView extends Observable {
             this.isEmphasized = false;
             if (this.inputPath !== null) {
                 this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
+            }
+            else {
+                // No input path to deemphasize
             }
             for (let element of this.nodeSvg.children) {
                 newFillOpacity = element.getAttribute("fill-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
@@ -151,19 +175,19 @@ class NodeView extends Observable {
         this.center = {
             x: centerX,
             y: centerY
-        }
+        };
         this.top = {
             x: centerX,
             y: centerY - this.nodeSvg.getAttribute("height") / 2
-        }
+        };
         this.bottom = {
             x: centerX,
             y: centerY + this.nodeSvg.getAttribute("height") / 2
-        }
+        };
         this.topLeft = {
             x: centerX - this.nodeSvg.getAttribute("width") / 2,
             y: centerY - this.nodeSvg.getAttribute("height") / 2
-        }
+        };
         if (this.inputPath !== null) {
             this.bezierReferencePoint = {
                 x: this.parentOutputPoint.x,
@@ -174,6 +198,15 @@ class NodeView extends Observable {
         }
         else {
             // No input path which postion has to be updated.
+        }
+        if (this.type !== Config.NODE_TYPE_EXPERIMENT) {
+            this.addNextNodeButton.setAttribute("cx", this.center.x + Config.NODE_ADD_BUTTON_DISTANCE);
+            this.addNextNodeButton.setAttribute("cy", this.center.y);
+            this.addPrevNodeButton.setAttribute("cx", this.center.x - Config.NODE_ADD_BUTTON_DISTANCE);
+            this.addPrevNodeButton.setAttribute("cy", this.center.y);
+        }
+        else {
+            // No add buttons which positions have to be updated.
         }
         this.nodeSvg.setAttribute("x", this.topLeft.x);
         this.nodeSvg.setAttribute("y", this.topLeft.y);
@@ -267,6 +300,36 @@ function onDrop() {
     this.notifyAll(controllerEvent);
 }
 
+function onAddNextNodeClicked() {
+    let controllerEvent, data;
+
+    data = {
+        target: this
+    };
+    controllerEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
+    this.notifyAll(controllerEvent);
+}
+
+function onAddPrevNodeClicked() {
+    let controllerEvent, data;
+
+    data = {
+        target: this
+    };
+    controllerEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+    this.notifyAll(controllerEvent);
+}
+
+function onAddButtonMouseEnter(event) {
+    event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED);
+    event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED);
+}
+
+function onAddButtonMouseLeave(event) {
+    event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
+    event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+}
+
 
 // Svg element creation:
 
@@ -279,7 +342,27 @@ function createInputPath() {
     return inputPath;
 }
 
-function createNodeSvg(type, description) {
+function createAddButton(that, isNextButton) {
+    let addButton = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    if (isNextButton) {
+        addButton.addEventListener("click", onAddNextNodeClicked.bind(that));
+    }
+    else {
+        addButton.addEventListener("click", onAddPrevNodeClicked.bind(that));
+    }
+    addButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(that));
+    addButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+    addButton.setAttribute("r", Config.NODE_ADD_BUTTON_RADIUS);
+    addButton.setAttribute("fill", Config.NODE_ADD_BUTTON_FILL_COLOR);
+    addButton.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
+    addButton.setAttribute("stroke", Config.NODE_ADD_BUTTON_STROKE_COLOR);
+    addButton.setAttribute("stroke-width", Config.NODE_ADD_BUTTON_STROKE_WIDTH);
+    addButton.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+    addButton.setAttribute("display", "none");
+    return addButton;
+}
+
+function createNodeSvg(description) {
     let nodeSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
     nodeBody = createBody(),
     //nodeIcon = createIcon(type),

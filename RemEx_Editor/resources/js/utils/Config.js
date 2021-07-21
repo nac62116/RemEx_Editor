@@ -25,6 +25,9 @@ const Config = {
     EVENT_NODE_START_DRAG: "nodestartdrag",
     EVENT_NODE_ON_DRAG: "nodeondrag",
     EVENT_NODE_ON_DROP: "nodeondrop",
+    EVENT_ADD_NEXT_NODE: "addnextnode",
+    EVENT_ADD_PREV_NODE: "addprevnode",
+    EVENT_NODE_ON_DROP: "nodeondrop",
     EVENT_INPUT_CHANGED: "inputchanged",
     EVENT_REMOVE_NODE: "removeNode",
 
@@ -62,6 +65,8 @@ const Config = {
     TREE_VIEW_ROW_DISTANCE_FACTOR: 0.7,
     TREE_MOVEMENT_ANIMATION_STEPS: 10,
     TREE_MOVEMENT_ANIMATION_FRAME_RATE_MS: 10,
+    TREE_VIEW_INSERT_BEFORE: "insertBeforeNode",
+    TREE_VIEW_INSERT_AFTER: "insertBeforeNode",
 
     // Tree node input path
     NODE_INPUT_PATH_STROKE_WIDTH: "2",
@@ -72,7 +77,7 @@ const Config = {
     // Tree node 
     NODE_WIDTH: "100",
     NODE_HEIGHT: "120",
-    NODE_DISTANCE_HORIZONTAL: "120",
+    NODE_DISTANCE_HORIZONTAL: 130,
 
     // Tree node body (Sizes are relative to the tree node)
     NODE_BODY_X: "2%",
@@ -87,6 +92,17 @@ const Config = {
     NODE_BODY_STROKE_COLOR: "black",
     NODE_BODY_STROKE_OPACITY_DEEMPHASIZED: "0.3",
     NODE_BODY_STROKE_OPACITY_EMPHASIZE_BY: "0.7",
+
+    // Tree node add buttons
+    NODE_ADD_BUTTON_DISTANCE: 65,
+    NODE_ADD_BUTTON_RADIUS: "10",
+    NODE_ADD_BUTTON_FILL_COLOR: "black",
+    NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED: "0.1",
+    NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED: "0.5",
+    NODE_ADD_BUTTON_STROKE_WIDTH: "2",
+    NODE_ADD_BUTTON_STROKE_COLOR: "black",
+    NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED: "0.3",
+    NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED: "1",
 
     // Tree node description (Sizes are relative to the tree node)
     NODE_DESCRIPTION_ID: "nodeDescription",

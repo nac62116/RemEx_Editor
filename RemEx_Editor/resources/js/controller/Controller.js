@@ -194,6 +194,8 @@ function createNode(that, nodeProperties) {
     node.addEventListener(Config.EVENT_NODE_START_DRAG, onNodeStartDrag);
     node.addEventListener(Config.EVENT_NODE_ON_DRAG, onNodeDrag);
     node.addEventListener(Config.EVENT_NODE_ON_DROP, onNodeDrop);
+    node.addEventListener(Config.EVENT_ADD_NEXT_NODE, onAddNextNode.bind(that));
+    node.addEventListener(Config.EVENT_ADD_PREV_NODE, onAddPrevNode.bind(that));
     return node;
 }
 
@@ -234,7 +236,7 @@ function onNodeClicked(event) {
         experiment = Storage.load();
         if (node.type === Config.NODE_TYPE_EXPERIMENT) {
             newNode = createNewExperimentGroup(this, experiment, node, undefined, undefined);
-            TreeView.insertNode(newNode);
+            TreeView.insertNode(newNode, null);
             node.childNodes.push(newNode);
         }
         // TODO
@@ -260,6 +262,35 @@ function onNodeDrop(event) {
     // TreeView -> check for valid dropzone -> if valid (updatePosition(x, y, true))
     // -> if not valid (returnToLastStaticPosition)
     // -> Make all other items focusable
+}
+
+
+// TODO Verlinkung und insertion stimmt nicht
+
+function onAddNextNode(event) {
+    let node = event.data.target,
+    experiment = Storage.load(),
+    newNode;
+
+    if (node.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        newNode = createNewExperimentGroup(this, experiment, node.parentNode, node, node.nextNode);
+        node.nextNode = newNode;
+        node.parentNode.childNodes.push(newNode);
+        TreeView.insertNode(newNode, Config.TREE_VIEW_INSERT_AFTER);
+    }
+}
+
+function onAddPrevNode(event) {
+    let node = event.data.target,
+    experiment = Storage.load(),
+    newNode;
+
+    if (node.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        newNode = createNewExperimentGroup(this, experiment, node.parentNode, node.previousNode, node);
+        node.previousNode = newNode;
+        node.parentNode.childNodes.push(newNode);
+        TreeView.insertNode(newNode, Config.TREE_VIEW_INSERT_BEFORE);
+    }
 }
 
 // Node events helper functions
@@ -336,14 +367,14 @@ function onInputChanged(event) {
     let experiment = Storage.load(),
     description;
     if (event.data.node.type === Config.NODE_TYPE_EXPERIMENT) {
-        experiment.name = event.data.experimentName;
         description = event.data.experimentName;
+        experiment.name = event.data.experimentName;
     }
     else if (event.data.node.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
         for (let group of experiment.groups) {
             if (group.id === event.data.node.id) {
-                group.name = event.data.experimentGroupName;
                 description = event.data.experimentGroupName;
+                group.name = event.data.experimentGroupName;
                 break;
             }
         }

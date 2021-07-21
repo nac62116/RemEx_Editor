@@ -62,19 +62,21 @@ class TreeView {
         }
     }
 
-    insertNode(node) {
+    // TODO: Insertion
+
+    insertNode(node, insertionType) {
         let x,
         y,
         isInsertion = true;
-        if (node.previousNode !== undefined) {
+        if (insertionType === Config.TREE_VIEW_INSERT_AFTER && node.previousNode !== undefined) {
             x = node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL;
             y = node.previousNode.center.y;
-            updateNextNodePosition(node.nextNode, isInsertion);
+            //updateNextNodePosition(node.nextNode, isInsertion);
         }
-        else if (node.nextNode !== undefined) {
-            x = node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL;
+        else if (insertionType === Config.TREE_VIEW_INSERT_BEFORE && node.nextNode !== undefined) {
+            x = node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL;
             y = node.nextNode.center.y;
-            updatePreviousNodePosition(node.previousNode, isInsertion);
+            //updatePreviousNodePosition(node.previousNode, isInsertion);
         }
         else {
             x = this.center.x;
@@ -100,7 +102,8 @@ class TreeView {
     }
 
     setFocusOn(node) {
-        let centerOffsetVector = getCenterOffsetVector(this, node),
+        let firstNodeOfRow = getFirstNodeOfRow(node),
+        centerOffsetVector = getCenterOffsetVector(this, node),
         partialVector = {
             x: centerOffsetVector.x / Config.TREE_MOVEMENT_ANIMATION_STEPS,
             y: centerOffsetVector.y / Config.TREE_MOVEMENT_ANIMATION_STEPS
@@ -109,7 +112,8 @@ class TreeView {
         intervall;
         
         intervall = setInterval(() => {
-            moveTree(this.experimentRootNode, null, partialVector);
+            moveHorizontal(firstNodeOfRow, partialVector);
+            moveVertical(this.experimentRootNode, null, partialVector);
             i += 1;
             if (i === Config.TREE_MOVEMENT_ANIMATION_STEPS) {
                 clearInterval(intervall);
@@ -117,6 +121,7 @@ class TreeView {
         }, Config.TREE_MOVEMENT_ANIMATION_FRAME_RATE_MS);
         
         showChildNodes(node, true);
+        defocusNextNodes(firstNodeOfRow);
         node.focus();
     }
 }
@@ -150,10 +155,10 @@ function updateNextNodePosition(node, isInsertion) {
         return;
     }
     if (isInsertion) {
-        node.updatePosition(node.x + Config.NODE_DISTANCE_HORIZONTAL, node.y + Config.NODE_DISTANCE_HORIZONTAL, true);
+        node.updatePosition(node.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
     }
     else {
-        node.updatePosition(node.x - Config.NODE_DISTANCE_HORIZONTAL, node.y - Config.NODE_DISTANCE_HORIZONTAL, true);
+        node.updatePosition(node.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
     }
     updateNextNodePosition(node.nextNode);
 }
@@ -163,10 +168,10 @@ function updatePreviousNodePosition(node, isInsertion) {
         return;
     }
     if (isInsertion) {
-        node.updatePosition(node.x - Config.NODE_DISTANCE_HORIZONTAL, node.y - Config.NODE_DISTANCE_HORIZONTAL, true);
+        node.updatePosition(node.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
     }
     else {
-        node.updatePosition(node.x + Config.NODE_DISTANCE_HORIZONTAL, node.y + Config.NODE_DISTANCE_HORIZONTAL, true);
+        node.updatePosition(node.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
     }
     updatePreviousNodePosition(node.previousNode);
 }
@@ -183,21 +188,31 @@ function getCenterOffsetVector(that, node) {
     return centerOffsetVector;
 }
 
-function moveTree(node, parentNode, vector) {
-    let x, y;
+function moveHorizontal(node, vector) {
+    let x;
 
     if (node === undefined) {
         return;
     }
     x = node.center.x + vector.x;
+    node.updatePosition(x, node.center.y, true);
+    moveHorizontal(node.nextNode, vector);
+}
+
+function moveVertical(node, parentNode, vector) {
+    let y;
+
+    if (node === undefined) {
+        return;
+    }
     y = node.center.y + vector.y;
     if (parentNode !== null) {
         node.parentOutputPoint.x = parentNode.bottom.x;
         node.parentOutputPoint.y = parentNode.bottom.y;
     }
-    node.updatePosition(x, y, true);
+    node.updatePosition(node.center.x, y, true);
     for (let childNode of node.childNodes) {
-        moveTree(childNode, node, vector);
+        moveVertical(childNode, node, vector);
     }
 }
 
@@ -219,6 +234,23 @@ function showChildNodes(node, isFirstIteration) {
             showChildNodes(childNode, false);
         }
     }
+}
+
+function defocusNextNodes(node) {
+    if (node === undefined) {
+        return;
+    }
+    node.defocus();
+    defocusNextNodes(node.nextNode);
+}
+
+function getFirstNodeOfRow(node) {
+    let firstNode = node;
+
+    while (firstNode.previousNode !== undefined) {
+        firstNode = firstNode.previousNode;
+    }
+    return firstNode;
 }
 
 export default new TreeView();
