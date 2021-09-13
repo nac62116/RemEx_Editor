@@ -284,6 +284,7 @@ function onAddNextNode(event) {
         node.nextNode = newNode;
         node.parentNode.childNodes.push(newNode);
         TreeView.insertNode(newNode, Config.TREE_VIEW_INSERT_AFTER);
+        newNode.nodeSvg.dispatchEvent(new Event("click"));
     }
 }
 
@@ -297,6 +298,7 @@ function onAddPrevNode(event) {
         node.previousNode = newNode;
         node.parentNode.childNodes.push(newNode);
         TreeView.insertNode(newNode, Config.TREE_VIEW_INSERT_BEFORE);
+        newNode.nodeSvg.dispatchEvent(new Event("click"));
     }
 }
 
@@ -305,6 +307,7 @@ function onAddPrevNode(event) {
 function getInputData(node) {
     let data = {},
     experiment = Storage.load();
+
     if (node.type === Config.NODE_TYPE_EXPERIMENT) {
         data.experimentName = experiment.name;
         return data;
@@ -336,22 +339,31 @@ function showInputView(that, node, inputData, focus) {
         // No InputView defined for node.type
         return;
     }
-    inputView.show(inputData);
-    inputView.correspondingNode = node;
     if (focus) {
+        inputView.correspondingNode = node;
         that.focusedInputView = inputView;
         that.focusedInputViewData = inputData;
     }
+    inputView.show(inputData);
 }
 
 // InputView event callbacks
 
 function onRemoveNode(event) {
     let nodeToRemove = event.data.correspondingNode,
+    experiment = Storage.load(),
     nextFocusedNode,
-    inputData,
-    index;
+    indexOfParentList,
+    indexOfExperimentList;
 
+    // Updating the node links
+    if (nodeToRemove.previousNode !== undefined) {
+        nodeToRemove.previousNode.nextNode = nodeToRemove.nextNode;
+    }
+    if (nodeToRemove.nextNode !== undefined) {
+        nodeToRemove.nextNode.previousNode = nodeToRemove.previousNode;
+    }
+    // Defining the node which is focused after removal
     if (nodeToRemove.nextNode !== undefined) {
         nextFocusedNode = nodeToRemove.nextNode;
     }
@@ -361,18 +373,26 @@ function onRemoveNode(event) {
     else {
         nextFocusedNode = nodeToRemove.parentNode;
     }
-    nextFocusedNode.focus();
-    inputData = getInputData(nextFocusedNode);
-    for (let inputView of this.inputViews) {
-        inputView.hide();
+    // Removing node from parentNodes' child list
+    indexOfParentList = nodeToRemove.parentNode.childNodes.indexOf(nodeToRemove);
+    if (indexOfParentList !== -1) {
+        nodeToRemove.parentNode.childNodes.splice(indexOfParentList, 1);
     }
-    showInputView(this, nextFocusedNode, inputData, true);
-    index = nodeToRemove.parentNode.childNodes.indexOf(nodeToRemove);
-    if (index !== -1) {
-        nodeToRemove.parentNode.childNodes.splice(index, 1);
+    // Removing model entry
+    if (nodeToRemove.type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        for (let group of experiment.groups) {
+            if (group.id === nodeToRemove.id) {
+                indexOfExperimentList = experiment.groups.indexOf(group);
+                experiment.groups.splice(indexOfExperimentList, 1);
+                break;
+            }
+        }
     }
+    // TODO: else if (other types)
+    Storage.save(experiment);
     IdManager.removeId(nodeToRemove.id, nodeToRemove.type);
     TreeView.removeNode(nodeToRemove);
+    nextFocusedNode.nodeSvg.dispatchEvent(new Event("click"));
 }
 
 function onInputChanged(event) {

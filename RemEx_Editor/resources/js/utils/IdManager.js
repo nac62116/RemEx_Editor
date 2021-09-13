@@ -52,23 +52,25 @@ class IdManager {
     }
 
     getUnusedId(type) {
+        let unusedId;
         if (type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
-            getUnusedId(this.currentGroupIds);
+            unusedId = getUnusedId(this.currentGroupIds);
         }
         else if (type === Config.NODE_TYPE_SURVEY) {
-           getUnusedId(this.currentSurveyIds);
+            unusedId = getUnusedId(this.currentSurveyIds);
         }
         else if (type === Config.NODE_TYPE_BREATHING_EXERCISE
             || type === Config.NODE_TYPE_INSTRUCTION
             || type === Config.NODE_TYPE_QUESTIONNAIRE) {
-            getUnusedId(this.currentStepIds);
+            unusedId = getUnusedId(this.currentStepIds);
         }
         else if (type === Config.NODE_TYPE_QUESTION) {
-            getUnusedId(this.currentQuestionIds);
+            unusedId = getUnusedId(this.currentQuestionIds);
         }
         else {
             throw "IdManager.js: The node type \"" + type + "\" is not defined.";
         }
+        return unusedId;
     }
 }
 
