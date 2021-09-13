@@ -1,6 +1,3 @@
-
-/* eslint-env browser */
-
 class Event {
   constructor(type, data) {
     this.type = type;

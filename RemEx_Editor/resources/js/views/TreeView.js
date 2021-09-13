@@ -1,5 +1,3 @@
-/* eslint-env broswer */
-
 import Config from "../utils/Config.js";
 
 class TreeView {
@@ -10,10 +8,10 @@ class TreeView {
         initTreeViewBox(this);
 
         this.center = {
-            x: this.treeViewContainer.clientWidth / 2,
-            y: this.treeViewContainer.clientHeight / 2
-        }
-        this.rowDistance = this.treeViewContainer.clientHeight / 3;
+            x: this.treeViewContainer.clientWidth / 2, // eslint-disable-line no-magic-numbers
+            y: this.treeViewContainer.clientHeight / 2, // eslint-disable-line no-magic-numbers
+        };
+        this.rowDistance = this.treeViewContainer.clientHeight / 3; // eslint-disable-line no-magic-numbers
 
         this.experimentPositionY = this.center.y;
         this.experimentGroupsPositionY = this.experimentPositionY + this.rowDistance;
@@ -49,8 +47,8 @@ class TreeView {
                     stepNode.updatePosition(stepX, this.stepsPositionY, true);
                     insertNodeIntoDOM(this, stepNode);
                     stepX = stepX + Config.NODE_DISTANCE_HORIZONTAL;
-                    if (stepNode.type = Config.NODE_TYPE_QUESTIONNAIRE) {
-                        for (questionNode of stepNode.childNodes) {
+                    if (stepNode.type === Config.NODE_TYPE_QUESTIONNAIRE) {
+                        for (let questionNode of stepNode.childNodes) {
                             questionNode.setInputPath(stepNode.bottom);
                             questionNode.updatePosition(questionX, this.questionsPositionY, true);
                             insertNodeIntoDOM(this, questionNode);
@@ -71,12 +69,12 @@ class TreeView {
         if (insertionType === Config.TREE_VIEW_INSERT_AFTER && node.previousNode !== undefined) {
             x = node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL;
             y = node.previousNode.center.y;
-            //updateNextNodePosition(node.nextNode, isInsertion);
+            updateNextNodePosition(node.nextNode, isInsertion);
         }
         else if (insertionType === Config.TREE_VIEW_INSERT_BEFORE && node.nextNode !== undefined) {
-            x = node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL;
+            x = node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL;
             y = node.nextNode.center.y;
-            //updatePreviousNodePosition(node.previousNode, isInsertion);
+            updatePreviousNodePosition(node.previousNode, isInsertion);
         }
         else {
             x = this.center.x;
@@ -106,7 +104,7 @@ class TreeView {
         centerOffsetVector = getCenterOffsetVector(this, node),
         partialVector = {
             x: centerOffsetVector.x / Config.TREE_MOVEMENT_ANIMATION_STEPS,
-            y: centerOffsetVector.y / Config.TREE_MOVEMENT_ANIMATION_STEPS
+            y: centerOffsetVector.y / Config.TREE_MOVEMENT_ANIMATION_STEPS,
         },
         i = 0,
         intervall;
@@ -179,8 +177,8 @@ function updatePreviousNodePosition(node, isInsertion) {
 function getCenterOffsetVector(that, node) {
     let centerOffsetVector = {
         x: undefined,
-        y: undefined
-    }
+        y: undefined,
+    };
 
     centerOffsetVector.x = that.center.x - node.center.x;
     centerOffsetVector.y = that.center.y - node.center.y;

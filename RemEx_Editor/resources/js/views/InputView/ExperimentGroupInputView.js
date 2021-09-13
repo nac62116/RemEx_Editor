@@ -1,8 +1,6 @@
-/* eslint-env broswer */
-
 import Config from "../../utils/Config.js";
 import InputView from "./InputView.js";
-import {Event} from "../../utils/Observable.js"
+import {Event} from "../../utils/Observable.js";
 
 class ExperimentGroupInputView extends InputView {
 
@@ -36,7 +34,7 @@ class ExperimentGroupInputView extends InputView {
     }
 }
 
-function onInput(event) {
+function onInput() {
     let data = {},
     controllerEvent;
     
@@ -52,7 +50,7 @@ function onDeleteButtonClicked() {
     let data, controllerEvent;
 
     data = {
-        correspondingNode: this.correspondingNode
+        correspondingNode: this.correspondingNode,
     };
     controllerEvent = new Event(Config.EVENT_REMOVE_NODE, data);
     this.notifyAll(controllerEvent);

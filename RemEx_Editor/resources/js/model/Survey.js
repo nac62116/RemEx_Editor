@@ -1,5 +1,3 @@
-/* eslint-env browser */
-
 import Config from "../utils/Config.js";
 
 class Survey {
@@ -173,7 +171,7 @@ function isOverlappingPreviousSurvey(surveyToCheck, previousSurveys) {
         // If there is no last absolute survey (all previous surveys are relative) or there is no previous survey at all. So overlapping has to be checked in the RemEx Android application, because there the experiment start time is set (and with that relative surveys can resolve there absolute start time)
         if (result.lastAbsoluteSurvey !== undefined) {
             // If the start time of the last absolute survey plus the time of all relative surveys in between is greater than the start time of this survey, this survey is overlapping with the previous surveys.
-            if ((result.lastAbsoluteSurvey.getAbsoluteStartAtMinute + result.lastAbsoluteSurvey.getAbsoluteStartAtHour * 60 + result.lastAbsoluteSurvey.getAbsoluteStartDaysOffset * 24 * 60 + result.timeIntervalInMin) > (surveyToCheck.getAbsoluteStartAtMinute + surveyToCheck.getAbsoluteStartAtHour * 60 + surveyToCheck.getAbsoluteStartDaysOffset * 24 * 60)) {
+            if ((result.lastAbsoluteSurvey.getAbsoluteStartAtMinute + result.lastAbsoluteSurvey.getAbsoluteStartAtHour * 60 + result.lastAbsoluteSurvey.getAbsoluteStartDaysOffset * 24 * 60 + result.timeIntervalInMin) > (surveyToCheck.getAbsoluteStartAtMinute + surveyToCheck.getAbsoluteStartAtHour * 60 + surveyToCheck.getAbsoluteStartDaysOffset * 24 * 60)) { // eslint-disable-line
                 return true;
             }
         }
@@ -184,8 +182,8 @@ function isOverlappingPreviousSurvey(surveyToCheck, previousSurveys) {
 function getTimeIntervalFromLastAbsoluteSurvey(previousSurveys) {
     let result = {
         timeIntervalInMin: 0,
-        lastAbsoluteSurvey: undefined
-    }
+        lastAbsoluteSurvey: undefined,
+    };
     for (let i = previousSurveys.length - 1; i >= 0; i--) {
         result.timeIntervalInMin += previousSurveys[i].getMaxDurationInMin() + previousSurveys[i].getNotificationDurationInMin();
         if (!previousSurveys[i].getIsRelative()) {

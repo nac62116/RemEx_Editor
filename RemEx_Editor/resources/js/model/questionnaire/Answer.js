@@ -1,5 +1,3 @@
-/* eslint-env browser */
-
 import Config from "../../utils/Config.js";
 
 class Answer {

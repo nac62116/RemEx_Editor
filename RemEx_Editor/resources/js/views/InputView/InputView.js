@@ -1,5 +1,3 @@
-/* eslint-env broswer */
-
 import Config from "../../utils/Config.js";
 import Observable from "../../utils/Observable.js";
 

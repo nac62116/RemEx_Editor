@@ -1,5 +1,3 @@
-/* eslint-env browser */
-
 class EncodedResource {
 
     constructor(fileName, base64String) {

@@ -1,8 +1,6 @@
-/* eslint-env broswer */
-
 import Config from "../../utils/Config.js";
 import InputView from "./InputView.js";
-import {Event} from "../../utils/Observable.js"
+import {Event} from "../../utils/Observable.js";
 
 class ExperimentInputView extends InputView {
 
@@ -33,7 +31,7 @@ class ExperimentInputView extends InputView {
     }
 }
 
-function onInput(event) {
+function onInput() {
     let data = {},
     controllerEvent;
     

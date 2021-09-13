@@ -1,5 +1,3 @@
-/* eslint-env browser */
-
 /**
  * Configuration object for values shared by multiple components
  */
@@ -13,8 +11,7 @@ const Config = {
     STEP_CONSTRUCTOR_ERROR: "Cannot construct Step instances directly. Please construct subclasses of Step.",
     QUESTION_CONSTRUCTOR_ERROR: "Cannot construct Question instances directly. Please construct subclasses of Question.",
     NODE_VIEW_CONSTRUCTOR_ERROR: "Cannot construct NodeView instances directly. Please construct subclasses of NodeView.",
-
-    
+ 
     // View related:
 
     // View events:
@@ -27,7 +24,6 @@ const Config = {
     EVENT_NODE_ON_DROP: "nodeondrop",
     EVENT_ADD_NEXT_NODE: "addnextnode",
     EVENT_ADD_PREV_NODE: "addprevnode",
-    EVENT_NODE_ON_DROP: "nodeondrop",
     EVENT_INPUT_CHANGED: "inputchanged",
     EVENT_REMOVE_NODE: "removeNode",
 
@@ -137,12 +133,8 @@ const Config = {
     // Experiment group
     NODE_TYPE_EXPERIMENT_GROUP: "experimentGroupNode",
 
-
-
+    // Survey
     NODE_TYPE_SURVEY: "surveyNode",
-
-
-
 
     // Instruction
     NODE_TYPE_INSTRUCTION: "instructionNode",
@@ -172,7 +164,6 @@ const Config = {
     QUESTION_NAME_NOT_UNIQUE: "Der gewählte Name deiner Frage existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
     ANSWER_CODE_NOT_UNIQUE: "Der gewählte Code deiner Antwort existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
     
-
     // Model related:
     
     // Step types:

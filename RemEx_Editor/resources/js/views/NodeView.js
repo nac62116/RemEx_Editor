@@ -1,5 +1,3 @@
-/* eslint-env broswer */
-
 import Config from "../utils/Config.js";
 import {Observable, Event} from "../utils/Observable.js";
 
@@ -18,7 +16,7 @@ class NodeView extends Observable {
         this.elements = [];
         this.centerOffsetVector = {
             x: undefined,
-            y: undefined
+            y: undefined,
         };
         this.nodeSvg = createNodeSvg(description);
         this.nodeSvg.addEventListener("click", onClick.bind(this));
@@ -166,35 +164,35 @@ class NodeView extends Observable {
         if (makeStatic) {
             this.lastStaticPosition = {
                 x: centerX,
-                y: centerY
-            }
+                y: centerY,
+            };
         }
         else {
             // This node is currently moving. It has not yet a new static position.
         }
         this.center = {
             x: centerX,
-            y: centerY
+            y: centerY,
         };
         this.top = {
             x: centerX,
-            y: centerY - this.nodeSvg.getAttribute("height") / 2
+            y: centerY - this.nodeSvg.getAttribute("height") / 2, // eslint-disable-line no-magic-numbers
         };
         this.bottom = {
             x: centerX,
-            y: centerY + this.nodeSvg.getAttribute("height") / 2
+            y: centerY + this.nodeSvg.getAttribute("height") / 2, // eslint-disable-line no-magic-numbers
         };
         this.topLeft = {
-            x: centerX - this.nodeSvg.getAttribute("width") / 2,
-            y: centerY - this.nodeSvg.getAttribute("height") / 2
+            x: centerX - this.nodeSvg.getAttribute("width") / 2, // eslint-disable-line no-magic-numbers
+            y: centerY - this.nodeSvg.getAttribute("height") / 2, // eslint-disable-line no-magic-numbers
         };
         if (this.inputPath !== null) {
             this.bezierReferencePoint = {
                 x: this.parentOutputPoint.x,
-                y: (this.parentOutputPoint.y + ((this.top.y - this.parentOutputPoint.y) / 4))
-            }
+                y: (this.parentOutputPoint.y + ((this.top.y - this.parentOutputPoint.y) / 4)), // eslint-disable-line no-magic-numbers
+            };
             // Update Positions
-            this.inputPath.setAttribute("d", "M " + this.parentOutputPoint.x + " " + this.parentOutputPoint.y + " Q " + this.bezierReferencePoint.x + " " + this.bezierReferencePoint.y + ", " + (this.parentOutputPoint.x + ((this.top.x - this.parentOutputPoint.x) / 2)) + " " + (this.parentOutputPoint.y + ((this.top.y - this.parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + this.top.y);
+            this.inputPath.setAttribute("d", "M " + this.parentOutputPoint.x + " " + this.parentOutputPoint.y + " Q " + this.bezierReferencePoint.x + " " + this.bezierReferencePoint.y + ", " + (this.parentOutputPoint.x + ((this.top.x - this.parentOutputPoint.x) / 2)) + " " + (this.parentOutputPoint.y + ((this.top.y - this.parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + this.top.y); // eslint-disable-line no-magic-numbers
         }
         else {
             // No input path which postion has to be updated.
@@ -220,14 +218,13 @@ class NodeView extends Observable {
     }
 }
 
-
 // Event callback functions:
 
 function onMouseEnter() {
     let data, controllerEvent;
     
     data = {
-        target: this
+        target: this,
     };
     controllerEvent = new Event(Config.EVENT_NODE_MOUSE_ENTER, data);
     this.notifyAll(controllerEvent);
@@ -237,7 +234,7 @@ function onMouseLeave() {
     let data, controllerEvent;
     
     data = {
-        target: this
+        target: this,
     };
     controllerEvent = new Event(Config.EVENT_NODE_MOUSE_LEAVE, data);
     this.notifyAll(controllerEvent);
@@ -247,7 +244,7 @@ function onClick() {
     let data, controllerEvent;
 
     data = {
-        target: this
+        target: this,
     };
     controllerEvent = new Event(Config.EVENT_NODE_CLICKED, data);
     this.notifyAll(controllerEvent);
@@ -261,7 +258,7 @@ function onStartDrag(event) {
         this.centerOffsetVector.y = this.center.y - event.clientY;
         this.isDraggable = true;
         data = {
-            target: this
+            target: this,
         };
         controllerEvent = new Event(Config.EVENT_NODE_START_DRAG, data);
         this.notifyAll(controllerEvent);
@@ -279,7 +276,7 @@ function onDrag(event) {
         y = event.clientY + this.centerOffsetVector.y;
         this.updatePosition(x, y, false);
         data = {
-            target: this
+            target: this,
         };
         controllerEvent = new Event(Config.EVENT_NODE_ON_DRAG, data);
         this.notifyAll(controllerEvent);
@@ -294,7 +291,7 @@ function onDrop() {
 
     this.isDraggable = false;
     data = {
-        target: this
+        target: this,
     };
     controllerEvent = new Event(Config.EVENT_NODE_ON_DROP, data);
     this.notifyAll(controllerEvent);
@@ -304,7 +301,7 @@ function onAddNextNodeClicked() {
     let controllerEvent, data;
 
     data = {
-        target: this
+        target: this,
     };
     controllerEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
     this.notifyAll(controllerEvent);
@@ -314,7 +311,7 @@ function onAddPrevNodeClicked() {
     let controllerEvent, data;
 
     data = {
-        target: this
+        target: this,
     };
     controllerEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
     this.notifyAll(controllerEvent);
@@ -329,7 +326,6 @@ function onAddButtonMouseLeave(event) {
     event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
     event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
 }
-
 
 // Svg element creation:
 
@@ -395,10 +391,11 @@ function createBody() {
     return nodeBody;
 }
 
-function createIcon(type) {
+// TODO
+/*function createIcon(type) {
     let nodeIcon;
     return nodeIcon;
-}
+}*/
 
 function createDescription(description, isEmphasized) {
     let nodeDescription = document.createElementNS("http://www.w3.org/2000/svg", "text"),

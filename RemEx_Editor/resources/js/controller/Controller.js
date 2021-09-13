@@ -1,8 +1,6 @@
-/* eslint-env broswer */
-
 import Config from "../utils/Config.js";
 import Storage from "../utils/Storage.js";
-import IdFinder from "../utils/IdFinder.js";
+import IdManager from "../utils/IdManager.js";
 import ExperimentInputView from "../views/InputView/ExperimentInputView.js";
 import ExperimentGroupInputView from "../views/InputView/ExperimentGroupInputView.js";
 import NodeView from "../views/NodeView.js";
@@ -18,16 +16,16 @@ import ExperimentGroup from "../model/ExperimentGroup.js";
 // - Input fields that allow only one type or type check after input
 // - Format checks inside the views input fields (Delete the ones without usage in the model)
 
-// ENHANCEMENT: Calculate the optimal duration for a survey depending on its steps
+// ENHANCEMENT: Calculate the optimal duration for a survey depending on its 
 
 class Controller {
-
     init() {
-        let experiment, experimentRootNode;
+        let experiment,
+        experimentRootNode;
 
         // Init TreeView
         TreeView.init();
-        
+
         // TODO: Init InputViews
         this.focusedInputView = undefined;
         this.focusedInputViewData = undefined;
@@ -71,7 +69,7 @@ function createNewExperiment() {
 
 function createNewExperimentGroup(that, experiment, parentNode, previousNode, nextNode) {
     let group = new ExperimentGroup(),
-    id = IdFinder.getUnusedGroupId(),
+    id = IdManager.getUnusedId(Config.NODE_TYPE_EXPERIMENT_GROUP),
     groupNode,
     nodeProperties = {};
 
@@ -85,8 +83,14 @@ function createNewExperimentGroup(that, experiment, parentNode, previousNode, ne
     nodeProperties.description = group.name;
     nodeProperties.parentNode = parentNode;
     nodeProperties.previousNode = previousNode;
+    nodeProperties.nextNode = nextNode;
     groupNode = createNode(that, nodeProperties);
-    groupNode.nextNode = nextNode;
+    if (previousNode !== undefined) {
+        previousNode.nextNode = groupNode;
+    }
+    if (nextNode !== undefined) {
+        nextNode.previousNode = groupNode;
+    }
 
     return groupNode;
 }
@@ -94,13 +98,13 @@ function createNewExperimentGroup(that, experiment, parentNode, previousNode, ne
 function createInitialExperimentTree(that, experiment) {
     let experimentRootNode,
     groupNode,
-    previousGroupNode = undefined,
+    previousGroupNode,
     surveyNode,
-    previousSurveyNode = undefined,
+    previousSurveyNode,
     stepNode,
-    previousStepNode = undefined,
+    previousStepNode,
     questionNode,
-    previousQuestionNode = undefined,
+    previousQuestionNode,
     nodeProperties = {};
 
     nodeProperties.id = null;
@@ -108,14 +112,15 @@ function createInitialExperimentTree(that, experiment) {
     nodeProperties.description = experiment.name;
     nodeProperties.parentNode = null;
     nodeProperties.previousNode = undefined;
+    nodeProperties.nextNode = undefined;
     experimentRootNode = createNode(that, nodeProperties);
-    experimentRootNode.nextNode = undefined;
     for (let group of experiment.groups) {
         nodeProperties.id = group.id;
         nodeProperties.type = Config.NODE_TYPE_EXPERIMENT_GROUP;
         nodeProperties.description = group.name;
         nodeProperties.parentNode = experimentRootNode;
         nodeProperties.previousNode = previousGroupNode;
+        nodeProperties.nextNode = undefined;
         groupNode = createNode(that, nodeProperties);
         experimentRootNode.childNodes.push(groupNode);
         if (previousGroupNode !== undefined) {
@@ -129,6 +134,7 @@ function createInitialExperimentTree(that, experiment) {
             nodeProperties.description = survey.name;
             nodeProperties.parentNode = groupNode;
             nodeProperties.previousNode = previousSurveyNode;
+            nodeProperties.nextNode = undefined;
             surveyNode = createNode(that, nodeProperties);
             groupNode.childNodes.push(surveyNode);
             if (previousSurveyNode !== undefined) {
@@ -140,6 +146,7 @@ function createInitialExperimentTree(that, experiment) {
                 nodeProperties.description = step.name;
                 nodeProperties.parentNode = surveyNode;
                 nodeProperties.previousNode = previousStepNode;
+                nodeProperties.nextNode = undefined;
                 if (step.type === Config.STEP_TYPE_INSTRUCTION) {
                     nodeProperties.type = Config.NODE_TYPE_INSTRUCTION;
                 }
@@ -165,6 +172,7 @@ function createInitialExperimentTree(that, experiment) {
                         nodeProperties.description = question.name;
                         nodeProperties.parentNode = stepNode;
                         nodeProperties.previousNode = previousQuestionNode;
+                        nodeProperties.nextNode = undefined;
                         questionNode = createNode(that, nodeProperties);
                         stepNode.childNodes.push(questionNode);
                         if (previousQuestionNode !== undefined) {
@@ -187,7 +195,7 @@ function createNode(that, nodeProperties) {
     if (nodeProperties.description.length >= Config.NODE_DESCRIPTION_MAX_LENGTH) {
         nodeProperties.description = nodeProperties.description.substring(0, Config.NODE_DESCRIPTION_MAX_LENGTH) + "...";
     }
-    node = new NodeView(nodeProperties.id, nodeProperties.type, nodeProperties.description, nodeProperties.parentNode, nodeProperties.previousNode);
+    node = new NodeView(nodeProperties.id, nodeProperties.type, nodeProperties.description, nodeProperties.parentNode, nodeProperties.previousNode, nodeProperties.nextNode);
     node.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onNodeMouseEnter.bind(that));
     node.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onNodeMouseLeave.bind(that));
     node.addEventListener(Config.EVENT_NODE_CLICKED, onNodeClicked.bind(that));
@@ -248,22 +256,21 @@ function onNodeClicked(event) {
     showInputView(this, node, inputData, true);
 }
 
-function onNodeStartDrag(event) {
+function onNodeStartDrag() {
     // TreeView -> Make all other items unfocusable
     // TreeView -> Bring this node to front
 }
 
-function onNodeDrag(event) {
+function onNodeDrag() {
     // TreeView -> create empty spaces inside the current row
 }
 
-function onNodeDrop(event) {
+function onNodeDrop() {
 
     // TreeView -> check for valid dropzone -> if valid (updatePosition(x, y, true))
     // -> if not valid (returnToLastStaticPosition)
     // -> Make all other items focusable
 }
-
 
 // TODO Verlinkung und insertion stimmt nicht
 
@@ -313,6 +320,7 @@ function getInputData(node) {
     else {
         // Get input data from current experiment
     }
+    return undefined;
 }
 
 function showInputView(that, node, inputData, focus) {
@@ -336,19 +344,22 @@ function showInputView(that, node, inputData, focus) {
     }
 }
 
-// InputView events
+// InputView event callbacks
 
 function onRemoveNode(event) {
-    let inputData, nextFocusedNode, index;
+    let nodeToRemove = event.data.correspondingNode,
+    nextFocusedNode,
+    inputData,
+    index;
 
-    if (event.data.correspondingNode.nextNode !== undefined) {
-        nextFocusedNode = event.data.correspondingNode.nextNode;
+    if (nodeToRemove.nextNode !== undefined) {
+        nextFocusedNode = nodeToRemove.nextNode;
     }
-    else if (event.data.correspondingNode.previousNode !== undefined) {
-        nextFocusedNode = event.data.correspondingNode.previousNode;
+    else if (nodeToRemove.previousNode !== undefined) {
+        nextFocusedNode = nodeToRemove.previousNode;
     }
     else {
-        nextFocusedNode = event.data.correspondingNode.parentNode;
+        nextFocusedNode = nodeToRemove.parentNode;
     }
     nextFocusedNode.focus();
     inputData = getInputData(nextFocusedNode);
@@ -356,11 +367,12 @@ function onRemoveNode(event) {
         inputView.hide();
     }
     showInputView(this, nextFocusedNode, inputData, true);
-    index = event.data.correspondingNode.parentNode.childNodes.indexOf(event.data.correspondingNode);
+    index = nodeToRemove.parentNode.childNodes.indexOf(nodeToRemove);
     if (index !== -1) {
-        event.data.correspondingNode.parentNode.childNodes.splice(index, 1);
+        nodeToRemove.parentNode.childNodes.splice(index, 1);
     }
-    TreeView.removeNode(event.data.correspondingNode);
+    IdManager.removeId(nodeToRemove.id, nodeToRemove.type);
+    TreeView.removeNode(nodeToRemove);
 }
 
 function onInputChanged(event) {
