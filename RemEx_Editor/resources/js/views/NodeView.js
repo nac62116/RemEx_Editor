@@ -1,7 +1,7 @@
 import Config from "../utils/Config.js";
 import {Observable, Event} from "../utils/Observable.js";
 
-const UNDRAGGABLE_TYPES = [Config.NODE_TYPE_EXPERIMENT, Config.NODE_TYPE_EXPERIMENT_GROUP];
+const UNDRAGGABLE_TYPES = [Config.TYPE_EXPERIMENT, Config.TYPE_EXPERIMENT_GROUP];
 
 class NodeView extends Observable {
 
@@ -26,7 +26,7 @@ class NodeView extends Observable {
         document.addEventListener("mousemove", onDrag.bind(this));
         this.nodeSvg.addEventListener("mouseup", onDrop.bind(this));
         this.elements.push(this.nodeSvg);
-        if (type !== Config.NODE_TYPE_EXPERIMENT) {
+        if (type !== Config.TYPE_EXPERIMENT) {
             this.addNextNodeButton = createAddButton(this, true);
             this.addPrevNodeButton = createAddButton(this, false);
             this.elements.push(this.addNextNodeButton);
@@ -79,7 +79,7 @@ class NodeView extends Observable {
         if (!this.isFocused) {
             this.isFocused = true;
             this.emphasize();
-            if (this.type !== Config.NODE_TYPE_EXPERIMENT) {
+            if (this.type !== Config.TYPE_EXPERIMENT) {
                 this.addNextNodeButton.removeAttribute("display");
                 this.addPrevNodeButton.removeAttribute("display");
             }
@@ -96,7 +96,7 @@ class NodeView extends Observable {
         if (this.isFocused) {
             this.isFocused = false;
             this.deemphasize();
-            if (this.type !== Config.NODE_TYPE_EXPERIMENT) {
+            if (this.type !== Config.TYPE_EXPERIMENT) {
                 this.addNextNodeButton.setAttribute("display", "none");
                 this.addPrevNodeButton.setAttribute("display", "none");
             }
@@ -197,7 +197,7 @@ class NodeView extends Observable {
         else {
             // No input path which postion has to be updated.
         }
-        if (this.type !== Config.NODE_TYPE_EXPERIMENT) {
+        if (this.type !== Config.TYPE_EXPERIMENT) {
             this.addNextNodeButton.setAttribute("cx", this.center.x + Config.NODE_ADD_BUTTON_DISTANCE);
             this.addNextNodeButton.setAttribute("cy", this.center.y);
             this.addPrevNodeButton.setAttribute("cx", this.center.x - Config.NODE_ADD_BUTTON_DISTANCE);
@@ -302,8 +302,9 @@ function onAddNextNodeClicked() {
 
     data = {
         target: this,
+        insertionType: Config.INSERT_AFTER,
     };
-    controllerEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
+    controllerEvent = new Event(Config.EVENT_ADD_NODE, data);
     this.notifyAll(controllerEvent);
 }
 
@@ -312,8 +313,9 @@ function onAddPrevNodeClicked() {
 
     data = {
         target: this,
+        insertionType: Config.INSERT_BEFORE,
     };
-    controllerEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+    controllerEvent = new Event(Config.EVENT_ADD_NODE, data);
     this.notifyAll(controllerEvent);
 }
 
@@ -349,7 +351,7 @@ function createAddButton(that, isNextButton) {
     addButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(that));
     addButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
     addButton.setAttribute("r", Config.NODE_ADD_BUTTON_RADIUS);
-    addButton.setAttribute("fill", Config.NODE_ADD_BUTTON_FILL_COLOR);
+    addButton.setAttribute("fill", Config.NODE_ADD_BUTTON_FILL_COLOR_DEEMPHASIZED);
     addButton.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
     addButton.setAttribute("stroke", Config.NODE_ADD_BUTTON_STROKE_COLOR);
     addButton.setAttribute("stroke-width", Config.NODE_ADD_BUTTON_STROKE_WIDTH);

@@ -22,7 +22,7 @@ const Config = {
     EVENT_NODE_START_DRAG: "nodestartdrag",
     EVENT_NODE_ON_DRAG: "nodeondrag",
     EVENT_NODE_ON_DROP: "nodeondrop",
-    EVENT_ADD_NEXT_NODE: "addnextnode",
+    EVENT_ADD_NODE: "addnextnode",
     EVENT_ADD_PREV_NODE: "addprevnode",
     EVENT_INPUT_CHANGED: "inputchanged",
     EVENT_REMOVE_NODE: "removeNode",
@@ -61,8 +61,8 @@ const Config = {
     TREE_VIEW_ROW_DISTANCE_FACTOR: 0.7,
     TREE_MOVEMENT_ANIMATION_STEPS: 10,
     TREE_MOVEMENT_ANIMATION_FRAME_RATE_MS: 10,
-    TREE_VIEW_INSERT_BEFORE: "insertBeforeNode",
-    TREE_VIEW_INSERT_AFTER: "insertBeforeNode",
+    INSERT_BEFORE: "insertBeforeNode",
+    INSERT_AFTER: "insertAfterNode",
 
     // Tree node input path
     NODE_INPUT_PATH_STROKE_WIDTH: "2",
@@ -82,6 +82,7 @@ const Config = {
     NODE_BODY_HEIGHT: "96%",
     NODE_BODY_BORDER_RADIUS: "10%",
     NODE_BODY_FILL_COLOR: "black",
+    NODE_BODY_FILL_COLOR_FOCUSED: "rgb(0, 102, 204)",
     NODE_BODY_FILL_OPACITY_DEEMPHASIZED: "0.1",
     NODE_BODY_FILL_OPACITY_EMPHASIZE_BY: "0.4",
     NODE_BODY_STROKE_WIDTH: "2%",
@@ -92,7 +93,8 @@ const Config = {
     // Tree node add buttons
     NODE_ADD_BUTTON_DISTANCE: 65,
     NODE_ADD_BUTTON_RADIUS: "10",
-    NODE_ADD_BUTTON_FILL_COLOR: "black",
+    NODE_ADD_BUTTON_FILL_COLOR_DEEMPHASIZED: "black",
+    NODE_ADD_BUTTON_FILL_COLOR_EMPHASIZED: "rgb(0, 102, 204)",
     NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED: "0.1",
     NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED: "0.5",
     NODE_ADD_BUTTON_STROKE_WIDTH: "2",
@@ -119,34 +121,28 @@ const Config = {
     NODE_DESCRIPTION_FONT_WEIGHT: "bold",
 
     // Node descriptions
-    NEW_EXPERIMENT_DESCRIPTION: "Neues Experiment",
-    NEW_EXPERIMENT_GROUP_DESCRIPTION: "Neue Experiment Gruppe",
+    NEW_EXPERIMENT_NAME: "Neues Experiment",
+    NEW_EXPERIMENT_GROUP_NAME: "Neue Experiment Gruppe",
     NEW_STEP_DESCRIPTION: "Neuer Schritt",
     NEW_QUESTION_DESCRIPTION: "Neue Frage",
     BREATHING_EXERCISE_DESCRIPTION: "Atemübung",
     
-    // Node types
+    // Types
 
     // Experiment
-    NODE_TYPE_EXPERIMENT: "experimentNode",
-
+    TYPE_EXPERIMENT: "experiment",
     // Experiment group
-    NODE_TYPE_EXPERIMENT_GROUP: "experimentGroupNode",
-
+    TYPE_EXPERIMENT_GROUP: "experimentGroup",
     // Survey
-    NODE_TYPE_SURVEY: "surveyNode",
-
+    TYPE_SURVEY: "survey",
     // Instruction
-    NODE_TYPE_INSTRUCTION: "instructionNode",
-    
+    TYPE_INSTRUCTION: "instruction",
     // Breathing exercise
-    NODE_TYPE_BREATHING_EXERCISE: "breathingExerciseNode",
-    
+    TYPE_BREATHING_EXERCISE: "breathingExercise",
     // Questionnaire
-    NODE_TYPE_QUESTIONNAIRE: "questionnaireNode",
-    
+    TYPE_QUESTIONNAIRE: "questionnaire",
     // Question
-    NODE_TYPE_QUESTION: "questionNode",
+    TYPE_QUESTION: "question",
 
     // Input invalid messages:
     

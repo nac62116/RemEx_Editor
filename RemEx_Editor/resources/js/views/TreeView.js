@@ -47,7 +47,7 @@ class TreeView {
                     stepNode.updatePosition(stepX, this.stepsPositionY, true);
                     insertNodeIntoDOM(this, stepNode);
                     stepX = stepX + Config.NODE_DISTANCE_HORIZONTAL;
-                    if (stepNode.type === Config.NODE_TYPE_QUESTIONNAIRE) {
+                    if (stepNode.type === Config.TYPE_QUESTIONNAIRE) {
                         for (let questionNode of stepNode.childNodes) {
                             questionNode.setInputPath(stepNode.bottom);
                             questionNode.updatePosition(questionX, this.questionsPositionY, true);
@@ -66,15 +66,16 @@ class TreeView {
         let x,
         y,
         isInsertion = true;
-        if (insertionType === Config.TREE_VIEW_INSERT_AFTER && node.previousNode !== undefined) {
+
+        if (insertionType === Config.INSERT_AFTER) {
             x = node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL;
             y = node.previousNode.center.y;
-            updateNextNodePosition(node.nextNode, isInsertion);
+            updateNextNodePositions(node.nextNode, isInsertion);
         }
-        else if (insertionType === Config.TREE_VIEW_INSERT_BEFORE && node.nextNode !== undefined) {
+        else if (insertionType === Config.INSERT_BEFORE) {
             x = node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL;
             y = node.nextNode.center.y;
-            updatePreviousNodePosition(node.previousNode, isInsertion);
+            updatePrevNodePositions(node.previousNode);
         }
         else {
             x = this.center.x;
@@ -87,15 +88,8 @@ class TreeView {
 
     removeNode(node) {
         let isInsertion = false;
-        if (node.previousNode !== undefined) {
-            updateNextNodePosition(node.nextNode, isInsertion);
-        }
-        else if (node.nextNode !== undefined) {
-            updatePreviousNodePosition(node.previousNode, isInsertion);
-        }
-        else {
-            // No other nodes in this row which have to be updated
-        }
+
+        updateNextNodePositions(node.nextNode, isInsertion);
         removeNodeFromDOM(node);
     }
 
@@ -148,7 +142,7 @@ function removeNodeFromDOM(node) {
     }
 }
 
-function updateNextNodePosition(node, isInsertion) {
+function updateNextNodePositions(node, isInsertion) {
     if (node === undefined) {
         return;
     }
@@ -158,20 +152,15 @@ function updateNextNodePosition(node, isInsertion) {
     else {
         node.updatePosition(node.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
     }
-    updateNextNodePosition(node.nextNode);
+    updateNextNodePositions(node.nextNode, isInsertion);
 }
 
-function updatePreviousNodePosition(node, isInsertion) {
+function updatePrevNodePositions(node) {
     if (node === undefined) {
         return;
     }
-    if (isInsertion) {
-        node.updatePosition(node.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
-    }
-    else {
-        node.updatePosition(node.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
-    }
-    updatePreviousNodePosition(node.previousNode);
+    node.updatePosition(node.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.center.y, true);
+    updatePrevNodePositions(node.previousNode);
 }
 
 function getCenterOffsetVector(that, node) {

@@ -1,4 +1,4 @@
-import Config from "./Config.js";
+import Config from "../utils/Config.js";
 
 // Class to find unique ids for surveys, steps, questions...
 
@@ -12,18 +12,18 @@ class IdManager {
     }
 
     addId(id, type) {
-        if (type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        if (type === Config.TYPE_EXPERIMENT_GROUP) {
             addGroupId(this, id);
         }
-        else if (type === Config.NODE_TYPE_SURVEY) {
+        else if (type === Config.TYPE_SURVEY) {
            addSurveyId(this, id);
         }
-        else if (type === Config.NODE_TYPE_BREATHING_EXERCISE
-            || type === Config.NODE_TYPE_INSTRUCTION
-            || type === Config.NODE_TYPE_QUESTIONNAIRE) {
+        else if (type === Config.TYPE_BREATHING_EXERCISE
+            || type === Config.TYPE_INSTRUCTION
+            || type === Config.TYPE_QUESTIONNAIRE) {
             addStepId(this, id);
         }
-        else if (type === Config.NODE_TYPE_QUESTION) {
+        else if (type === Config.TYPE_QUESTION) {
             addQuestionId(this, id);
         }
         else {
@@ -32,18 +32,18 @@ class IdManager {
     }
 
     removeId(id, type) {
-        if (type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        if (type === Config.TYPE_EXPERIMENT_GROUP) {
             removeGroupId(this, id);
         }
-        else if (type === Config.NODE_TYPE_SURVEY) {
+        else if (type === Config.TYPE_SURVEY) {
            removeSurveyId(this, id);
         }
-        else if (type === Config.NODE_TYPE_BREATHING_EXERCISE
-            || type === Config.NODE_TYPE_INSTRUCTION
-            || type === Config.NODE_TYPE_QUESTIONNAIRE) {
+        else if (type === Config.TYPE_BREATHING_EXERCISE
+            || type === Config.TYPE_INSTRUCTION
+            || type === Config.TYPE_QUESTIONNAIRE) {
             removeStepId(this, id);
         }
-        else if (type === Config.NODE_TYPE_QUESTION) {
+        else if (type === Config.TYPE_QUESTION) {
             removeQuestionId(this, id);
         }
         else {
@@ -53,18 +53,18 @@ class IdManager {
 
     getUnusedId(type) {
         let unusedId;
-        if (type === Config.NODE_TYPE_EXPERIMENT_GROUP) {
+        if (type === Config.TYPE_EXPERIMENT_GROUP) {
             unusedId = getUnusedId(this.currentGroupIds);
         }
-        else if (type === Config.NODE_TYPE_SURVEY) {
+        else if (type === Config.TYPE_SURVEY) {
             unusedId = getUnusedId(this.currentSurveyIds);
         }
-        else if (type === Config.NODE_TYPE_BREATHING_EXERCISE
-            || type === Config.NODE_TYPE_INSTRUCTION
-            || type === Config.NODE_TYPE_QUESTIONNAIRE) {
+        else if (type === Config.TYPE_BREATHING_EXERCISE
+            || type === Config.TYPE_INSTRUCTION
+            || type === Config.TYPE_QUESTIONNAIRE) {
             unusedId = getUnusedId(this.currentStepIds);
         }
-        else if (type === Config.NODE_TYPE_QUESTION) {
+        else if (type === Config.TYPE_QUESTION) {
             unusedId = getUnusedId(this.currentQuestionIds);
         }
         else {

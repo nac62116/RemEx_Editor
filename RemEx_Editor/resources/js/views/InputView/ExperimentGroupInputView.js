@@ -29,18 +29,24 @@ class ExperimentGroupInputView extends InputView {
         inputElement = inputField.querySelector("#" + Config.INPUT_EXPERIMENT_GROUP_NAME_ID);
         inputElement.value = data.experimentGroupName;
         inputElement.addEventListener("keyup", onInput.bind(this));
-
+        
         this.inputFieldsContainer.appendChild(inputField);
+        inputElement.select();
     }
 }
 
 function onInput() {
-    let data = {},
+    let data = {
+        correspondingNode: this.correspondingNode,
+        newProperties: {
+            experimentGroupName: undefined,
+        },
+    },
     controllerEvent;
     
-    data.node = this.correspondingNode;
-    data.experimentGroupName = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_GROUP_NAME_ID).value;
-    this.header.innerHTML = data.experimentGroupName;
+    data.correspondingNode = this.correspondingNode;
+    data.newProperties.experimentGroupName = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_GROUP_NAME_ID).value;
+    this.header.innerHTML = data.newProperties.experimentGroupName;
 
     controllerEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
     this.notifyAll(controllerEvent);
