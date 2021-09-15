@@ -4,9 +4,7 @@ import ExperimentGroupInputView from "../views/InputView/ExperimentGroupInputVie
 
 class ViewManager {
 
-    initInputView(eventListener) {
-
-        // TODO: Init InputViews
+    initInputViews(eventListener) {
         this.focusedInputView = undefined;
         this.focusedInputViewData = undefined;
         this.inputViews = [];
@@ -59,6 +57,12 @@ class ViewManager {
 
     updateFocusedInputView(inputData) {
         this.focusedInputViewData = inputData;
+    }
+
+    selectInputField() {
+        for (let inputView of this.inputViews) {
+            inputView.selectFirstInput();
+        }
     }
 }
 

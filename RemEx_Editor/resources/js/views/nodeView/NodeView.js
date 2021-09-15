@@ -1,5 +1,5 @@
-import Config from "../utils/Config.js";
-import {Observable, Event} from "../utils/Observable.js";
+import Config from "../../utils/Config.js";
+import {Observable, Event} from "../../utils/Observable.js";
 
 const UNDRAGGABLE_TYPES = [Config.TYPE_EXPERIMENT, Config.TYPE_EXPERIMENT_GROUP];
 
@@ -186,6 +186,10 @@ class NodeView extends Observable {
             x: centerX - this.nodeSvg.getAttribute("width") / 2, // eslint-disable-line no-magic-numbers
             y: centerY - this.nodeSvg.getAttribute("height") / 2, // eslint-disable-line no-magic-numbers
         };
+        this.topRight = {
+            x: centerX + this.nodeSvg.getAttribute("width") / 2, // eslint-disable-line no-magic-numbers
+            y: centerY - this.nodeSvg.getAttribute("height") / 2, // eslint-disable-line no-magic-numbers
+        };
         if (this.inputPath !== null) {
             this.bezierReferencePoint = {
                 x: this.parentOutputPoint.x,
@@ -211,9 +215,18 @@ class NodeView extends Observable {
     }
 
     updateDescription(description) {
-        let descriptionElement = this.nodeSvg.querySelector("#" + Config.NODE_DESCRIPTION_ID);
+        let formatedDescription = description,
+        descriptionElement;
+
+        if (description.length > Config.NODE_DESCRIPTION_MAX_LENGTH) {
+            formatedDescription = description.substring(0, Config.NODE_DESCRIPTION_MAX_LENGTH) + "...";
+        }
+        else {
+            // Description is short enough
+        }
+        descriptionElement = this.nodeSvg.querySelector("#" + Config.NODE_DESCRIPTION_ID);
         descriptionElement.remove();
-        descriptionElement = createDescription(description, true);
+        descriptionElement = createDescription(formatedDescription, true);
         this.nodeSvg.appendChild(descriptionElement);
     }
 }
@@ -366,6 +379,8 @@ function createNodeSvg(description) {
     //nodeIcon = createIcon(type),
     nodeDescription = createDescription(description, false);
 
+    nodeBody.setAttribute("focusable", false);
+    nodeDescription.setAttribute("focusable", false);
     nodeSvg.setAttribute("viewBox", "0 0 " + Config.NODE_WIDTH + " " + Config.NODE_HEIGHT);
     nodeSvg.setAttribute("width", Config.NODE_WIDTH);
     nodeSvg.setAttribute("height", Config.NODE_HEIGHT);

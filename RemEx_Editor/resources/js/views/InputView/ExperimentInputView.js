@@ -8,14 +8,7 @@ class ExperimentInputView extends InputView {
         super.show();
         // The root node cannot be deleted
         this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-        this.removeInputFields();
         this.createInputFields(data);
-    }
-
-    removeInputFields() {
-        for (let child of this.inputFieldsContainer.children) {
-            child.remove();
-        }
     }
 
     createInputFields(data) {
@@ -28,7 +21,6 @@ class ExperimentInputView extends InputView {
         inputElement.addEventListener("keyup", onInput.bind(this));
 
         this.inputFieldsContainer.appendChild(inputField);
-        inputElement.select();
     }
 }
 

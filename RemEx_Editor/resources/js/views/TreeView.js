@@ -1,8 +1,9 @@
 import Config from "../utils/Config.js";
+import NodeView from "./nodeView/NodeView.js";
 
 class TreeView {
 
-    init() {
+    init(eventListener, experiment) {
         this.treeViewContainer = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID);
         this.treeView = this.treeViewContainer.firstElementChild;
         initTreeViewBox(this);
@@ -19,16 +20,17 @@ class TreeView {
         this.stepsPositionY = this.surveysPositionY + this.rowDistance;
         this.questionsPositionY = this.stepsPositionY + this.rowDistance;
 
-        this.experimentRootNode = undefined;
+        this.setTree(eventListener, experiment);
+        this.currentFocusedNode = this.experimentRootNode;
     }
 
-    setInitialTree(rootNode) {
+    setTree(eventListener, experiment) {
         let groupX = this.center.x,
         stepX = this.center.x,
         surveyX = this.center.x,
         questionX = this.center.x;
 
-        this.experimentRootNode = rootNode;
+        this.experimentRootNode = createExperimentTree(this, eventListener, experiment);
         this.experimentRootNode.setInputPath(null);
         this.experimentRootNode.updatePosition(this.center.x, this.experimentPositionY, true);
         insertNodeIntoDOM(this, this.experimentRootNode);
@@ -60,7 +62,28 @@ class TreeView {
         }
     }
 
-    // TODO: Insertion
+    createNode(id, eventListener, nodeProperties) {
+        let newNode;
+    
+        if (nodeProperties.description.length >= Config.NODE_DESCRIPTION_MAX_LENGTH) {
+            nodeProperties.description = nodeProperties.description.substring(0, Config.NODE_DESCRIPTION_MAX_LENGTH) + "...";
+        }
+        newNode = new NodeView(id, nodeProperties.type, nodeProperties.description, nodeProperties.parentNode, nodeProperties.previousNode, nodeProperties.nextNode);
+        for (let listener of eventListener) {
+            newNode.addEventListener(listener.eventType, listener.callback);
+        }
+        if (nodeProperties.parentNode !== undefined) {
+            nodeProperties.parentNode.childNodes.push(newNode);
+        }
+        if (nodeProperties.previousNode !== undefined) {
+            nodeProperties.previousNode.nextNode = newNode;
+        }
+        if (nodeProperties.nextNode !== undefined) {
+            nodeProperties.nextNode.previousNode = newNode;
+        }
+    
+        return newNode;
+    }
 
     insertNode(node, insertionType) {
         let x,
@@ -87,13 +110,18 @@ class TreeView {
     }
 
     removeNode(node) {
-        let isInsertion = false;
+        let isInsertion = false,
+        nextFocusedNode;
 
+        updateNodeLinks(node);
+        nextFocusedNode = getNextFocusedNode(node);
         updateNextNodePositions(node.nextNode, isInsertion);
+        removeNodeFromParentsList(node);
         removeNodeFromDOM(node);
+        return nextFocusedNode;
     }
 
-    setFocusOn(node) {
+    focusNode(node) {
         let firstNodeOfRow = getFirstNodeOfRow(node),
         centerOffsetVector = getCenterOffsetVector(this, node),
         partialVector = {
@@ -115,6 +143,47 @@ class TreeView {
         showChildNodes(node, true);
         defocusNextNodes(firstNodeOfRow);
         node.focus();
+        this.currentFocusedNode = node;
+    }
+
+    emphasizeNode(node) {
+        node.emphasize();
+    }
+
+    deemphasizeNode(node) {
+        node.deemphasize();
+    }
+
+    clickNode(node) {
+        node.nodeSvg.dispatchEvent(new Event("click"));
+    }
+
+    updateNodeDescription(node, description) {
+        node.updateDescription(description);
+    }
+
+    moveToPreviousNode() {
+        if (this.currentFocusedNode.previousNode !== undefined) {
+            this.clickNode(this.currentFocusedNode.previousNode);
+        }
+    }
+
+    moveToNextNode() {
+        if (this.currentFocusedNode.nextNode !== undefined) {
+            this.clickNode(this.currentFocusedNode.nextNode);
+        }
+    }
+
+    moveToParentNode() {
+        if (this.currentFocusedNode.parentNode !== undefined) {
+            this.clickNode(this.currentFocusedNode.parentNode);
+        }
+    }
+
+    moveToFirstChildNode() {
+        if (this.currentFocusedNode.childNodes[0] !== undefined) {
+            this.clickNode(this.currentFocusedNode.childNodes[0]);
+        }
     }
 }
 
@@ -128,6 +197,134 @@ function initTreeViewBox(that) {
     that.background.setAttribute("fill", Config.TREE_VIEW_BACKGROUND_COLOR);
     that.background.setAttribute("fill-opacity", Config.TREE_VIEW_BACKGROUND_OPACITY);
     that.treeView.appendChild(that.background);
+}
+
+function createExperimentTree(that, eventListener, experiment) {
+    let experimentRootNode,
+    groupNode,
+    previousGroupNode,
+    surveyNode,
+    previousSurveyNode,
+    stepNode,
+    previousStepNode,
+    questionNode,
+    previousQuestionNode,
+    nodeProperties = {},
+    id;
+
+    nodeProperties.type = Config.TYPE_EXPERIMENT;
+    nodeProperties.description = experiment.name;
+    nodeProperties.parentNode = undefined;
+    nodeProperties.previousNode = undefined;
+    nodeProperties.nextNode = undefined;
+    experimentRootNode = that.createNode(id, eventListener, nodeProperties);
+    for (let group of experiment.groups) {
+        id = group.id;
+        nodeProperties.type = Config.TYPE_EXPERIMENT_GROUP;
+        nodeProperties.description = group.name;
+        nodeProperties.parentNode = experimentRootNode;
+        nodeProperties.previousNode = previousGroupNode;
+        nodeProperties.nextNode = undefined;
+        groupNode = that.createNode(id, eventListener, nodeProperties);
+        experimentRootNode.childNodes.push(groupNode);
+        if (previousGroupNode !== undefined) {
+            previousGroupNode.nextNode = groupNode;
+        }
+        previousGroupNode = groupNode;
+        for (let survey of group.surveys) {
+            // TODO: Create Survey Timeline
+            id = survey.id;
+            nodeProperties.type = Config.TYPE_SURVEY;
+            nodeProperties.description = survey.name;
+            nodeProperties.parentNode = groupNode;
+            nodeProperties.previousNode = previousSurveyNode;
+            nodeProperties.nextNode = undefined;
+            surveyNode = that.createNode(id, eventListener, nodeProperties);
+            groupNode.childNodes.push(surveyNode);
+            if (previousSurveyNode !== undefined) {
+                previousSurveyNode.nextNode = surveyNode;
+            }
+            previousSurveyNode = surveyNode;
+            for (let step of survey.steps) {
+                id = step.id;
+                nodeProperties.description = step.name;
+                nodeProperties.parentNode = surveyNode;
+                nodeProperties.previousNode = previousStepNode;
+                nodeProperties.nextNode = undefined;
+                if (step.type === Config.STEP_TYPE_INSTRUCTION) {
+                    nodeProperties.type = Config.TYPE_INSTRUCTION;
+                }
+                else if (step.type === Config.STEP_TYPE_BREATHING_EXERCISE) {
+                    nodeProperties.type = Config.TYPE_BREATHING_EXERCISE;
+                }
+                else if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                    nodeProperties.type = Config.TYPE_QUESTIONNAIRE;
+                }
+                else {
+                    throw "TreeView: No Node for step type \"" + step.type + "\" is defined.";
+                }
+                stepNode = that.createNode(id, eventListener, nodeProperties);
+                surveyNode.childNodes.push(stepNode);
+                if (previousStepNode !== undefined) {
+                    previousStepNode.nextNode = stepNode;
+                }
+                previousStepNode = stepNode;
+                if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                    for (let question of step.questions) {
+                        id = question.id;
+                        nodeProperties.type = Config.TYPE_QUESTION;
+                        nodeProperties.description = question.name;
+                        nodeProperties.parentNode = stepNode;
+                        nodeProperties.previousNode = previousQuestionNode;
+                        nodeProperties.nextNode = undefined;
+                        questionNode = that.createNode(id, eventListener, nodeProperties);
+                        stepNode.childNodes.push(questionNode);
+                        if (previousQuestionNode !== undefined) {
+                            previousQuestionNode.nextNode = questionNode;
+                        }
+                        previousQuestionNode = questionNode;
+                    }
+                }
+                else {
+                    // The other step types haven't got child nodes
+                }
+            }
+        }
+    }
+    return experimentRootNode;
+}
+
+function updateNodeLinks(node) {
+    if (node.previousNode !== undefined) {
+        node.previousNode.nextNode = node.nextNode;
+    }
+    if (node.nextNode !== undefined) {
+        node.nextNode.previousNode = node.previousNode;
+    }
+}
+
+function getNextFocusedNode(node) {
+    let nextFocusedNode;
+
+    if (node.nextNode !== undefined) {
+        nextFocusedNode = node.nextNode;
+    }
+    else if (node.previousNode !== undefined) {
+        nextFocusedNode = node.previousNode;
+    }
+    else {
+        nextFocusedNode = node.parentNode;
+    }
+    return nextFocusedNode;
+}
+
+function removeNodeFromParentsList(node) {
+    let indexInParentList;
+
+    indexInParentList = node.parentNode.childNodes.indexOf(node);
+    if (indexInParentList !== -1) {
+        node.parentNode.childNodes.splice(indexInParentList, 1);
+    }
 }
 
 function insertNodeIntoDOM(that, node) {

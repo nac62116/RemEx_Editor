@@ -9,6 +9,7 @@ class InputView extends Observable {
         this.header = document.querySelector("#" + Config.INPUT_VIEW_HEADER_ID);
         this.deleteButton = document.querySelector("#" + Config.INPUT_VIEW_DELETE_BUTTON_ID);
         this.correspondingNode = undefined;
+        this.inputEnabled = true;
         // TODO: Fullscreen Button
         this.hide();
     }
@@ -18,6 +19,10 @@ class InputView extends Observable {
         this.header.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         this.inputFieldsContainer.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         this.deleteButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        // The inputFields are recreated in the derived classes (ExperimentInputView, ...)
+        for (let inputField of this.inputFieldsContainer.children) {
+            inputField.remove();
+        }
     }
 
     hide() {
@@ -25,6 +30,10 @@ class InputView extends Observable {
         this.header.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         this.inputFieldsContainer.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+    }
+
+    selectFirstInput() {
+        this.inputFieldsContainer.querySelector("input").select();
     }
 
     createTextInput(label, id) {

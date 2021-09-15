@@ -11,14 +11,7 @@ class ExperimentGroupInputView extends InputView {
 
     show(data) {
         super.show();
-        this.removeInputFields();
         this.createInputFields(data);
-    }
-
-    removeInputFields() {
-        for (let child of this.inputFieldsContainer.children) {
-            child.remove();
-        }
     }
 
     createInputFields(data) {
@@ -31,7 +24,6 @@ class ExperimentGroupInputView extends InputView {
         inputElement.addEventListener("keyup", onInput.bind(this));
         
         this.inputFieldsContainer.appendChild(inputField);
-        inputElement.select();
     }
 }
 

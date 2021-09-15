@@ -1,4 +1,4 @@
-import TreeViewManager from "./TreeViewManager.js";
+import TreeView from "../views/TreeView.js";
 import InputViewManager from "./InputViewManager.js";
 import ModelManager from "./ModelManager.js";
 import IdManager from "./IdManager.js";
@@ -7,12 +7,20 @@ import Config from "../utils/Config.js";
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
 
-// TODO: Input checks:
-// - Defining max characters for several input fields
-// - Input fields that allow only one type or type check after input
-// - Format checks inside the views input fields (Delete the ones without usage in the model)
+// TODO:
+// -> InfoView
+// -> Up and download experiment.json
+// -> Input checks:
+// --- Defining max characters for several input fields
+// --- Input fields that allow only one type or type check after input
+// --- Format checks inside the views input fields (Delete the ones without usage in the model)
+// -> Copy paste option
+// -> Code cleaning
+// (-> Tree spacing)
+// (-> Colors and style)
 
-// ENHANCEMENT: Calculate the optimal duration for a survey depending on its 
+// ENHANCEMENT: 
+// - Calculate the optimal duration for a survey depending on its 
 
 class Controller {
 
@@ -61,9 +69,10 @@ class Controller {
         ];
 
         experiment = ModelManager.initExperiment();
-        TreeViewManager.initTreeView(this.nodeViewEventListener, experiment);
-        InputViewManager.initInputView(this.inputViewEventListener);
+        TreeView.init(this.nodeViewEventListener, experiment);
+        InputViewManager.initInputViews(this.inputViewEventListener);
         // InfoViewManager.initInfoView();
+        document.addEventListener("keydown", onKeyDown.bind(this));
     }
 }
 
@@ -73,16 +82,17 @@ function onNodeMouseEnter(event) {
     let hoveredNode = event.data.target,
     inputData = ModelManager.getDataFromNode(hoveredNode);
     
-    TreeViewManager.emphasizeNode(hoveredNode);
+    TreeView.emphasizeNode(hoveredNode);
     InputViewManager.showInputView(hoveredNode, inputData, false);
     // InfoView -> show Info
 }
 
 function onNodeMouseLeave(event) {
     let hoveredNode = event.data.target;
-    
-    TreeViewManager.deemphasizeNode(hoveredNode);
+    // InputViewManager -> Enable input
+    TreeView.deemphasizeNode(hoveredNode);
     InputViewManager.showFocusedInputView();
+    InputViewManager.selectInputField();
     // InfoView -> show last focused info
 }
 
@@ -94,7 +104,7 @@ function onNodeClicked(event) {
     newModelProperties = {},
     id;
     
-    TreeViewManager.focusNode(clickedNode);
+    TreeView.focusNode(clickedNode);
     if (clickedNode.childNodes.length === 0) {
         if (clickedNode.type === Config.TYPE_EXPERIMENT) {
 
@@ -104,9 +114,9 @@ function onNodeClicked(event) {
             ModelManager.extendExperiment(id, Config.TYPE_EXPERIMENT_GROUP, newModelProperties);
 
             newNodeProperties = getNewNodeProperties(Config.TYPE_EXPERIMENT_GROUP, clickedNode, undefined, undefined);
-            newNode = TreeViewManager.createNode(id, this.nodeViewEventListener, newNodeProperties);
+            newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
 
-            TreeViewManager.insertNode(newNode, undefined);
+            TreeView.insertNode(newNode, undefined);
         }
         else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
             // TODO 
@@ -118,7 +128,9 @@ function onNodeClicked(event) {
     else {
         // No need to create a new childNode as the clicked node already got one or more
     }
+    // InputViewManager -> Enable input
     InputViewManager.showInputView(clickedNode, inputData, true);
+    InputViewManager.selectInputField();
 }
 
 function onNodeStartDrag() {
@@ -155,10 +167,10 @@ function onAddNode(event) {
         throw "TypeError: The insertion type \"" + insertionType + "\" is not defined.";
     }
     ModelManager.extendExperiment(id, Config.TYPE_EXPERIMENT_GROUP, newModelProperties);
-    newNode = TreeViewManager.createNode(id, this.nodeViewEventListener, newNodeProperties);
+    newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
 
-    TreeViewManager.insertNode(newNode, insertionType);
-    TreeViewManager.clickNode(newNode);
+    TreeView.insertNode(newNode, insertionType);
+    TreeView.clickNode(newNode);
 }
 
 // Node event helper functions
@@ -226,8 +238,8 @@ function onRemoveNode(event) {
 
     IdManager.removeId(nodeToRemove.id, nodeToRemove.type);
     ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.type);
-    nextFocusedNode = TreeViewManager.removeNode(nodeToRemove);
-    TreeViewManager.clickNode(nextFocusedNode);
+    nextFocusedNode = TreeView.removeNode(nodeToRemove);
+    TreeView.clickNode(nextFocusedNode);
 }
 
 function onInputChanged(event) {
@@ -238,10 +250,30 @@ function onInputChanged(event) {
     newDescription = ModelManager.updateExperiment(id, type, newModelProperties),
     inputData;
 
-    TreeViewManager.updateDescription(correspondingNode, newDescription);
+    TreeView.updateNodeDescription(correspondingNode, newDescription);
 
     inputData = ModelManager.getDataFromNode(correspondingNode);
     InputViewManager.updateFocusedInputView(inputData);
+}
+
+// Whole page events
+
+function onKeyDown(event) {
+    if (event.key === "ArrowLeft") {
+        TreeView.moveToPreviousNode();
+    }
+    else if (event.key === "ArrowRight") {
+        TreeView.moveToNextNode();
+    }
+    else if (event.key === "ArrowUp") {
+        TreeView.moveToParentNode();
+    }
+    else if (event.key === "ArrowDown") {
+        TreeView.moveToFirstChildNode();
+    }
+    else {
+        // No event for other keys defined
+    }
 }
 
 export default new Controller();
