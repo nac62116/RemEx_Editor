@@ -9,6 +9,34 @@ class NodeView extends Observable {
         super();
         this.id = id;
         this.type = type;
+        this.parentNode = parent;
+        this.previousNode = previousNode;
+        this.nextNode = nextNode;
+        this.childNodes = [];
+        this.lastStaticPosition = {
+            x: undefined,
+            y: undefined,
+        };
+        this.center = {
+            x: undefined,
+            y: undefined,
+        };
+        this.top = {
+            x: undefined,
+            y: undefined,
+        };
+        this.bottom = {
+            x: undefined,
+            y: undefined,
+        };
+        this.topLeft = {
+            x: undefined,
+            y: undefined,
+        };
+        this.topRight = {
+            x: undefined,
+            y: undefined,
+        };
         this.isEmphasized = false;
         this.isFocused = false;
         this.isFocusable = true;
@@ -18,7 +46,7 @@ class NodeView extends Observable {
             x: undefined,
             y: undefined,
         };
-        this.nodeSvg = createNodeSvg(description);
+        this.nodeSvg = createNodeSvg(this, description);
         this.nodeSvg.addEventListener("click", onClick.bind(this));
         this.nodeSvg.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeSvg.addEventListener("mouseleave", onMouseLeave.bind(this));
@@ -32,10 +60,6 @@ class NodeView extends Observable {
             this.elements.push(this.addNextNodeButton);
             this.elements.push(this.addPrevNodeButton);
         }
-        this.previousNode = previousNode;
-        this.nextNode = nextNode;
-        this.childNodes = [];
-        this.parentNode = parent;
     }
 
     setInputPath(parentOutputPoint) {
@@ -78,7 +102,6 @@ class NodeView extends Observable {
     focus() {
         if (!this.isFocused) {
             this.isFocused = true;
-            this.emphasize();
             if (this.type !== Config.TYPE_EXPERIMENT) {
                 this.addNextNodeButton.removeAttribute("display");
                 this.addPrevNodeButton.removeAttribute("display");
@@ -95,7 +118,6 @@ class NodeView extends Observable {
     defocus() {
         if (this.isFocused) {
             this.isFocused = false;
-            this.deemphasize();
             if (this.type !== Config.TYPE_EXPERIMENT) {
                 this.addNextNodeButton.setAttribute("display", "none");
                 this.addPrevNodeButton.setAttribute("display", "none");
@@ -110,32 +132,28 @@ class NodeView extends Observable {
     }
 
     emphasize() {
-        let newFillOpacity, newStrokeOpacity;
-
-        if (!this.isEmphasized && this.isFocusable) {
-            this.isEmphasized = true;
-            if (this.inputPath !== null) {
-                this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
-            }
-            else {
-                // No input path to emphasize.
-            }
-            for (let element of this.nodeSvg.children) {
-                newFillOpacity = element.getAttribute("fill-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
-                newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 + element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
-                element.setAttribute("fill-opacity", newFillOpacity);
-                element.setAttribute("stroke-opacity", newStrokeOpacity);
-            }
+        let nodeBody,
+        nodeDescription;
+        
+        this.isEmphasized = true;
+        if (this.inputPath !== null) {
+            this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
         }
         else {
-            // This node is either already focused or it is not focusable (nodes are not focusable if other nodes are currently dragged arround).
+            // No input path to emphasize.
         }
+        nodeBody = this.nodeSvg.querySelector("#" + Config.NODE_BODY_ID);
+        nodeDescription = this.nodeSvg.querySelector("#" + Config.NODE_DESCRIPTION_ID);
+        nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_EMPHASIZED);
+        nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_EMPHASIZED);
+        nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZED);
     }
 
     deemphasize() {
-        let newFillOpacity, newStrokeOpacity;
+        let nodeBody,
+        nodeDescription;
 
-        if (this.isEmphasized && !this.isFocused && this.isFocusable) {
+        if (!this.isFocused) {
             this.isEmphasized = false;
             if (this.inputPath !== null) {
                 this.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
@@ -143,15 +161,11 @@ class NodeView extends Observable {
             else {
                 // No input path to deemphasize
             }
-            for (let element of this.nodeSvg.children) {
-                newFillOpacity = element.getAttribute("fill-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_FILL_OPACITY_BY) * 1;
-                newStrokeOpacity = element.getAttribute("stroke-opacity") * 1 - element.getAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY) * 1;
-                element.setAttribute("fill-opacity", newFillOpacity);
-                element.setAttribute("stroke-opacity", newStrokeOpacity);
-            }
-        }
-        else {
-            // This node is either already focused or it is not focusable (nodes are not focusable if other nodes are currently dragged arround).
+            nodeBody = this.nodeSvg.querySelector("#" + Config.NODE_BODY_ID);
+            nodeDescription = this.nodeSvg.querySelector("#" + Config.NODE_DESCRIPTION_ID);
+            nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
+            nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
+            nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
         }
     }
 
@@ -226,7 +240,7 @@ class NodeView extends Observable {
         }
         descriptionElement = this.nodeSvg.querySelector("#" + Config.NODE_DESCRIPTION_ID);
         descriptionElement.remove();
-        descriptionElement = createDescription(formatedDescription, true);
+        descriptionElement = createDescription(this, formatedDescription);
         this.nodeSvg.appendChild(descriptionElement);
     }
 }
@@ -373,11 +387,11 @@ function createAddButton(that, isNextButton) {
     return addButton;
 }
 
-function createNodeSvg(description) {
+function createNodeSvg(that, description) {
     let nodeSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
-    nodeBody = createBody(),
+    nodeBody = createBody(that),
     //nodeIcon = createIcon(type),
-    nodeDescription = createDescription(description, false);
+    nodeDescription = createDescription(that, description);
 
     nodeBody.setAttribute("focusable", false);
     nodeDescription.setAttribute("focusable", false);
@@ -390,8 +404,9 @@ function createNodeSvg(description) {
     return nodeSvg;
 }
 
-function createBody() {
+function createBody(that) {
     let nodeBody = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    nodeBody.setAttribute("id", Config.NODE_BODY_ID);
     nodeBody.setAttribute("x", Config.NODE_BODY_X);
     nodeBody.setAttribute("y", Config.NODE_BODY_Y);
     nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
@@ -399,12 +414,17 @@ function createBody() {
     nodeBody.setAttribute("rx", Config.NODE_BODY_BORDER_RADIUS);
     nodeBody.setAttribute("ry", Config.NODE_BODY_BORDER_RADIUS);
     nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
-    nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
-    nodeBody.setAttribute(Config.EMPHASIZE_FILL_OPACITY_BY, Config.NODE_BODY_FILL_OPACITY_EMPHASIZE_BY);
     nodeBody.setAttribute("stroke-width", Config.NODE_BODY_STROKE_WIDTH);
     nodeBody.setAttribute("stroke", Config.NODE_BODY_STROKE_COLOR);
-    nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
-    nodeBody.setAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY, Config.NODE_BODY_STROKE_OPACITY_EMPHASIZE_BY);
+    if (that.isEmphasized) {
+        nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_EMPHASIZED);
+        nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_EMPHASIZED);
+    }
+    else {
+
+        nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
+        nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
+    }
     return nodeBody;
 }
 
@@ -414,7 +434,7 @@ function createBody() {
     return nodeIcon;
 }*/
 
-function createDescription(description, isEmphasized) {
+function createDescription(that, description) {
     let nodeDescription = document.createElementNS("http://www.w3.org/2000/svg", "text"),
     newLine,
     lastWhitespaceIndex,
@@ -425,18 +445,14 @@ function createDescription(description, isEmphasized) {
     nodeDescription.setAttribute("y", Config.NODE_DESCRIPTION_Y);
     nodeDescription.setAttribute("text-anchor", Config.NODE_DESCRIPTION_TEXT_ANCHOR);
     nodeDescription.setAttribute("fill", Config.NODE_DESCRIPTION_COLOR);
-    nodeDescription.setAttribute(Config.EMPHASIZE_FILL_OPACITY_BY, Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZE_BY);
-    nodeDescription.setAttribute(Config.EMPHASIZE_STROKE_OPACITY_BY, Config.NODE_DESCRIPTION_STROKE_OPACITY_EMPHASIZE_BY);
     nodeDescription.setAttribute("font-family", Config.NODE_DESCRIPTION_FONT_FAMILY);
     nodeDescription.setAttribute("font-size", Config.NODE_DESCRIPTION_FONT_SIZE);
     nodeDescription.setAttribute("font-weight", Config.NODE_DESCRIPTION_FONT_WEIGHT);
-    if (isEmphasized) {
-        nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED + Config.EMPHASIZE_FILL_OPACITY_BY);
-        nodeDescription.setAttribute("stroke-opacity", Config.NODE_DESCRIPTION_STROKE_OPACITY_DEEMPHASIZED + Config.EMPHASIZE_STROKE_OPACITY_BY);
+    if (that.isEmphasized) {
+        nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZED);
     }
     else {
         nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
-        nodeDescription.setAttribute("stroke-opacity", Config.NODE_DESCRIPTION_STROKE_OPACITY_DEEMPHASIZED);
     }
     // Description fits in one line
     if (description.length <= Config.NODE_DESCRIPTION_LINE_BREAK_COUNT) {

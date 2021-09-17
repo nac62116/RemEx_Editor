@@ -1,5 +1,5 @@
-import Config from "../utils/Config.js";
-import NodeView from "./nodeView/NodeView.js";
+import Config from "../../utils/Config.js";
+import NodeView from "./NodeView.js";
 
 class TreeView {
 
@@ -142,6 +142,7 @@ class TreeView {
         
         showChildNodes(node, true);
         defocusNextNodes(firstNodeOfRow);
+        deemphasizeNextNodes(firstNodeOfRow);
         node.focus();
         this.currentFocusedNode = node;
     }
@@ -426,6 +427,13 @@ function defocusNextNodes(node) {
     }
     node.defocus();
     defocusNextNodes(node.nextNode);
+}
+function deemphasizeNextNodes(node) {
+    if (node === undefined) {
+        return;
+    }
+    node.deemphasize();
+    deemphasizeNextNodes(node.nextNode);
 }
 
 function getFirstNodeOfRow(node) {

@@ -1,4 +1,4 @@
-import TreeView from "../views/TreeView.js";
+import TreeView from "../views/treeView/TreeView.js";
 import InputViewManager from "./InputViewManager.js";
 import ModelManager from "./ModelManager.js";
 import IdManager from "./IdManager.js";
@@ -8,6 +8,9 @@ import Config from "../utils/Config.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
+// -> Finish Tree and InputView
+// --- InputView selectFirstRow when navigating with keys
+// -> WhereAmIView
 // -> InfoView
 // -> Up and download experiment.json
 // -> Input checks:
@@ -104,18 +107,17 @@ function onNodeClicked(event) {
     newModelProperties = {},
     id;
     
-    TreeView.focusNode(clickedNode);
     if (clickedNode.childNodes.length === 0) {
         if (clickedNode.type === Config.TYPE_EXPERIMENT) {
-
+            
             id = getNewId(Config.TYPE_EXPERIMENT_GROUP);
-
+            
             newModelProperties = getNewModelProperties(Config.TYPE_EXPERIMENT_GROUP);
             ModelManager.extendExperiment(id, Config.TYPE_EXPERIMENT_GROUP, newModelProperties);
-
+            
             newNodeProperties = getNewNodeProperties(Config.TYPE_EXPERIMENT_GROUP, clickedNode, undefined, undefined);
             newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
-
+            
             TreeView.insertNode(newNode, undefined);
         }
         else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
@@ -128,6 +130,8 @@ function onNodeClicked(event) {
     else {
         // No need to create a new childNode as the clicked node already got one or more
     }
+    TreeView.focusNode(clickedNode);
+    TreeView.emphasizeNode(clickedNode);
     // InputViewManager -> Enable input
     InputViewManager.showInputView(clickedNode, inputData, true);
     InputViewManager.selectInputField();
@@ -272,7 +276,7 @@ function onKeyDown(event) {
         TreeView.moveToFirstChildNode();
     }
     else {
-        // No event for other keys defined
+        // No event for other keys
     }
 }
 
