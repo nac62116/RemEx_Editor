@@ -9,7 +9,6 @@ import Config from "../utils/Config.js";
 
 // TODO:
 // -> Finish Tree and InputView
-// --- InputView selectFirstRow when navigating with keys
 // -> WhereAmIView
 // -> InfoView
 // -> Up and download experiment.json
