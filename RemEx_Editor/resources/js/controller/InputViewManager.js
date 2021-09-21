@@ -2,7 +2,7 @@ import Config from "../utils/Config.js";
 import ExperimentInputView from "../views/InputView/ExperimentInputView.js";
 import ExperimentGroupInputView from "../views/InputView/ExperimentGroupInputView.js";
 
-class ViewManager {
+class InputViewManager {
 
     initInputViews(eventListener) {
         this.focusedInputView = undefined;
@@ -66,4 +66,4 @@ class ViewManager {
     }
 }
 
-export default new ViewManager();
+export default new InputViewManager();

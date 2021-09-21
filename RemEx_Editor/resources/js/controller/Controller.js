@@ -3,6 +3,7 @@ import TimelineView from "../views/treeView/TimelineView.js";
 import InputViewManager from "./InputViewManager.js";
 import ModelManager from "./ModelManager.js";
 import IdManager from "./IdManager.js";
+import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
@@ -28,9 +29,10 @@ import Config from "../utils/Config.js";
 class Controller {
 
     init() {
-        let experiment;
-        
-        this.nodeViewEventListener = [
+        let experiment,
+        treeViewContainer = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID),
+        treeViewElement = SvgFactory.createTreeViewElement(treeViewContainer.clientWidth, treeViewContainer.clientHeight),
+        nodeEventListener = [
             {
                 eventType: Config.EVENT_NODE_MOUSE_ENTER,
                 callback: onNodeMouseEnter.bind(this),
@@ -56,11 +58,19 @@ class Controller {
                 callback: onNodeDrop.bind(this),
             },
             {
-                eventType: Config.EVENT_ADD_NODE,
-                callback: onAddNode.bind(this),
+                eventType: Config.EVENT_ADD_NEXT_NODE,
+                callback: onAddNextNode.bind(this),
             },
-        ];
-        this.inputViewEventListener = [
+            {
+                eventType: Config.EVENT_ADD_PREV_NODE,
+                callback: onAddPreviousNode.bind(this),
+            },
+            {
+                eventType: Config.EVENT_ADD_CHILD_NODE,
+                callback: onAddChildNode.bind(this),
+            },
+        ],
+        inputViewEventListener = [
             {
                 eventType: Config.EVENT_INPUT_CHANGED,
                 callback: onInputChanged.bind(this),
@@ -69,16 +79,17 @@ class Controller {
                 eventType: Config.EVENT_REMOVE_NODE,
                 callback: onRemoveNode.bind(this),
             },
-        ];
-        this.timelineEventListener = [
+        ],
+        timelineEventListener = [
             {
                 eventType: Config.EVENT_TIMELINE_CLICKED,
                 callback: onTimelineClicked.bind(this),
             },
         ];
+        treeViewContainer.appendChild(treeViewElement);
 
         experiment = ModelManager.initExperiment();
-        TreeView.init(this.nodeViewEventListener, experiment);
+        TreeView.init(treeViewContainer, nodeEventListener, experiment);
         TimelineView.init(undefined);
         InputViewManager.initInputViews(this.inputViewEventListener);
         // InfoViewManager.initInfoView();
@@ -92,15 +103,13 @@ function onNodeMouseEnter(event) {
     let hoveredNode = event.data.target,
     inputData = ModelManager.getDataFromNode(hoveredNode);
     
-    TreeView.emphasizeNode(hoveredNode);
     InputViewManager.showInputView(hoveredNode, inputData, false);
     // InfoView -> show Info
 }
 
-function onNodeMouseLeave(event) {
-    let hoveredNode = event.data.target;
+function onNodeMouseLeave(/*event*/) {
+    //let hoveredNode = event.data.target;
     // InputViewManager -> Enable input
-    TreeView.deemphasizeNode(hoveredNode);
     InputViewManager.showFocusedInputView();
     InputViewManager.selectInputField();
     // InfoView -> show last focused info
@@ -114,59 +123,60 @@ function onNodeClicked(event) {
     newModelProperties = {},
     timelinePosition = {},
     id;
-    
-    if (clickedNode.childNodes.length === 0) {
-        if (clickedNode.type === Config.TYPE_EXPERIMENT) {
-            
-            id = getNewId(Config.TYPE_EXPERIMENT_GROUP);
-            
-            newModelProperties = getNewModelProperties(Config.TYPE_EXPERIMENT_GROUP);
-            ModelManager.extendExperiment(id, Config.TYPE_EXPERIMENT_GROUP, newModelProperties);
-            
-            newNodeProperties = getNewNodeProperties(Config.TYPE_EXPERIMENT_GROUP, clickedNode, undefined, undefined);
-            newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
-            TreeView.insertNode(newNode, undefined);
-            TimelineView.hide();
-        }
-        else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            TimelineView.init(clickedNode);
-            TreeView.insertTimeline(TimelineView.timelineElement);
-            timelinePosition.x = clickedNode.center.x;
-            timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
-            TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
-            TimelineView.rescale();
-            TimelineView.show();
-        }
-        else {
-            throw "TypeError: The node type \"" + clickedNode.type + "\" is not defined.";
-        }
-    }
-    else {
-        if (clickedNode.type === Config.TYPE_EXPERIMENT) {
-            TimelineView.hide();
-        }
-        // In the case of clickedNode.type === Config.TYPE_EXPERIMENT_GROUP, the TimelineView has to be updated and the childNodes inserted.
-        else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            TimelineView.init(clickedNode);
-            TreeView.insertTimeline(TimelineView.timelineElement);
-            timelinePosition.x = clickedNode.center.x;
-            timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
-            TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
-            for (let surveyNode of clickedNode.childNodes) {
-                TimelineView.insertSurveyNode(surveyNode);
+    if (clickedNode !== TreeView.currentFocusedNode) {
+        TreeView.focusNode(clickedNode);
+        // InputViewManager -> Enable input
+        InputViewManager.showInputView(clickedNode, inputData, true);
+        InputViewManager.selectInputField();
+        
+        if (clickedNode.childNodes.length === 0) {
+            if (clickedNode.type === Config.TYPE_EXPERIMENT) {
+                
+                id = getNewId(Config.TYPE_EXPERIMENT_GROUP);
+                
+                newModelProperties = getNewModelProperties(Config.TYPE_EXPERIMENT_GROUP);
+                ModelManager.extendExperiment(id, Config.TYPE_EXPERIMENT_GROUP, newModelProperties);
+                
+                newNodeProperties = getNewNodeProperties(Config.TYPE_EXPERIMENT_GROUP, clickedNode, undefined, undefined);
+                newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
+                TreeView.insertNode(newNode, undefined);
+                TimelineView.hide();
             }
-            TimelineView.rescale();
-            TimelineView.show();
+            else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+                TimelineView.init(clickedNode);
+                timelinePosition.x = clickedNode.center.x;
+                timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
+                TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
+                TimelineView.rescale();
+                TimelineView.show();
+                TreeView.insertTimeline(TimelineView.timelineElement);
+            }
+            else {
+                throw "TypeError: The node type \"" + clickedNode.type + "\" is not defined.";
+            }
         }
         else {
-            // No need to create a new childNode as the clicked node already got one or more
+            if (clickedNode.type === Config.TYPE_EXPERIMENT) {
+                TimelineView.hide();
+            }
+            // In the case of clickedNode.type === Config.TYPE_EXPERIMENT_GROUP, the TimelineView has to be updated and the childNodes inserted.
+            else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+                TimelineView.init(clickedNode);
+                timelinePosition.x = clickedNode.center.x;
+                timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
+                TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
+                for (let surveyNode of clickedNode.childNodes) {
+                    TimelineView.insertSurveyNode(surveyNode);
+                }
+                TimelineView.rescale();
+                TimelineView.show();
+                TreeView.insertTimeline(TimelineView.timelineElement);
+            }
+            else {
+                // No need to create a new childNode as the clicked node already got one or more
+            }
         }
     }
-    TreeView.focusNode(clickedNode);
-    TreeView.emphasizeNode(clickedNode);
-    // InputViewManager -> Enable input
-    InputViewManager.showInputView(clickedNode, inputData, true);
-    InputViewManager.selectInputField();
 }
 
 function onNodeStartDrag() {
@@ -185,14 +195,24 @@ function onNodeDrop() {
     // -> Make all other items focusable
 }
 
-function onAddNode(event) {
+function onAddNextNode(event) {
     let clickedNode = event.data.target,
+    timelinePosition = {},
     insertionType = event.data.insertionType,
     id = getNewId(clickedNode.type),
     newModelProperties = getNewModelProperties(clickedNode.type),
     newNode,
     newNodeProperties;
 
+    if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+        TimelineView.init(clickedNode);
+        timelinePosition.x = clickedNode.center.x;
+        timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
+        TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
+        TimelineView.rescale();
+        TimelineView.show();
+        TreeView.insertTimeline(TimelineView.timelineElement);
+    }
     if (insertionType === Config.INSERT_AFTER) {
         newNodeProperties = getNewNodeProperties(clickedNode.type, clickedNode.parentNode, clickedNode, clickedNode.nextNode);
     }
@@ -207,6 +227,14 @@ function onAddNode(event) {
 
     TreeView.insertNode(newNode, insertionType);
     TreeView.clickNode(newNode);
+}
+
+function onAddPreviousNode(event) {
+    //
+}
+
+function onAddChildNode(event) {
+    //
 }
 
 // Node event helper functions

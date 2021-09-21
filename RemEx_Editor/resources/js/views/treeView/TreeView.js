@@ -1,20 +1,18 @@
 import Config from "../../utils/Config.js";
-import NodeView from "./NodeView.js";
+import NodeView from "../nodeView/NodeView.js";
 
 class TreeView {
 
-    init(eventListener, experiment) {
-        this.treeViewContainer = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID);
-        this.treeView = this.treeViewContainer.firstElementChild;
-        initTreeViewBox(this);
+    // treeViewElement
+    init(treeViewContainer, eventListener, experiment) {
+        this.treeViewElement = treeViewContainer.firstElementChild;
 
-        this.width = this.treeViewContainer.clientWidth;
-        this.height = this.treeViewContainer.clientHeight;
+        this.width = treeViewContainer.clientWidth;
+        this.height = treeViewContainer.clientHeight;
         this.center = {
-            x: this.treeViewContainer.clientWidth / 2, // eslint-disable-line no-magic-numbers
-            y: this.treeViewContainer.clientHeight / 2, // eslint-disable-line no-magic-numbers
+            x: treeViewContainer.clientWidth / 2, // eslint-disable-line no-magic-numbers
+            y: treeViewContainer.clientHeight / 2, // eslint-disable-line no-magic-numbers
         };
-        this.rowDistance = this.treeViewContainer.clientHeight / 3; // eslint-disable-line no-magic-numbers
 
         this.experimentPositionY = this.center.y;
         this.experimentGroupsPositionY = this.experimentPositionY + this.rowDistance;
@@ -163,29 +161,16 @@ class TreeView {
             y: this.currentFocusedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE,
         };
         if (this.currentTimelineElement !== undefined) {
-            this.treeView.removeChild(this.currentTimelineElement);
+            this.treeViewElement.removeChild(this.currentTimelineElement);
         }
         else {
             // No current element to remove
         }
-        this.treeView.appendChild(timelineElement);
+        this.treeViewElement.appendChild(timelineElement);
         this.currentTimelineElement = timelineElement;
         return timelinePosition;
     }
 }
-
-function initTreeViewBox(that) {
-    that.treeView.setAttribute("viewBox", "0 0 " + that.treeViewContainer.clientWidth + " " + that.treeViewContainer.clientHeight);
-    that.background = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    that.background.setAttribute("x", "-150%");
-    that.background.setAttribute("y", "-350%");
-    that.background.setAttribute("width", "400%");
-    that.background.setAttribute("height", "800%");
-    that.background.setAttribute("fill", Config.TREE_VIEW_BACKGROUND_COLOR);
-    that.background.setAttribute("fill-opacity", Config.TREE_VIEW_BACKGROUND_OPACITY);
-    that.treeView.appendChild(that.background);
-}
-
 function setTree(that, eventListener, experiment) {
     that.experimentRootNode = createExperimentTree(that, eventListener, experiment);
     that.experimentRootNode.setInputPath(null);
@@ -243,7 +228,7 @@ function removeNodeFromParentsList(node) {
 
 function insertNodeIntoDOM(that, node) {
     for (let element of node.elements) {
-        that.treeView.appendChild(element);
+        that.treeViewElement.appendChild(element);
     }
 }
 

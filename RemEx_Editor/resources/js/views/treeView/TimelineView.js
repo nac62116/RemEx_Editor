@@ -120,11 +120,11 @@ class TimelineView extends Observable {
         this.center.x = centerX;
         this.center.y = centerY;
         this.top.x = centerX;
-        this.top.y = centerY - this.height / 2;
-        this.topLeft.x = centerX - this.width / 2;
-        this.topLeft.y = centerY - this.height / 2;
+        this.top.y = centerY - this.height / 2; // eslint-disable-line no-magic-numbers
+        this.topLeft.x = centerX - this.width / 2; // eslint-disable-line no-magic-numbers
+        this.topLeft.y = centerY - this.height / 2; // eslint-disable-line no-magic-numbers
         this.bottom.x = centerX;
-        this.bottom.y = centerY + this.height / 2;
+        this.bottom.y = centerY + this.height / 2; // eslint-disable-line no-magic-numbers
         this.timelineElement.setAttribute("x", this.topLeft.x);
         this.timelineElement.setAttribute("y", this.topLeft.y);
         updateSurveyPositions(this);
@@ -147,11 +147,13 @@ function calculateTimeSpanInDays(that) {
     return timeSpanInDays;
 }
 
+// TODO Endless loop
 function updateTimePositionPairs(that, timeSpanInDays) {
+    /*
     let timeline = that.timelineElement.querySelector("#" + Config.TIMELINE_ID),
     timelineStartX = timeline.getAttribute("x1"),
     timelineEndX = timeline.getAttribute("x2"),
-    timeSpanInMinutes = timeSpanInDays * 24 * 60,
+    timeSpanInMinutes = timeSpanInDays * 24 * 60, // eslint-disable-line no-magic-numbers
     timelineMinuteLength = (timelineEndX - timelineStartX) / timeSpanInMinutes,
     time = {
         day: 1,
@@ -162,7 +164,7 @@ function updateTimePositionPairs(that, timeSpanInDays) {
     that.timePositionPairs = new Map();
 
     //console.log(timelineMinuteLength);
-    /*for (let positionX = timelineStartX; positionX <= timelineEndX; positionX = positionX + timelineMinuteLength) {
+    for (let positionX = timelineStartX; positionX <= timelineEndX; positionX = positionX + timelineMinuteLength) {
         that.timePositionPairs.set(timeKey, positionX);
         time.minute += 1;
         if (time.minute === 60) {
@@ -173,7 +175,8 @@ function updateTimePositionPairs(that, timeSpanInDays) {
             time.hour = 0;
             time.day += 1;
         }
-    }*/
+    }
+    */
 }
 
 function updateScaleLabels(that, timeSpanInDays) {
@@ -186,7 +189,7 @@ function updateScaleLabels(that, timeSpanInDays) {
         numberOfLabelsPerDay = Config.TIMELINE_LABEL_DESCRIPTIONS_PER_DAY_TIME_SPAN_ONE_DAY;
         isGreaterFrequency = Config.TIMELINE_LABEL_DESCRIPTIONS_IS_GREATER_FREQUENCY_TIME_SPAN_ONE_DAY;
     }
-    else if (timeSpanInDays <= 3) {
+    else if (timeSpanInDays <= 3) { // eslint-disable-line no-magic-numbers
         that.labelDescriptionsType = Config.TIMELINE_LABEL_DESCRIPTIONS_TYPE_HOURLY;
         labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_HOURLY;
         numberOfLabelsPerDay = Config.TIMELINE_LABEL_DESCRIPTIONS_PER_DAY_TIME_SPAN_THREE_DAYS;
@@ -229,7 +232,7 @@ function getNearestSurveyNode(clickedTime, getNextNode) {
     splittedSurveyDescription,
     surveyNodeTime,
     surveyNodeTimeInMinutes,
-    clickedTimeInMinutes = clickedTime.day * 24 * 60 + clickedTime.hour * 60 + clickedTime.minute,
+    clickedTimeInMinutes = clickedTime.day * 24 * 60 + clickedTime.hour * 60 + clickedTime.minute, // eslint-disable-line no-magic-numbers
     minimumTimeDifferenceInMinutes,
     currentTimeDifferenceInMinutes;
     
@@ -240,7 +243,7 @@ function getNearestSurveyNode(clickedTime, getNextNode) {
             hour: splittedSurveyDescription[2].split(":")[0],
             minute: splittedSurveyDescription[2].split(":")[1],
         };
-        surveyNodeTimeInMinutes = surveyNodeTime.day * 24 * 60 + surveyNodeTime.hour * 60 + surveyNodeTime.minute;
+        surveyNodeTimeInMinutes = surveyNodeTime.day * 24 * 60 + surveyNodeTime.hour * 60 + surveyNodeTime.minute; // eslint-disable-line no-magic-numbers
         if (getNextNode === true) {
             currentTimeDifferenceInMinutes = surveyNodeTimeInMinutes - clickedTimeInMinutes;
         }
@@ -352,7 +355,6 @@ function createLabels(that, labelDescriptions, timeSpanInDays, numberOfLabelsPer
     dayCounter = 1;
     
     for (let labelX = 0 + Config.TIMELINE_DISTANCE_FROM_BORDER; labelX <= that.width - Config.TIMELINE_DISTANCE_FROM_BORDER; labelX += that.width / (timeSpanInDays * numberOfLabelsPerDay)) {
-        //console.log(labelDescriptionCounter);
         labelDescription[0] = Config.TIMELINE_LABEL_DESCRIPTIONS_PREFIX + " " + dayCounter;
         labelDescription[1] = labelDescriptions[labelDescriptionCounter] + " " + Config.TIMELINE_LABEL_DESCRIPTIONS_SUFFIX;
         if (isGreaterFrequency !== undefined && labelDescriptionCounter % isGreaterFrequency === 0) {

@@ -7,6 +7,7 @@ const Config = {
     // General app settings:
 
     LINE_SPACING: "1.2em",
+    LINE_SPACING_TWO_LINES: "2.4em",
     MAX_ID_SIZE: 10000,
     MAX_ID_ALERT: "Du kannst maximal 10.000 Schritte auf einer Ebene erstellen. Kontaktiere den Support falls du die Grenze erweitern möchtest.",
     STEP_CONSTRUCTOR_ERROR: "Cannot construct Step instances directly. Please construct subclasses of Step.",
@@ -23,8 +24,9 @@ const Config = {
     EVENT_NODE_START_DRAG: "nodeStartDrag",
     EVENT_NODE_ON_DRAG: "nodeOnDrag",
     EVENT_NODE_ON_DROP: "nodeOnDrop",
-    EVENT_ADD_NODE: "addNextNode",
+    EVENT_ADD_NEXT_NODE: "addNextNode",
     EVENT_ADD_PREV_NODE: "addPrevNode",
+    EVENT_ADD_CHILD_NODE: "addChildNode",
     EVENT_INPUT_CHANGED: "inputChanged",
     EVENT_REMOVE_NODE: "removeNode",
     EVENT_TIMELINE_MOUSE_ENTER: "timelineMouseEnter",
@@ -130,8 +132,6 @@ const Config = {
     TIMELINE_LABEL_DESCRIPTIONS_IS_GREATER_FREQUENCY_TIME_SPAN_ABOVE_THREE_DAYS: undefined,
 
     // NodeView 
-    NODE_WIDTH: "100",
-    NODE_HEIGHT: "120",
     NODE_DISTANCE_HORIZONTAL: 130,
     
     // NodeView input path
@@ -144,8 +144,10 @@ const Config = {
     NODE_BODY_ID: "nodeBody",
     NODE_BODY_X: "2%",
     NODE_BODY_Y: "2%",
-    NODE_BODY_WIDTH: "96%",
-    NODE_BODY_HEIGHT: "96%",
+    NODE_BODY_WIDTH: "100",
+    NODE_BODY_WIDTH_DEFLATED: "10",
+    NODE_BODY_HEIGHT: "120",
+    NODE_BODY_HEIGHT_DEFLATED: "12",
     NODE_BODY_BORDER_RADIUS: "10%",
     NODE_BODY_FILL_COLOR: "black",
     NODE_BODY_FILL_COLOR_FOCUSED: "rgb(0, 102, 204)",
@@ -157,6 +159,9 @@ const Config = {
     NODE_BODY_STROKE_OPACITY_EMPHASIZED: "1",
 
     // NodeView add buttons
+    NODE_ADD_PREV_BUTTON_ID: "addPrevNodeButton",
+    NODE_ADD_NEXT_BUTTON_ID: "addNextNodeButton",
+    NODE_ADD_CHILD_BUTTON_ID: "addChildNodeButton",
     NODE_ADD_BUTTON_DISTANCE: 65,
     NODE_ADD_BUTTON_RADIUS: "10",
     NODE_ADD_BUTTON_FILL_COLOR_DEEMPHASIZED: "black",
@@ -169,10 +174,11 @@ const Config = {
     NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED: "1",
 
     // NodeView description (Sizes are relative to the tree node)
-    NODE_DESCRIPTION_ID: "nodeDescription",
+    NODE_DESCRIPTION_FIRST_LINE_ID: "nodeDescriptionFirstLine",
+    NODE_DESCRIPTION_SECOND_LINE_ID: "nodeDescriptionSecondLine",
+    NODE_DESCRIPTION_THIRD_LINE_ID: "nodeDescriptionThirdLine",
     NODE_DESCRIPTION_MAX_LENGTH: 25,
-    NODE_DESCRIPTION_X: "50%",
-    NODE_DESCRIPTION_Y: "66%",
+    NODE_DESCRIPTION_CENTER_OFFSET: "20",
     NODE_DESCRIPTION_TEXT_ANCHOR: "middle",
     // How many symbols until a linebreak is inserted
     NODE_DESCRIPTION_LINE_BREAK_COUNT: 11,
@@ -209,6 +215,8 @@ const Config = {
     TYPE_QUESTIONNAIRE: "questionnaire",
     // Question
     TYPE_QUESTION: "question",
+    // Answer
+    TYPE_ANSWER: "answer",
 
     // Input invalid messages:
     
