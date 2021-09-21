@@ -5,10 +5,12 @@ const UNDRAGGABLE_TYPES = [Config.TYPE_EXPERIMENT, Config.TYPE_EXPERIMENT_GROUP]
 
 class NodeView extends Observable {
 
+    // TODO: Insert icon via constructor
     constructor(id, type, description, parent, previousNode, nextNode) {
         super();
         this.id = id;
         this.type = type;
+        this.description = description;
         this.parentNode = parent;
         this.previousNode = previousNode;
         this.nextNode = nextNode;
@@ -476,7 +478,7 @@ function createDescription(that, description) {
         while (currentIndex < description.length) {
             newLine = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
             newLine.setAttribute("x", Config.NODE_DESCRIPTION_X);
-            newLine.setAttribute("dy", Config.NODE_DESCRIPTION_LINE_SPACING);
+            newLine.setAttribute("dy", Config.LINE_SPACING);
             // Last line
             if (currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT > description.length) {
                 substring = description.slice(currentIndex, description.length);

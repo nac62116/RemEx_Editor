@@ -8,6 +8,8 @@ class TreeView {
         this.treeView = this.treeViewContainer.firstElementChild;
         initTreeViewBox(this);
 
+        this.width = this.treeViewContainer.clientWidth;
+        this.height = this.treeViewContainer.clientHeight;
         this.center = {
             x: this.treeViewContainer.clientWidth / 2, // eslint-disable-line no-magic-numbers
             y: this.treeViewContainer.clientHeight / 2, // eslint-disable-line no-magic-numbers
@@ -20,46 +22,9 @@ class TreeView {
         this.stepsPositionY = this.surveysPositionY + this.rowDistance;
         this.questionsPositionY = this.stepsPositionY + this.rowDistance;
 
-        this.setTree(eventListener, experiment);
+        setTree(this, eventListener, experiment);
         this.currentFocusedNode = this.experimentRootNode;
-    }
-
-    setTree(eventListener, experiment) {
-        let groupX = this.center.x,
-        stepX = this.center.x,
-        surveyX = this.center.x,
-        questionX = this.center.x;
-
-        this.experimentRootNode = createExperimentTree(this, eventListener, experiment);
-        this.experimentRootNode.setInputPath(null);
-        this.experimentRootNode.updatePosition(this.center.x, this.experimentPositionY, true);
-        insertNodeIntoDOM(this, this.experimentRootNode);
-        for (let groupNode of this.experimentRootNode.childNodes) {
-            groupNode.setInputPath(this.experimentRootNode.bottom);
-            groupNode.updatePosition(groupX, this.experimentGroupsPositionY, true);
-            insertNodeIntoDOM(this, groupNode);
-            groupX = groupX + Config.NODE_DISTANCE_HORIZONTAL;
-            for (let surveyNode of groupNode.childNodes) {
-                surveyNode.setInputPath(groupNode.bottom);
-                surveyNode.updatePosition(surveyX, this.surveysPositionY, true);
-                insertNodeIntoDOM(this, surveyNode);
-                surveyX = surveyX + Config.NODE_DISTANCE_HORIZONTAL;
-                for (let stepNode of surveyNode.childNodes) {
-                    stepNode.setInputPath(surveyNode.bottom);
-                    stepNode.updatePosition(stepX, this.stepsPositionY, true);
-                    insertNodeIntoDOM(this, stepNode);
-                    stepX = stepX + Config.NODE_DISTANCE_HORIZONTAL;
-                    if (stepNode.type === Config.TYPE_QUESTIONNAIRE) {
-                        for (let questionNode of stepNode.childNodes) {
-                            questionNode.setInputPath(stepNode.bottom);
-                            questionNode.updatePosition(questionX, this.questionsPositionY, true);
-                            insertNodeIntoDOM(this, questionNode);
-                            questionX = questionX + Config.NODE_DISTANCE_HORIZONTAL;
-                        }
-                    }
-                }
-            }
-        }
+        this.currentTimelineElement = undefined;
     }
 
     createNode(id, eventListener, nodeProperties) {
@@ -89,23 +54,28 @@ class TreeView {
         let x,
         y,
         isInsertion = true;
-
-        if (insertionType === Config.INSERT_AFTER) {
-            x = node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL;
-            y = node.previousNode.center.y;
-            updateNextNodePositions(node.nextNode, isInsertion);
-        }
-        else if (insertionType === Config.INSERT_BEFORE) {
-            x = node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL;
-            y = node.nextNode.center.y;
-            updatePrevNodePositions(node.previousNode);
+        
+        if (insertionType !== Config.INSERT_SURVEY) {
+            if (insertionType === Config.INSERT_AFTER) {
+                x = node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL;
+                y = node.previousNode.center.y;
+                updateNextNodePositions(node.nextNode, isInsertion);
+            }
+            else if (insertionType === Config.INSERT_BEFORE) {
+                x = node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL;
+                y = node.nextNode.center.y;
+                updatePrevNodePositions(node.previousNode);
+            }
+            else {
+                x = this.center.x;
+                y = node.parentNode.center.y + this.rowDistance;
+            }
+            node.setInputPath(node.parentNode.bottom);
+            node.updatePosition(x, y, true);
         }
         else {
-            x = this.center.x;
-            y = node.parentNode.center.y + this.rowDistance;
+            // A survey node gets positioned by the TimeLineView.js module, as this rescales from time to time
         }
-        node.setInputPath(node.parentNode.bottom);
-        node.updatePosition(x, y, true);
         insertNodeIntoDOM(this, node);
     }
 
@@ -186,6 +156,22 @@ class TreeView {
             this.clickNode(this.currentFocusedNode.childNodes[0]);
         }
     }
+
+    insertTimeline(timelineElement) {
+        let timelinePosition = {
+            x: undefined,
+            y: this.currentFocusedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE,
+        };
+        if (this.currentTimelineElement !== undefined) {
+            this.treeView.removeChild(this.currentTimelineElement);
+        }
+        else {
+            // No current element to remove
+        }
+        this.treeView.appendChild(timelineElement);
+        this.currentTimelineElement = timelineElement;
+        return timelinePosition;
+    }
 }
 
 function initTreeViewBox(that) {
@@ -200,16 +186,15 @@ function initTreeViewBox(that) {
     that.treeView.appendChild(that.background);
 }
 
+function setTree(that, eventListener, experiment) {
+    that.experimentRootNode = createExperimentTree(that, eventListener, experiment);
+    that.experimentRootNode.setInputPath(null);
+    that.experimentRootNode.updatePosition(that.center.x, that.experimentPositionY, true);
+    insertNodeIntoDOM(that, that.experimentRootNode);
+}
+
 function createExperimentTree(that, eventListener, experiment) {
     let experimentRootNode,
-    groupNode,
-    previousGroupNode,
-    surveyNode,
-    previousSurveyNode,
-    stepNode,
-    previousStepNode,
-    questionNode,
-    previousQuestionNode,
     nodeProperties = {},
     id;
 
@@ -219,79 +204,7 @@ function createExperimentTree(that, eventListener, experiment) {
     nodeProperties.previousNode = undefined;
     nodeProperties.nextNode = undefined;
     experimentRootNode = that.createNode(id, eventListener, nodeProperties);
-    for (let group of experiment.groups) {
-        id = group.id;
-        nodeProperties.type = Config.TYPE_EXPERIMENT_GROUP;
-        nodeProperties.description = group.name;
-        nodeProperties.parentNode = experimentRootNode;
-        nodeProperties.previousNode = previousGroupNode;
-        nodeProperties.nextNode = undefined;
-        groupNode = that.createNode(id, eventListener, nodeProperties);
-        experimentRootNode.childNodes.push(groupNode);
-        if (previousGroupNode !== undefined) {
-            previousGroupNode.nextNode = groupNode;
-        }
-        previousGroupNode = groupNode;
-        for (let survey of group.surveys) {
-            // TODO: Create Survey Timeline
-            id = survey.id;
-            nodeProperties.type = Config.TYPE_SURVEY;
-            nodeProperties.description = survey.name;
-            nodeProperties.parentNode = groupNode;
-            nodeProperties.previousNode = previousSurveyNode;
-            nodeProperties.nextNode = undefined;
-            surveyNode = that.createNode(id, eventListener, nodeProperties);
-            groupNode.childNodes.push(surveyNode);
-            if (previousSurveyNode !== undefined) {
-                previousSurveyNode.nextNode = surveyNode;
-            }
-            previousSurveyNode = surveyNode;
-            for (let step of survey.steps) {
-                id = step.id;
-                nodeProperties.description = step.name;
-                nodeProperties.parentNode = surveyNode;
-                nodeProperties.previousNode = previousStepNode;
-                nodeProperties.nextNode = undefined;
-                if (step.type === Config.STEP_TYPE_INSTRUCTION) {
-                    nodeProperties.type = Config.TYPE_INSTRUCTION;
-                }
-                else if (step.type === Config.STEP_TYPE_BREATHING_EXERCISE) {
-                    nodeProperties.type = Config.TYPE_BREATHING_EXERCISE;
-                }
-                else if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                    nodeProperties.type = Config.TYPE_QUESTIONNAIRE;
-                }
-                else {
-                    throw "TreeView: No Node for step type \"" + step.type + "\" is defined.";
-                }
-                stepNode = that.createNode(id, eventListener, nodeProperties);
-                surveyNode.childNodes.push(stepNode);
-                if (previousStepNode !== undefined) {
-                    previousStepNode.nextNode = stepNode;
-                }
-                previousStepNode = stepNode;
-                if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                    for (let question of step.questions) {
-                        id = question.id;
-                        nodeProperties.type = Config.TYPE_QUESTION;
-                        nodeProperties.description = question.name;
-                        nodeProperties.parentNode = stepNode;
-                        nodeProperties.previousNode = previousQuestionNode;
-                        nodeProperties.nextNode = undefined;
-                        questionNode = that.createNode(id, eventListener, nodeProperties);
-                        stepNode.childNodes.push(questionNode);
-                        if (previousQuestionNode !== undefined) {
-                            previousQuestionNode.nextNode = questionNode;
-                        }
-                        previousQuestionNode = questionNode;
-                    }
-                }
-                else {
-                    // The other step types haven't got child nodes
-                }
-            }
-        }
-    }
+    
     return experimentRootNode;
 }
 

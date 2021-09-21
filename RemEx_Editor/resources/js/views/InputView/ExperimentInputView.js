@@ -14,10 +14,10 @@ class ExperimentInputView extends InputView {
     createInputFields(data) {
         let inputField, inputElement;
 
-        this.header.innerHTML = data.experimentName;
+        this.header.innerHTML = data.name;
         inputField = super.createTextInput(Config.INPUT_EXPERIMENT_NAME_LABEL, Config.INPUT_EXPERIMENT_NAME_ID);
         inputElement = inputField.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID);
-        inputElement.value = data.experimentName;
+        inputElement.value = data.name;
         inputElement.addEventListener("keyup", onInput.bind(this));
 
         this.inputFieldsContainer.appendChild(inputField);
@@ -28,14 +28,14 @@ function onInput() {
     let data = {
         correspondingNode: this.correspondingNode,
         newProperties: {
-            experimentName: undefined,
+            name: undefined,
         },
     },
     controllerEvent;
     
     data.correspondingNode = this.correspondingNode;
-    data.newProperties.experimentName = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID).value;
-    this.header.innerHTML = data.newProperties.experimentName;
+    data.newProperties.name = this.inputFieldsContainer.querySelector("#" + Config.INPUT_EXPERIMENT_NAME_ID).value;
+    this.header.innerHTML = data.newProperties.name;
 
     controllerEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
     this.notifyAll(controllerEvent);

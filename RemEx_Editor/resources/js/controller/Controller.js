@@ -1,4 +1,5 @@
 import TreeView from "../views/treeView/TreeView.js";
+import TimelineView from "../views/treeView/TimelineView.js";
 import InputViewManager from "./InputViewManager.js";
 import ModelManager from "./ModelManager.js";
 import IdManager from "./IdManager.js";
@@ -69,12 +70,19 @@ class Controller {
                 callback: onRemoveNode.bind(this),
             },
         ];
+        this.timelineEventListener = [
+            {
+                eventType: Config.EVENT_TIMELINE_CLICKED,
+                callback: onTimelineClicked.bind(this),
+            },
+        ];
 
         experiment = ModelManager.initExperiment();
         TreeView.init(this.nodeViewEventListener, experiment);
+        TimelineView.init(undefined);
         InputViewManager.initInputViews(this.inputViewEventListener);
         // InfoViewManager.initInfoView();
-        document.addEventListener("keydown", onKeyDown.bind(this));
+        document.addEventListener("keyup", onKeyUp.bind(this));
     }
 }
 
@@ -104,6 +112,7 @@ function onNodeClicked(event) {
     newNode,
     newNodeProperties = {},
     newModelProperties = {},
+    timelinePosition = {},
     id;
     
     if (clickedNode.childNodes.length === 0) {
@@ -116,18 +125,42 @@ function onNodeClicked(event) {
             
             newNodeProperties = getNewNodeProperties(Config.TYPE_EXPERIMENT_GROUP, clickedNode, undefined, undefined);
             newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
-            
             TreeView.insertNode(newNode, undefined);
+            TimelineView.hide();
         }
         else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            // TODO 
+            TimelineView.init(clickedNode);
+            TreeView.insertTimeline(TimelineView.timelineElement);
+            timelinePosition.x = clickedNode.center.x;
+            timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
+            TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
+            TimelineView.rescale();
+            TimelineView.show();
         }
         else {
             throw "TypeError: The node type \"" + clickedNode.type + "\" is not defined.";
         }
     }
     else {
-        // No need to create a new childNode as the clicked node already got one or more
+        if (clickedNode.type === Config.TYPE_EXPERIMENT) {
+            TimelineView.hide();
+        }
+        // In the case of clickedNode.type === Config.TYPE_EXPERIMENT_GROUP, the TimelineView has to be updated and the childNodes inserted.
+        else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            TimelineView.init(clickedNode);
+            TreeView.insertTimeline(TimelineView.timelineElement);
+            timelinePosition.x = clickedNode.center.x;
+            timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
+            TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
+            for (let surveyNode of clickedNode.childNodes) {
+                TimelineView.insertSurveyNode(surveyNode);
+            }
+            TimelineView.rescale();
+            TimelineView.show();
+        }
+        else {
+            // No need to create a new childNode as the clicked node already got one or more
+        }
     }
     TreeView.focusNode(clickedNode);
     TreeView.emphasizeNode(clickedNode);
@@ -169,7 +202,7 @@ function onAddNode(event) {
     else {
         throw "TypeError: The insertion type \"" + insertionType + "\" is not defined.";
     }
-    ModelManager.extendExperiment(id, Config.TYPE_EXPERIMENT_GROUP, newModelProperties);
+    ModelManager.extendExperiment(id, clickedNode.type, newModelProperties);
     newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
 
     TreeView.insertNode(newNode, insertionType);
@@ -205,6 +238,13 @@ function getNewModelProperties(type) {
     else if (type === Config.TYPE_EXPERIMENT_GROUP) {
         modelProperties.name = Config.NEW_EXPERIMENT_GROUP_NAME;
     }
+    else if (type === Config.TYPE_SURVEY) {
+        modelProperties.name = Config.NEW_SURVEY_NAME;
+        modelProperties.isRelative = false;
+        modelProperties.relativeStartTimeInMin = null;
+        modelProperties.maxDurationInMin = Config.NEW_SURVEY_MAX_DURATION_IN_MIN;
+        modelProperties.notificationDurationInMin = Config.NEW_SURVEY_NOTIFICATION_DURATION_IN_MIN;
+    }
     // TODO
     else {
         throw "TypeError: The node type \"" + type + "\" is not defined.";
@@ -231,6 +271,33 @@ function getNewNodeProperties(type, parentNode, previousNode, nextNode) {
     }
 
     return nodeProperties;
+}
+
+// TimelineView event callbacks
+
+function onTimelineClicked(event) {
+    let clickedTime = event.data.time,
+    id = getNewId(Config.TYPE_SURVEY),
+    nextNode = TimelineView.getNextSurveyNode(clickedTime),
+    previousNode = TimelineView.getPreviousSurveyNode(clickedTime),
+    parentNode = TimelineView.getParentNode(),
+    newNodeProperties = getNewNodeProperties(Config.TYPE_SURVEY, parentNode, previousNode, nextNode),
+    newModelProperties = getNewModelProperties(Config.TYPE_SURVEY),
+    newNode;
+
+    newModelProperties.absoluteStartAtHour = clickedTime.hour;
+    newModelProperties.absoluteStartAtMinute = clickedTime.minute;
+    newModelProperties.absoluteStartDaysOffset = clickedTime.day - 1;
+    ModelManager.extendExperiment(id, Config.TYPE_SURVEY, newModelProperties);
+    newNodeProperties.description = Config.TIMELINE_LABEL_DESCRIPTIONS_PREFIX + " " + clickedTime.day + " " + clickedTime.hour + ":" + clickedTime.minute + " " + Config.TIMELINE_LABEL_DESCRIPTIONS_SUFFIX;
+    newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
+
+    TreeView.insertNode(newNode, Config.INSERT_SURVEY);
+    TimelineView.insertSurveyNode(newNode);
+    TimelineView.rescale();
+    TreeView.clickNode(newNode);
+    // TimelineView calculate insertPosition and description
+    // TreeView create node with type survey and insert it.
 }
 
 // InputView event callbacks
@@ -261,7 +328,7 @@ function onInputChanged(event) {
 
 // Whole page events
 
-function onKeyDown(event) {
+function onKeyUp(event) {
     if (event.key === "ArrowLeft") {
         TreeView.moveToPreviousNode();
     }

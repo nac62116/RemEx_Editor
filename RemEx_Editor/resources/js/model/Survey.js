@@ -2,9 +2,9 @@ import Config from "../utils/Config.js";
 
 class Survey {
 
-    constructor(id, nextSurveyId) {
+    constructor() {
         // Unique
-        this.id = id;
+        this.id = undefined;
         // Unique
         this.name = undefined;
         this.maxDurationInMin = undefined;
@@ -14,7 +14,7 @@ class Survey {
         this.absoluteStartAtHour = undefined;
         this.absoluteStartDaysOffset = undefined;
         this.notificationDurationInMin = undefined;
-        this.nextSurveyId = nextSurveyId;
+        this.nextSurveyId = undefined;
         this.steps = [];
     }
 
