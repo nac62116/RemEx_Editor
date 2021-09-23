@@ -9,6 +9,7 @@ class NodeView extends Observable {
     // TODO: Insert icon via constructor
     constructor(nodeElements, id, type, description, parentNode) {
         super();
+        this.nodeElements = nodeElements;
         this.id = id;
         this.type = type;
         this.parentNode = parentNode;
@@ -43,7 +44,6 @@ class NodeView extends Observable {
         this.isFocused = false;
         this.isFocusable = true;
         this.isDraging = false;
-        this.nodeElements = nodeElements;
         this.nodeElements.nodeBody.addEventListener("click", onClick.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseleave", onMouseLeave.bind(this));

@@ -1,12 +1,11 @@
-import TreeView from "../views/treeView/TreeView.js";
-import TimelineView from "../views/treeView/TimelineView.js";
+import TreeView from "../views/TreeView.js";
 import InputViewManager from "./InputViewManager.js";
 import ModelManager from "./ModelManager.js";
 import IdManager from "./IdManager.js";
 import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
 import RootNode from "../views/nodeView/RootNode.js";
-import StandardNode from "../views/nodeView/StandardNode.js";
+import TimelineNode from "../views/nodeView/TimelineNode.js";
 import Storage from "../utils/Storage.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
@@ -110,9 +109,9 @@ function createNode(that, parentNode, data, position) {
         node = new RootNode(elements, id, Config.TYPE_EXPERIMENT, description);
     }
     else if (parentNode.type === Config.TYPE_EXPERIMENT) {
-        elements = SvgFactory.createStandardNodeElements();
+        elements = SvgFactory.createTimelineNodeElements();
         description = data.name;
-        node = new StandardNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, parentNode);
+        node = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, parentNode, that.timelineEventListener);
     }
     for (let listener of that.nodeEventListener) {
         node.addEventListener(listener.eventType, listener.callback);
@@ -321,102 +320,12 @@ function onAddChildNode(event) {
     newNode = createNode(this, clickedNode, inputData, position);
     clickedNode.childNodes.push(newNode);
     clickedNode.hideAddChildButton();
-    /* Create new nodes
-        
-    if (clickedNode.childNodes.length === 0) {
-        if (clickedNode.type === Config.TYPE_EXPERIMENT) {
-            
-            id = getNewId(Config.TYPE_EXPERIMENT_GROUP);
-            
-            newModelProperties = getNewModelProperties(Config.TYPE_EXPERIMENT_GROUP);
-            ModelManager.extendExperiment(id, Config.TYPE_EXPERIMENT_GROUP, newModelProperties);
-            
-            newNodeProperties = getNewNodeProperties(Config.TYPE_EXPERIMENT_GROUP, clickedNode, undefined, undefined);
-            newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
-            TreeView.insertNode(newNode, undefined);
-            TimelineView.hide();
-        }
-        else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            TimelineView.init(clickedNode);
-            timelinePosition.x = clickedNode.center.x;
-            timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
-            TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
-            TimelineView.rescale();
-            TimelineView.show();
-            TreeView.insertTimeline(TimelineView.timelineElement);
-        }
-        else {
-            throw "TypeError: The node type \"" + clickedNode.type + "\" is not defined.";
-        }
-    }
-    else {
-        if (clickedNode.type === Config.TYPE_EXPERIMENT) {
-            TimelineView.hide();
-        }
-        // In the case of clickedNode.type === Config.TYPE_EXPERIMENT_GROUP, the TimelineView has to be updated and the childNodes inserted.
-        else if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            TimelineView.init(clickedNode);
-            timelinePosition.x = clickedNode.center.x;
-            timelinePosition.y = clickedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE;
-            TimelineView.updatePosition(timelinePosition.x, timelinePosition.y);
-            for (let surveyNode of clickedNode.childNodes) {
-                TimelineView.insertSurveyNode(surveyNode);
-            }
-            TimelineView.rescale();
-            TimelineView.show();
-            TreeView.insertTimeline(TimelineView.timelineElement);
-        }
-        else {
-            // No need to create a new childNode as the clicked node already got one or more
-        }
-    }*/
-}
-
-// Node event helper functions
-
-function getNewId(type) {
-    let id;
-
-    if (type === Config.TYPE_EXPERIMENT_GROUP ||
-        type === Config.TYPE_SURVEY ||
-        type === Config.TYPE_BREATHING_EXERCISE ||
-        type === Config.TYPE_QUESTIONNAIRE ||
-        type === Config.TYPE_INSTRUCTION ||
-        type === Config.TYPE_QUESTION) {
-
-        id = IdManager.getUnusedId(type);
-    }
-    else {
-        // No need for an id
-    }
-    return id;
 }
 
 // TimelineView event callbacks
 
 function onTimelineClicked(event) {
-    let clickedTime = event.data.time,
-    id = getNewId(Config.TYPE_SURVEY),
-    nextNode = TimelineView.getNextSurveyNode(clickedTime),
-    previousNode = TimelineView.getPreviousSurveyNode(clickedTime),
-    parentNode = TimelineView.getParentNode(),
-    newNodeProperties = getNewNodeProperties(Config.TYPE_SURVEY, parentNode, previousNode, nextNode),
-    newModelProperties = getNewModelProperties(Config.TYPE_SURVEY),
-    newNode;
-
-    newModelProperties.absoluteStartAtHour = clickedTime.hour;
-    newModelProperties.absoluteStartAtMinute = clickedTime.minute;
-    newModelProperties.absoluteStartDaysOffset = clickedTime.day - 1;
-    ModelManager.extendExperiment(id, Config.TYPE_SURVEY, newModelProperties);
-    newNodeProperties.description = Config.TIMELINE_LABEL_DESCRIPTIONS_PREFIX + " " + clickedTime.day + " " + clickedTime.hour + ":" + clickedTime.minute + " " + Config.TIMELINE_LABEL_DESCRIPTIONS_SUFFIX;
-    newNode = TreeView.createNode(id, this.nodeViewEventListener, newNodeProperties);
-
-    TreeView.insertNode(newNode, Config.INSERT_SURVEY);
-    TimelineView.insertSurveyNode(newNode);
-    TimelineView.rescale();
-    TreeView.clickNode(newNode);
-    // TimelineView calculate insertPosition and description
-    // TreeView create node with type survey and insert it.
+    let clickedTime = event.data.time;
 }
 
 // InputView event callbacks

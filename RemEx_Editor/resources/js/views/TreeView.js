@@ -1,4 +1,4 @@
-import Config from "../../utils/Config.js";
+import Config from "../utils/Config.js";
 
 class TreeView {
 
@@ -25,9 +25,18 @@ class TreeView {
     }
 
     insertNode(node) {
-        for (let element in node.nodeElements) {
-            if (Object.prototype.hasOwnProperty.call(node.nodeElements, element)) {
-                this.treeViewElement.appendChild(node.nodeElements[element]);
+        for (let nodeKey in node.nodeElements) {
+            if (Object.prototype.hasOwnProperty.call(node.nodeElements, nodeKey)) {
+                if (nodeKey !== "timelineElements") {
+                    this.treeViewElement.appendChild(node.nodeElements[nodeKey]);
+                }
+                else {
+                    for (let timelineKey in node.nodeElements.timelineElements) {
+                        if (Object.prototype.hasOwnProperty.call(node.nodeElements.timelineElements, timelineKey)) {
+                            this.treeViewElement.appendChild(node.nodeElements.timelineElements[timelineKey]);
+                        }
+                    }
+                }
             }
         }
     }

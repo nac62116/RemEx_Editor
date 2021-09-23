@@ -46,17 +46,31 @@ class SvgFactory {
         return leafNodeElements;
     }
 
+    createTimelineNodeElements() {
+        let timelineNodeElements = this.createStandardNodeElements();
+
+        timelineNodeElements.timelineElements = createTimelineElements();
+
+        return timelineNodeElements;
+    }
+
+    createTimelineLabel() {
+        let timelineLabel = {},
+        stroke = createTimelineLabelStroke(),
+        description = createTimelineLabelDescription();
+
+        timelineLabel.stroke = stroke;
+        timelineLabel.description = description;
+
+        return timelineLabel;
+    }
+
     createNewTextLine() {
         let newLine = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
 
         newLine.setAttribute("id", Config.NODE_DESCRIPTION_NEW_LINE_ID);
 
         return newLine;
-    }
-
-    createTimelineNodeElements() {
-        let element;
-        return element;
     }
 
     createWhereAmIViewElement() {
@@ -139,6 +153,36 @@ function createAddNodeButton(id) {
     addButton.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
     addButton.setAttribute("display", "none");
     return addButton;
+}
+
+function createTimelineElements() {
+    let timelineElements = {},
+    timeline = document.createElementNS("http://www.w3.org/2000/svg", "line"),
+    description = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
+    timeline.setAttribute("id", Config.TIMELINE_ID);
+    timeline.setAttribute("x1", Config.TIMELINE_X1);
+    timeline.setAttribute("x2", Config.TIMELINE_X2);
+    timeline.setAttribute("stroke", Config.TIMELINE_COLOR);
+    timeline.setAttribute("stroke-width", Config.TIMELINE_STROKE_WIDTH);
+    timeline.setAttribute("stroke-opacity", Config.TIMELINE_STROKE_OPACITY_DEEMPHASIZED);
+    timeline.setAttribute("display", "none");
+
+    description.setAttribute("id", Config.TIMELINE_DESCRIPTION_ID);
+    description.setAttribute("x", Config.TIMELINE_DESCRIPTION_X);
+    description.setAttribute("text-anchor", Config.TIMELINE_DESCRIPTION_TEXT_ANCHOR);
+    description.setAttribute("fill", Config.TIMELINE_DESCRIPTION_COLOR);
+    description.setAttribute("font-family", Config.TIMELINE_DESCRIPTION_FONT_FAMILY);
+    description.setAttribute("font-size", Config.TIMELINE_DESCRIPTION_FONT_SIZE);
+    description.setAttribute("font-weight", Config.TIMELINE_DESCRIPTION_FONT_WEIGHT);
+    description.setAttribute("fill-opacity", Config.TIMELINE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
+    description.setAttribute("display", "none");
+    description.innerHTML = Config.TIMELINE_DESCRIPTION_TEXT;
+
+    timelineElements.timeline = timeline;
+    timelineElements.description = description;
+    
+    return timelineElements;
 }
 
 export default new SvgFactory();
