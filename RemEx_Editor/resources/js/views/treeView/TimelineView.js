@@ -302,9 +302,9 @@ function createTimelineElement(that) {
     timeline = createTimeline(that),
     timelineDescription = createTimelineDescription(that);
 
-    timelineElement.setAttribute("viewBox", "0 0 " + that.width + " " + Config.NODE_HEIGHT);
+    timelineElement.setAttribute("viewBox", "0 0 " + that.width + " " + Config.NODE_BODY_HEIGHT);
     timelineElement.setAttribute("width", that.width);
-    timelineElement.setAttribute("height", Config.NODE_HEIGHT);
+    timelineElement.setAttribute("height", Config.NODE_BODY_HEIGHT);
     timelineElement.appendChild(timelineDescription);
     timelineElement.appendChild(timeline);
     return timelineElement;

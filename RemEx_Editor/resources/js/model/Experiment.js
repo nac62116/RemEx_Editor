@@ -3,45 +3,12 @@ import Config from "../utils/Config.js";
 class Experiment {
 
     constructor() {
-        this.name = undefined;
+        this.id = null;
+        this.name = null;
         this.groups = [];
         this.encodedResources = [];
     }
-
-    getName() {
-        return this.name;
-    }
-
-    setName(name) {
-        this.name = name;
-    }
-
-    getGroupCount() {
-        return this.groups.length;
-    }
-
-    getGroupByName(groupName) {
-        for (let group of this.groups) {
-            if (group.getName() === groupName) {
-                return group;
-            }
-        }
-        return null;
-    }
-
-    addGroup(group) {
-        if (!this.groups.includes(group)) {
-            this.groups.push(group);
-        }
-    }
-
-    removeGroup(group) {
-        let index = this.groups.indexOf(group);
-        if (index !== -1) {
-            this.groups.splice(index, 1);
-        }
-    }
-
+    // TODO: Outsource to InputValidationManager
     getEncodedResourceByFileName(fileName) {
         for (let resource of this.encodedResources) {
             if (resource.getFileName() === fileName) {

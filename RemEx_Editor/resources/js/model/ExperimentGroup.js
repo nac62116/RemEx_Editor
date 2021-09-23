@@ -3,53 +3,13 @@ import Config from "../utils/Config.js";
 class ExperimentGroup {
 
     constructor() {
-        this.id = undefined;
+        this.id = null;
         // Unique
-        this.name = undefined;
+        this.name = null;
         this.startTimeInMillis = 0;
         this.surveys = [];
     }
-
-    getName() {
-        return this.name;
-    }
-
-    setName(name) {
-        this.name = name;
-    }
-
-    // TODO: What happens when you click on an experiment group (getSurveyCount(), getSurveyTimes()?)
-
-    getCurrentSurveyIds() {
-        let surveyIds = [];
-        for (let survey of this.surveys) {
-            surveyIds.push(survey.getId());
-        }
-        return surveyIds;
-    }
-
-    getSurveyById(surveyId) {
-        for (let survey of this.surveys) {
-            if (survey.getId() === surveyId) {
-                return survey;
-            }
-        }
-        return null;
-    }
-
-    addSurvey(survey) {
-        if (!this.surveys.includes(survey)) {
-            this.surveys.push(survey);
-        }
-    }
-
-    removeSurvey(survey) {
-        let index = this.surveys.indexOf(survey);
-        if (index !== -1) {
-            this.surveys.splice(index, 1);
-        }
-    }
-
+    // TODO: Outsource to InputValidationManager
     isValid(groups) {
         for (let group of groups) {
             if (group.getName() === this.name) {

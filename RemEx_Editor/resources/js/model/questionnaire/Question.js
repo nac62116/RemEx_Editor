@@ -2,61 +2,21 @@ import Config from "../../utils/Config.js";
 
 class Question {
 
-    constructor(id, type, nextQuestionId) {
+    constructor(type) {
         if (new.target === Question) {
             throw new TypeError("Cannot construct Abstract instances directly");
         }
         // Unique
-        this.id = id;
+        this.id = null;
         // TODO: JSON value should be named "@type"
         this.type = type;
         // Unique
-        this.name = undefined;
-        this.text = undefined;
+        this.name = null;
+        this.text = null;
         this.hint = null;
-        this.nextQuestionId = nextQuestionId;
+        this.nextQuestionId = null;
     }
-
-    getId() {
-        return this.id;
-    }
-
-    getType() {
-        return this.type;
-    }
-
-    getName() {
-        return this.name;
-    }
-
-    setName(name) {
-        this.name = name;
-    }
-
-    getText() {
-        return this.text;
-    }
-
-    setText(text) {
-        this.text = text;
-    }
-
-    getHint() {
-        return this.hint;
-    }
-
-    setHint(hint) {
-        this.hint = hint;
-    }
-
-    getNextQuestionId() {
-        return this.nextQuestionId;
-    }
-
-    setNextQuestionId(nextQuestionId) {
-        this.nextQuestionId = nextQuestionId;
-    }
-
+    // TODO: Outsource to InputValidationManager
     isValid(questions) {
         for (let question of questions) {
             if (question.getName() === this.name) {

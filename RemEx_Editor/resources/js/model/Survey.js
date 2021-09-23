@@ -4,130 +4,20 @@ class Survey {
 
     constructor() {
         // Unique
-        this.id = undefined;
+        this.id = null;
         // Unique
-        this.name = undefined;
-        this.maxDurationInMin = undefined;
-        this.isRelative = undefined;
-        this.relativeStartTimeInMin = undefined;
-        this.absoluteStartAtMinute = undefined;
-        this.absoluteStartAtHour = undefined;
-        this.absoluteStartDaysOffset = undefined;
-        this.notificationDurationInMin = undefined;
-        this.nextSurveyId = undefined;
+        this.name = null;
+        this.maxDurationInMin = null;
+        this.isRelative = null;
+        this.relativeStartTimeInMin = null;
+        this.absoluteStartAtMinute = null;
+        this.absoluteStartAtHour = null;
+        this.absoluteStartDaysOffset = null;
+        this.notificationDurationInMin = null;
+        this.nextSurveyId = null;
         this.steps = [];
     }
-
-    getId() {
-        return this.id;
-    }
-
-    getName() {
-        return this.name;
-    }
-
-    setName(name) {
-        this.name = name;
-    }
-
-    getMaxDurationInMin() {
-        return this.maxDurationInMin;
-    }
-
-    setMaxDurationInMin(maxDurationInMin) {
-        this.maxDurationInMin = Math.round(maxDurationInMin);
-    }
-
-    getIsRelative() {
-        return this.isRelative;
-    }
-
-    setIsRelative(isRelative) {
-        this.isRelative = isRelative;
-    }
-
-    getRelativeStartTimeInMin() {
-        return this.relativeStartTimeInMin;
-    }
-
-    setRelativeStartTimeInMin(relativeStartTimeInMin) {
-        this.relativeStartTimeInMin = Math.round(relativeStartTimeInMin);
-    }
-
-    getAbsoluteStartAtMinute() {
-        return this.absoluteStartAtMinute;
-    }
-
-    setAbsoluteStartAtMinute(absoluteStartAtMinute) {
-        this.absoluteStartAtMinute = Math.round(absoluteStartAtMinute);
-    }
-
-    getAbsoluteStartAtHour() {
-        return this.absoluteStartAtHour;
-    }
-
-    setAbsoluteStartAtHour(absoluteStartAtHour) {
-        this.absoluteStartAtHour = Math.round(absoluteStartAtHour);
-    }
-
-    getAbsoluteStartDaysOffset() {
-        return this.absoluteStartDaysOffset;
-    }
-
-    setAbsoluteStartDaysOffset(absoluteStartDaysOffset) {
-        this.absoluteStartDaysOffset = Math.round(absoluteStartDaysOffset);
-    }
-
-    getNotificationDurationInMin() {
-        return this.notificationDurationInMin;
-    }
-
-    setNotificationDurationInMin(notificationDurationInMin) {
-        this.notificationDurationInMin = Math.round(notificationDurationInMin);
-    }
-
-    getNextSurveyId() {
-        return this.nextSurveyId;
-    }
-
-    setNextSurveyId(nextSurveyId) {
-        this.nextSurveyId = nextSurveyId;
-    }
-
-    getStepCount() {
-        return this.steps.length;
-    }
-
-    getCurrentStepIds() {
-        let stepIds = [];
-        for (let step of this.steps) {
-            stepIds.push(step.getId());
-        }
-        return stepIds;
-    }
-
-    getStepById(stepId) {
-        for (let step of this.steps) {
-            if (step.getId() === stepId) {
-                return step;
-            }
-        }
-        return null;
-    }
-
-    addStep(step) {
-        if (!this.steps.includes(step)) {
-            this.steps.push(step);
-        }
-    }
-
-    removeStep(step) {
-        let index = this.steps.indexOf(step);
-        if (index !== -1) {
-            this.steps.splice(index, 1);
-        }
-    }
-
+    // TODO: Outsource to InputValidationManager
     isValid(surveys, previousSurveys, nextSurvey) {
         for (let survey of surveys) {
             if (survey.getName() === this.name) {

@@ -1,10 +1,11 @@
 import NodeView from "./NodeView.js";
+import {Event} from "../../utils/Observable.js";
 import Config from "../../utils/Config.js";
 
 class RootNode extends NodeView {
 
-    constructor(nodeElements, id, properties) {
-        super(nodeElements, id, properties);
+    constructor(nodeElements, id, type, description) {
+        super(nodeElements, id, type, description, undefined);
         
         this.nodeElements.addChildButton.addEventListener("click", onAddChildNodeClicked.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
@@ -14,7 +15,7 @@ class RootNode extends NodeView {
     focus() {
         super.focus();
         if (this.childNodes.length === 0) {
-            this.nodeElements.addChildButton.removeAttribute("display");
+            this.showAddChildButton();
         }
         else {
             for (let childNode of this.childNodes) {
@@ -25,15 +26,22 @@ class RootNode extends NodeView {
 
     defocus() {
         super.defocus();
-        this.nodeElements.addChildButton.setAttribute("display", "none");
+        this.hideAddChildButton();
     }
 
     updatePosition(centerX, centerY, makeStatic) {
         super.updatePosition(centerX, centerY, makeStatic);
         this.nodeElements.addChildButton.setAttribute("cx", this.center.x);
-        this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.TREE_VIEW_ROW_DISTANCE);
+        this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y);
     }
 
+    hideAddChildButton() {
+        this.nodeElements.addChildButton.setAttribute("display", "none");
+    }
+
+    showAddChildButton() {
+        this.nodeElements.addChildButton.removeAttribute("display");
+    }
 }
 
 function onAddChildNodeClicked() {
@@ -56,4 +64,4 @@ function onAddButtonMouseLeave(event) {
     event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
 }
 
-export default new RootNode();
+export default RootNode;

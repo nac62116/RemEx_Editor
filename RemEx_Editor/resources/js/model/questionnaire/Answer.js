@@ -2,37 +2,14 @@ import Config from "../../utils/Config.js";
 
 class Answer {
 
-    constructor(nextQuestionId) {
+    constructor() {
+        this.id = null;
         // Unique
-        this.code = undefined;
-        this.text = undefined;
-        this.nextQuestionId = nextQuestionId;
+        this.code = null;
+        this.text = null;
+        this.nextQuestionId = null;
     }
-
-    getCode() {
-        return this.code;
-    }
-
-    setCode(code) {
-        this.code = code;
-    }
-
-    getText() {
-        return this.text;
-    }
-
-    setText(text) {
-        this.text = text;
-    }
-
-    getNextQuestionId() {
-        return this.nextQuestionId;
-    }
-
-    setNextQuestionId(nextQuestionId) {
-        this.nextQuestionId = nextQuestionId;
-    }
-
+    // TODO: Outsource to InputValidationManager
     isValid(answers) {
         for (let answer of answers) {
             if (answer.getCode() === this.code) {

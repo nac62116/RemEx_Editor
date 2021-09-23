@@ -3,8 +3,8 @@ import Question from "./Question.js";
 
 class TextQuestion extends Question {
 
-    constructor(id, nextQuestionId) {
-        super(id, Config.QUESTION_TYPE_TEXT, nextQuestionId);
+    constructor() {
+        super(Config.QUESTION_TYPE_TEXT);
     }
 }
 

@@ -3,6 +3,7 @@ import Storage from "../utils/Storage.js";
 import Experiment from "../model/Experiment.js";
 import ExperimentGroup from "../model/ExperimentGroup.js";
 import Survey from "../model/Survey.js";
+import IdManager from "./IdManager.js";
 
 class ModelManager {
 
@@ -14,6 +15,7 @@ class ModelManager {
 
         experiment = Storage.load();
         if (experiment === undefined) {
+            properties.id = IdManager.getUnusedId();
             properties.name = Config.NEW_EXPERIMENT_NAME;
             experiment = createNewExperiment(properties);
             Storage.save(experiment);
@@ -25,105 +27,159 @@ class ModelManager {
         return experiment;
     }
 
-    extendExperiment(id, type, properties) {
-        let experiment = Storage.load();
-
-        if (type === Config.TYPE_EXPERIMENT) {
-            createNewExperiment(properties);
-        }
-        else if (type === Config.TYPE_EXPERIMENT_GROUP) {
-            createNewExperimentGroup(id, properties, experiment);
-        }
-        else if (type === Config.TYPE_SURVEY) {
-            createNewSurvey(id, properties, experiment);
-        }
-        else {
-            throw "Error: The node type \"" + type + "\" is not defined.";
-        }
-        Storage.save(experiment);
+    getExperiment() {
+        return Storage.load();
     }
 
-    shortenExperiment(id, type) {
-        let experiment = Storage.load();
-
-        if (type === Config.TYPE_EXPERIMENT_GROUP) {
-            removeExperimentGroup(id, experiment);
-        }
-        else if (type === Config.TYPE_SURVEY) {
-            removeSurvey(id, experiment);
-        }
-        else {
-            throw "ModelManager.js: The node type \"" + type + "\" is not defined.";
-        }
-        Storage.save(experiment);
-    }
-
-    updateExperiment(id, type, properties) {
+    extendExperiment(parentType) {
         let experiment = Storage.load(),
-        newNodeDescription;
+        properties = getNewModelProperties(parentType),
+        newData;
 
-        if (type === Config.TYPE_EXPERIMENT) {
-            newNodeDescription = properties.name;
-            experiment.name = properties.name;
+        if (parentType === Config.TYPE_EXPERIMENT) {
+            newData = createNewExperimentGroup(properties, experiment);
         }
-        else if (type === Config.TYPE_EXPERIMENT_GROUP) {
-            newNodeDescription = updateExperimentGroup(id, properties, experiment);
+        else if (parentType === Config.TYPE_EXPERIMENT_GROUP) {
+            newData = createNewSurvey(properties, experiment);
         }
-        else if (type === Config.TYPE_SURVEY) {
-            newNodeDescription = updateSurvey(id, properties, experiment);
-        }
-        // TODO
         else {
-            throw "ModelManager.js: The node type \"" + type + "\" is not defined.";
+            // No such type
         }
         Storage.save(experiment);
-        return newNodeDescription;
+        return newData;
     }
 
-    getDataFromNode(node) {
-        let data = {},
-        experiment = Storage.load();
-    
-        if (node.type === Config.TYPE_EXPERIMENT) {
-            data.name = experiment.name;
+    shortenExperiment(id, parentId) {
+        let experiment = Storage.load(),
+        data = this.getDataFromNodeId(id, experiment),
+        parentData = this.getDataFromNodeId(parentId, experiment),
+        index;
+
+        if (parentData.groups !== undefined) {
+            index = parentData.groups.indexOf(data);
+            parentData.groups.splice(index, 1);
         }
-        else if (node.type === Config.TYPE_EXPERIMENT_GROUP) {
-            data = getExperimentGroupData(node.id, experiment);
+        else if (parentData.surveys !== undefined) {
+            index = parentData.surveys.indexOf(data);
+            parentData.surveys.splice(index, 1);
         }
-        else if (node.type === Config.TYPE_SURVEY) {
-            data = getSurveyData(node.id, experiment);
+        else if (parentData.steps !== undefined) {
+            index = parentData.steps.indexOf(data);
+            parentData.steps.splice(index, 1);
         }
-        // TODO
+        else if (parentData.questions !== undefined) {
+            index = parentData.questions.indexOf(data);
+            parentData.questions.splice(index, 1);
+        }
+        else if (parentData.answers !== undefined) {
+            index = parentData.answers.indexOf(data);
+            parentData.answers.splice(index, 1);
+        }
         else {
-            throw "ModelManager.js: The node type \"" + node.type + "\" is not defined.";
+            // Experiment was not shortened
         }
-        return data;
+        Storage.save(experiment);
     }
+
+    updateExperiment(id, properties) {
+        let experiment = Storage.load(),
+        data = this.getDataFromNodeId(id, experiment);
+
+        for (let key in properties) {
+            if (Object.prototype.hasOwnProperty.call(properties, key)) {
+                data.key = properties.key;
+            }
+        }
+        Storage.save(experiment);
+    }
+
+    getDataFromNodeId(id, experiment) {
+        if (experiment.id === id) {
+            return experiment;
+        }
+        if (experiment.groups !== undefined) {
+            for (let group of experiment.groups) {
+                if (group.id === id){
+                    return group;
+                }
+                if (group.surveys !== undefined) {
+                    for (let survey of group.surveys) {
+                        if (survey.id === id) {
+                            return survey;
+                        }
+                        if (survey.steps !== undefined) {
+                            for (let step of survey.steps) {
+                                if (step.id === id) {
+                                    return step;
+                                }
+                                if (step.type === Config.STEP_TYPE_QUESTIONNAIRE && step.questions !== undefined) {
+                                    for (let question of step.questions) {
+                                        if (question.id === id) {
+                                            return question;
+                                        }
+                                        if (question.type === Config.QUESTION_TYPE_CHOICE && question.answers !== undefined) {
+                                            for (let answer of question.answers) {
+                                                if (answer.id === id) {
+                                                    return answer;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+}
+
+function getNewModelProperties(parentType) {
+    let modelProperties = {};
+
+    if (parentType === Config.TYPE_EXPERIMENT) {
+        modelProperties.name = Config.NEW_EXPERIMENT_GROUP_NAME;
+    }
+    else if (parentType === Config.TYPE_EXPERIMENT_GROUP) {
+        modelProperties.name = Config.NEW_SURVEY_NAME;
+        modelProperties.isRelative = false;
+        modelProperties.relativeStartTimeInMin = null;
+        modelProperties.maxDurationInMin = Config.NEW_SURVEY_MAX_DURATION_IN_MIN;
+        modelProperties.notificationDurationInMin = Config.NEW_SURVEY_NOTIFICATION_DURATION_IN_MIN;
+    }
+    // TODO
+    else {
+        throw "TypeError: The node type \"" + parentType + "\" is not defined.";
+    }
+    return modelProperties;
 }
 
 function createNewExperiment(properties) {
     let experiment = new Experiment();
 
     Storage.clear();
+    experiment.id = properties.id;
     experiment.name = properties.name;
 
     return experiment;
 }
 
-function createNewExperimentGroup(id, properties, experiment) {
+function createNewExperimentGroup(properties, experiment) {
     let group = new ExperimentGroup();
     
-    group.id = id;
+    group.id = properties.id;
     group.name = properties.name;
     experiment.groups.push(group);
 
-    return experiment;
+    return group;
 }
 
-function createNewSurvey(id, properties, experiment) {
+function createNewSurvey(properties, experiment) {
     let survey = new Survey();
     
-    survey.id = id;
+    survey.id = properties.id;
     survey.name = properties.name;
     survey.absoluteStartAtMinute = properties.absoluteStartAtMinute;
     survey.absoluteStartAtHour = properties.absoluteStartAtHour;
@@ -137,101 +193,7 @@ function createNewSurvey(id, properties, experiment) {
     }
     experiment.groups.push(survey);
 
-    return experiment;
-}
-
-function removeExperimentGroup(id, experiment) {
-    let indexInGroupList;
-
-    for (let group of experiment.groups) {
-        if (group.id === id) {
-            indexInGroupList = experiment.groups.indexOf(group);
-            experiment.groups.splice(indexInGroupList, 1);
-            break;
-        }
-    }
-}
-
-function removeSurvey(id, experiment) {
-    let indexInSurveyList;
-
-    for (let group of experiment.groups) {
-        for (let survey of group.surveys) {
-            if (survey.id === id) {
-                indexInSurveyList = group.surveys.indexOf(survey);
-                experiment.groups.splice(indexInSurveyList, 1);
-                break;
-            }
-        }
-    }
-}
-
-function updateExperimentGroup(id, properties, experiment) {
-    let newNodeDescription;
-
-    for (let group of experiment.groups) {
-        if (group.id === id) {
-            newNodeDescription = properties.name;
-            group.name = properties.name;
-            break;
-        }
-    }
-    return newNodeDescription;
-}
-
-function updateSurvey(id, properties, experiment) {
-    let newNodeDescription;
-
-    for (let group of experiment.groups) {
-        for (let survey of group.surveys) {
-            if (survey.id === id) {
-                newNodeDescription = properties.description;
-                survey.name = properties.name;
-                survey.maxDurationInMin = properties.maxDurationInMin;
-                survey.isRelative = properties.isRelative;
-                survey.relativeStartTimeInMin = properties.relativeStartTimeInMin;
-                survey.absoluteStartAtMinute = properties.absoluteStartAtMinute;
-                survey.absoluteStartAtHour = properties.absoluteStartAtHour;
-                survey.absoluteStartDaysOffset = properties.absoluteStartDaysOffset;
-                survey.notificationDurationInMin = properties.notificationDurationInMin;
-                survey.nextSurveyId = properties.nextSurveyId;
-                break;
-            }
-        }
-    }
-    return newNodeDescription;
-}
-
-function getExperimentGroupData(id, experiment) {
-    let data = {};
-
-    for (let group of experiment.groups) {
-        if (group.id === id) {
-            data.name = group.name;
-        }
-    }
-    return data;
-}
-
-function getSurveyData(id, experiment) {
-    let data = {};
-
-    for (let group of experiment.groups) {
-        for (let survey of group.surveys) {
-            if (survey.id === id) {
-                data.name = survey.name;
-                data.maxDurationInMin = survey.maxDurationInMin;
-                data.isRelative = survey.isRelative;
-                data.relativeStartTimeInMin = survey.relativeStartTimeInMin;
-                data.absoluteStartAtMinute = survey.absoluteStartAtMinute;
-                data.absoluteStartAtHour = survey.absoluteStartAtHour;
-                data.absoluteStartDaysOffset = survey.absoluteStartDaysOffset;
-                data.notificationDurationInMin = survey.notificationDurationInMin;
-                data.nextSurveyId = survey.nextSurveyId;
-            }
-        }
-    }
-    return data;
+    return survey;
 }
 
 export default new ModelManager();

@@ -1,17 +1,19 @@
 import Config from "../../utils/Config.js";
-import {Observable, Event} from "../../utils/Observable.js";
+import {Observable, Event as ControllerEvent} from "../../utils/Observable.js";
+import SvgFactory from "../../utils/SvgFactory.js";
 
 const UNDRAGGABLE_TYPES = [Config.TYPE_EXPERIMENT, Config.TYPE_EXPERIMENT_GROUP];
 
 class NodeView extends Observable {
 
     // TODO: Insert icon via constructor
-    constructor(nodeElements, properties) {
+    constructor(nodeElements, id, type, description, parentNode) {
         super();
-        this.id = properties.id;
-        this.parentNode = properties.parentNode;
-        this.previousNode = properties.previousNode;
-        this.nextNode = properties.nextNode;
+        this.id = id;
+        this.type = type;
+        this.parentNode = parentNode;
+        this.previousNode = undefined;
+        this.nextNode = undefined;
         this.childNodes = [];
         this.positionBeforeDrag = {
             x: undefined,
@@ -46,9 +48,18 @@ class NodeView extends Observable {
         this.nodeElements.nodeBody.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseleave", onMouseLeave.bind(this));
         this.nodeElements.nodeBody.addEventListener("mousedown", onStartDrag.bind(this));
-        document.addEventListener("mousemove", onDrag.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseup", onDrop.bind(this));
-        this.updateDescription(properties.description);
+        this.nodeElements.nodeDescription.addEventListener("click", onClick.bind(this));
+        this.nodeElements.nodeDescription.addEventListener("mouseenter", onMouseEnter.bind(this));
+        this.nodeElements.nodeDescription.addEventListener("mouseleave", onMouseLeave.bind(this));
+        this.nodeElements.nodeDescription.addEventListener("mousedown", onStartDrag.bind(this));
+        this.nodeElements.nodeDescription.addEventListener("mouseup", onDrop.bind(this));
+        document.addEventListener("mousemove", onDrag.bind(this));
+        this.updateDescription(description);
+    }
+
+    click() {
+        this.nodeElements.nodeBody.dispatchEvent(new Event("click"));
     }
 
     show() {
@@ -64,12 +75,14 @@ class NodeView extends Observable {
     focus() {
         if (!this.isFocused) {
             this.isFocused = true;
+            this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR_FOCUSED);
         }
     }
 
     defocus() {
         if (this.isFocused) {
             this.isFocused = false;
+            this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
         }
     }
 
@@ -123,37 +136,29 @@ class NodeView extends Observable {
         this.nodeElements.nodeBody.setAttribute("x", this.topLeft.x);
         this.nodeElements.nodeBody.setAttribute("y", this.topLeft.y);
         this.nodeElements.nodeDescription.setAttribute("x", this.center.x);
-        this.nodeElements.nodeDescription.setAttribute("y", this.center.y + Config.NODE_DESCRIPTION_CENTER_OFFSET);
+        this.nodeElements.nodeDescription.setAttribute("y", this.center.y + Config.NODE_DESCRIPTION_CENTER_OFFSET_Y);
+        for (let newLine of this.nodeElements.nodeDescription.children) {
+            newLine.setAttribute("x", this.center.x);
+            newLine.setAttribute("y", this.center.y + Config.NODE_DESCRIPTION_CENTER_OFFSET_Y);
+        }
     }
 
     updateDescription(description) {
-        let shortDescription = shortenDescription(description);
-
-        insertDescriptionWithLineBreaks(shortDescription);
+        insertDescriptionWithLineBreaks(this, description);
     }
 }
 
-function shortenDescription(description) {
-    let shortDescription;
-
-    if (description.length > Config.NODE_DESCRIPTION_MAX_LENGTH) {
-        shortDescription = description.substring(0, Config.NODE_DESCRIPTION_MAX_LENGTH) + "...";
-    }
-    else {
-        // Description is short enough
-    }
-
-    return shortDescription;
-}
-
-function insertDescriptionWithLineBreaks(description) {
-    let substring,
+function insertDescriptionWithLineBreaks(that, description) {
+    let newLine,
+    lineSpacing = Config.LINE_SPACING,
+    lineNumber = 1,
+    substring,
     currentIndex,
     lastWhitespaceIndex;
 
     // Description fits in one line
     if (description.length <= Config.NODE_DESCRIPTION_LINE_BREAK_COUNT) {
-        this.nodeElements.nodeDescription.innerHTML = description;
+        that.nodeElements.nodeDescription.innerHTML = description;
     }
     // Description does not fit. It is breaked into several lines, if possible at whitespace positions.
     else {
@@ -162,15 +167,18 @@ function insertDescriptionWithLineBreaks(description) {
         lastWhitespaceIndex = substring.lastIndexOf(" ");
         // There is a whitespace where the line can be broken
         if (lastWhitespaceIndex !== -1) {
-            this.nodeElements.nodeDescription.innerHTML = description.slice(0, lastWhitespaceIndex);
+            that.nodeElements.nodeDescription.innerHTML = description.slice(0, lastWhitespaceIndex);
             currentIndex = lastWhitespaceIndex + 1;
         }
         // There is not whitespace and the line gets broken after the defined character count (no hyphenation yet)
         else {
-            this.nodeElements.nodeDescription.innerHTML = substring;
+            that.nodeElements.nodeDescription.innerHTML = substring;
             currentIndex = Config.NODE_DESCRIPTION_LINE_BREAK_COUNT;
         }
-        for (let newLine of this.nodeElements.nodeDescription.childNodes) {
+        
+        while (lineNumber <= Config.NODE_DESCRIPTION_MAX_NEW_LINE_COUNT) {
+            newLine = SvgFactory.createNewTextLine();
+            newLine.setAttribute("dy", lineSpacing);
             // Last line
             if (currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT > description.length) {
                 substring = description.slice(currentIndex, description.length);
@@ -190,6 +198,12 @@ function insertDescriptionWithLineBreaks(description) {
                 }
             }
             newLine.innerHTML = substring;
+            if (lineNumber === Config.NODE_DESCRIPTION_MAX_NEW_LINE_COUNT && currentIndex < description.length) {
+                newLine.innerHTML += "...";
+            }
+            that.nodeElements.nodeDescription.appendChild(newLine);
+            lineSpacing += Config.LINE_SPACING;
+            lineNumber += 1;
         }
     }
 }
@@ -203,7 +217,7 @@ function onMouseEnter() {
     data = {
         target: this,
     };
-    controllerEvent = new Event(Config.EVENT_NODE_MOUSE_ENTER, data);
+    controllerEvent = new ControllerEvent(Config.EVENT_NODE_MOUSE_ENTER, data);
     this.notifyAll(controllerEvent);
 }
 
@@ -214,7 +228,7 @@ function onMouseLeave() {
     data = {
         target: this,
     };
-    controllerEvent = new Event(Config.EVENT_NODE_MOUSE_LEAVE, data);
+    controllerEvent = new ControllerEvent(Config.EVENT_NODE_MOUSE_LEAVE, data);
     this.notifyAll(controllerEvent);
 }
 
@@ -224,7 +238,7 @@ function onClick() {
     data = {
         target: this,
     };
-    controllerEvent = new Event(Config.EVENT_NODE_CLICKED, data);
+    controllerEvent = new ControllerEvent(Config.EVENT_NODE_CLICKED, data);
     this.notifyAll(controllerEvent);
 }
 
@@ -238,7 +252,7 @@ function onStartDrag(event) {
         data = {
             target: this,
         };
-        controllerEvent = new Event(Config.EVENT_NODE_START_DRAG, data);
+        controllerEvent = new ControllerEvent(Config.EVENT_NODE_START_DRAG, data);
         this.notifyAll(controllerEvent);
     }
     else {
@@ -256,7 +270,7 @@ function onDrag(event) {
         data = {
             target: this,
         };
-        controllerEvent = new Event(Config.EVENT_NODE_ON_DRAG, data);
+        controllerEvent = new ControllerEvent(Config.EVENT_NODE_ON_DRAG, data);
         this.notifyAll(controllerEvent);
     }
     else {
@@ -271,7 +285,7 @@ function onDrop() {
     data = {
         target: this,
     };
-    controllerEvent = new Event(Config.EVENT_NODE_ON_DROP, data);
+    controllerEvent = new ControllerEvent(Config.EVENT_NODE_ON_DROP, data);
     this.notifyAll(controllerEvent);
 }
 

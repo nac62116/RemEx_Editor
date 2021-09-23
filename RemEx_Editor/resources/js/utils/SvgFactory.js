@@ -2,15 +2,15 @@ import Config from "./Config.js";
 
 class SvgFactory {
 
-    createTreeViewElement(containerWidth, containerHeight) {
+    createTreeViewElement() {
         let treeViewElement = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
         background = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 
-        treeViewElement.setAttribute("viewBox", "0 0 " + containerWidth + " " + containerHeight);
-        background.setAttribute("x", "-150%");
-        background.setAttribute("y", "-350%");
-        background.setAttribute("width", "400%");
-        background.setAttribute("height", "800%");
+        //treeViewElement.setAttribute("viewBox", "0 0 " + containerWidth + " " + containerHeight);
+        treeViewElement.setAttribute("width", Config.TREE_VIEW_WIDTH);
+        treeViewElement.setAttribute("height", Config.TREE_VIEW_HEIGHT);
+        background.setAttribute("width", Config.TREE_VIEW_BACKGROUND_WIDTH);
+        background.setAttribute("height", Config.TREE_VIEW_BACKGROUND_HEIGHT);
         background.setAttribute("fill", Config.TREE_VIEW_BACKGROUND_COLOR);
         background.setAttribute("fill-opacity", Config.TREE_VIEW_BACKGROUND_OPACITY);
         treeViewElement.appendChild(background);
@@ -18,7 +18,7 @@ class SvgFactory {
     }
 
     createRootNodeElements(/* TODO: nodeIcon */) {
-        let rootNodeElements = createMinimumNode(false);
+        let rootNodeElements = createMinimumNode();
         
         rootNodeElements.addChildButton = createAddNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
 
@@ -26,7 +26,7 @@ class SvgFactory {
     }
 
     createStandardNodeElements() {
-        let standardNodeElements = createMinimumNode(false);
+        let standardNodeElements = createMinimumNode();
 
         standardNodeElements.inputPath = createNodeInputPath();
         standardNodeElements.addNextButton = createAddNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
@@ -37,7 +37,7 @@ class SvgFactory {
     }
 
     createLeafNodeElements() {
-        let leafNodeElements = createMinimumNode(false);
+        let leafNodeElements = createMinimumNode();
 
         leafNodeElements.inputPath = createNodeInputPath();
         leafNodeElements.addNextButton = createAddNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
@@ -46,16 +46,15 @@ class SvgFactory {
         return leafNodeElements;
     }
 
-    createDeflateableNodeElements() {
-        let deflateableNodeElements = createMinimumNode(false);
+    createNewTextLine() {
+        let newLine = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
 
-        deflateableNodeElements.inputPath = createNodeInputPath();
-        deflateableNodeElements.addChildButton = createAddNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+        newLine.setAttribute("id", Config.NODE_DESCRIPTION_NEW_LINE_ID);
 
-        return deflateableNodeElements;
+        return newLine;
     }
 
-    createTimelineElement() {
+    createTimelineNodeElements() {
         let element;
         return element;
     }
@@ -76,27 +75,21 @@ class SvgFactory {
     }
 }
 
-function createMinimumNode(isDeflateable) {
+function createMinimumNode() {
     let minimumNode = {
-        nodeBody: createNodeBody(isDeflateable),
-        nodeDescription: createNodeDescription(isDeflateable),
+        nodeBody: createNodeBody(),
+        nodeDescription: createNodeDescription(),
     };
     //TODO: insert node icon
 
     return minimumNode;
 }
 
-function createNodeBody(isDeflateable) {
+function createNodeBody() {
     let nodeBody = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     nodeBody.setAttribute("id", Config.NODE_BODY_ID);
-    if (isDeflateable) {
-        nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
-        nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
-    }
-    else {
-        nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
-        nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
-    }
+    nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
+    nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
     nodeBody.setAttribute("rx", Config.NODE_BODY_BORDER_RADIUS);
     nodeBody.setAttribute("ry", Config.NODE_BODY_BORDER_RADIUS);
     nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
@@ -109,10 +102,8 @@ function createNodeBody(isDeflateable) {
     return nodeBody;
 }
 
-function createNodeDescription(isDeflateable) {
-    let nodeDescription = document.createElementNS("http://www.w3.org/2000/svg", "text"),
-    secondLine,
-    thirdLine;
+function createNodeDescription() {
+    let nodeDescription = document.createElementNS("http://www.w3.org/2000/svg", "text");
 
     nodeDescription.setAttribute("id", Config.NODE_DESCRIPTION_FIRST_LINE_ID);
     nodeDescription.setAttribute("text-anchor", Config.NODE_DESCRIPTION_TEXT_ANCHOR);
@@ -122,18 +113,6 @@ function createNodeDescription(isDeflateable) {
     nodeDescription.setAttribute("font-weight", Config.NODE_DESCRIPTION_FONT_WEIGHT);
     nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
     //nodeDescription.setAttribute("focusable", false);
-    secondLine = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-    secondLine.setAttribute("id", Config.NODE_DESCRIPTION_SECOND_LINE_ID);
-    secondLine.setAttribute("dy", Config.LINE_SPACING);
-    thirdLine.setAttribute("id", Config.NODE_DESCRIPTION_THIRD_LINE_ID);
-    thirdLine.setAttribute("dy", Config.LINE_SPACING_TWO_LINES);
-    if (isDeflateable) {
-        nodeDescription.setAttribute("display", "none");
-        secondLine.setAttribute("display", "none");
-        thirdLine.setAttribute("display", "none");
-    }
-    nodeDescription.appendChild(secondLine);
-    nodeDescription.appendChild(thirdLine);
 
     return nodeDescription;
 }
@@ -158,6 +137,7 @@ function createAddNodeButton(id) {
     addButton.setAttribute("stroke", Config.NODE_ADD_BUTTON_STROKE_COLOR);
     addButton.setAttribute("stroke-width", Config.NODE_ADD_BUTTON_STROKE_WIDTH);
     addButton.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+    addButton.setAttribute("display", "none");
     return addButton;
 }
 
