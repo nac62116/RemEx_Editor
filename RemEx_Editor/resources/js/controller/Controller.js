@@ -7,6 +7,7 @@ import Config from "../utils/Config.js";
 import RootNode from "../views/nodeView/RootNode.js";
 import TimelineNode from "../views/nodeView/TimelineNode.js";
 import Storage from "../utils/Storage.js";
+import StandardNode from "../views/nodeView/StandardNode.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
@@ -33,7 +34,8 @@ class Controller {
     init() {
         let experiment,
         treeViewContainer = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID),
-        treeViewElement = SvgFactory.createTreeViewElement();
+        treeViewElement = SvgFactory.createTreeViewElement(),
+        newNode;
         this.nodeEventListener = [
             {
                 eventType: Config.EVENT_NODE_MOUSE_ENTER,
@@ -91,14 +93,16 @@ class Controller {
         treeViewContainer.appendChild(treeViewElement);
         TreeView.init(treeViewContainer);
         experiment = ModelManager.initExperiment();
-        createNode(this, undefined, experiment, TreeView.getCenter());
+        newNode = createNode(this, undefined, experiment);
+        newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
+
         InputViewManager.initInputViews(this.inputViewEventListener);
         // InfoViewManager.initInfoView();
         document.addEventListener("keyup", onKeyUp.bind(this));
     }
 }
 
-function createNode(that, parentNode, data, position) {
+function createNode(that, parentNode, data) {
     let id = data.id,
     elements,
     description,
@@ -111,12 +115,17 @@ function createNode(that, parentNode, data, position) {
     else if (parentNode.type === Config.TYPE_EXPERIMENT) {
         elements = SvgFactory.createTimelineNodeElements();
         description = data.name;
-        node = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, parentNode, that.timelineEventListener);
+        node = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, parentNode, that.timelineEventListener, TreeView.getWidth());
+    }
+    else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+        // TODO: Expandable node
+        elements = SvgFactory.createStandardNodeElements();
+        description = data.name;
+        node = new StandardNode(elements, id, Config.TYPE_SURVEY, description, parentNode);
     }
     for (let listener of that.nodeEventListener) {
         node.addEventListener(listener.eventType, listener.callback);
     }
-    node.updatePosition(position.x, position.y, true);
     TreeView.insertNode(node);
     return node;
 }
@@ -151,6 +160,9 @@ function onNodeClicked(event) {
     };
 
     if (clickedNode !== TreeView.currentFocusedNode) {
+        if (clickedNode instanceof TimelineNode) {
+            clickedNode.updateTimelineLength();
+        }
         if (TreeView.currentFocusedNode !== undefined) {
             TreeView.currentFocusedNode.defocus();
             TreeView.currentFocusedNode.deemphasize();
@@ -254,14 +266,14 @@ function onNodeDrop() {
 
 function onAddNextNode(event) {
     let clickedNode = event.data.target,
-    inputData = ModelManager.extendExperiment(clickedNode.parentNode.type),
+    inputData = ModelManager.extendExperiment(clickedNode.parentNode),
     position = {
         x: clickedNode.center.x + Config.NODE_DISTANCE_HORIZONTAL,
         y: clickedNode.center.y,
     },
     newNode;
-
-    newNode = createNode(this, clickedNode.parentNode, inputData, position);
+    newNode = createNode(this, clickedNode.parentNode, inputData);
+    newNode.updatePosition(position.x, position.y, true);
     clickedNode.parentNode.childNodes.push(newNode);
     if (clickedNode.nextNode !== undefined) {
         clickedNode.nextNode.previousNode = newNode;
@@ -274,14 +286,15 @@ function onAddNextNode(event) {
 
 function onAddPreviousNode(event) {
     let clickedNode = event.data.target,
-    inputData = ModelManager.extendExperiment(clickedNode.parentNode.type),
+    inputData = ModelManager.extendExperiment(clickedNode.parentNode),
     position = {
         x: clickedNode.center.x - Config.NODE_DISTANCE_HORIZONTAL,
         y: clickedNode.center.y,
     },
     newNode;
 
-    newNode = createNode(this, clickedNode.parentNode, inputData, position);
+    newNode = createNode(this, clickedNode.parentNode, inputData);
+    newNode.updatePosition(position.x, position.y, true);
     clickedNode.parentNode.childNodes.push(newNode);
     if (clickedNode.previousNode !== undefined) {
         clickedNode.previousNode.nextNode = newNode;
@@ -310,15 +323,35 @@ function moveNextNodes(node) {
 
 function onAddChildNode(event) {
     let clickedNode = event.data.target,
-    inputData = ModelManager.extendExperiment(clickedNode.type),
-    position = {
-        x: clickedNode.center.x,
-        y: clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL,
-    },
-    newNode;
-
-    newNode = createNode(this, clickedNode, inputData, position);
+    inputData = ModelManager.extendExperiment(clickedNode),
+    position = {},
+    newNode,
+    timeInMin,
+    properties,
+    timeSortedChildNodes;
+    
+    newNode = createNode(this, clickedNode, inputData);
+    // TODO: Move to onTimelineClicked
+    if (clickedNode instanceof TimelineNode) {
+        timeInMin = inputData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + inputData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + inputData.absoluteStartAtMinute;
+        position = clickedNode.getPositionFromTime(timeInMin, newNode);
+        timeSortedChildNodes = clickedNode.getTimeSortedChildNodes();
+        for (let i = 0; i < timeSortedChildNodes.length - 1; i++) {
+            properties.id = timeSortedChildNodes[i].id;
+            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
+            ModelManager.updateExperiment(properties);
+        }
+    }
+    else {
+        position.x = clickedNode.center.x;
+        position.y = clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL;
+    }
+    newNode.updatePosition(position.x, position.y, true);
     clickedNode.childNodes.push(newNode);
+    // TODO: Move to onTimelineClicked
+    if (clickedNode instanceof TimelineNode) {
+        clickedNode.updateTimelineLength();
+    }
     clickedNode.hideAddChildButton();
 }
 

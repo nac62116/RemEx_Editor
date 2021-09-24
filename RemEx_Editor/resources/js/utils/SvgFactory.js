@@ -7,6 +7,7 @@ class SvgFactory {
         background = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 
         //treeViewElement.setAttribute("viewBox", "0 0 " + containerWidth + " " + containerHeight);
+        treeViewElement.setAttribute("id", Config.TREE_VIEW_ID);
         treeViewElement.setAttribute("width", Config.TREE_VIEW_WIDTH);
         treeViewElement.setAttribute("height", Config.TREE_VIEW_HEIGHT);
         background.setAttribute("width", Config.TREE_VIEW_BACKGROUND_WIDTH);
@@ -54,10 +55,10 @@ class SvgFactory {
         return timelineNodeElements;
     }
 
-    createTimelineLabel() {
+    createTimelineLabel(labelPosition, descriptionLines, isGreater) {
         let timelineLabel = {},
-        stroke = createTimelineLabelStroke(),
-        description = createTimelineLabelDescription();
+        stroke = createTimelineLabelStroke(labelPosition, isGreater),
+        description = createTimelineLabelDescription(labelPosition, descriptionLines, isGreater);
 
         timelineLabel.stroke = stroke;
         timelineLabel.description = description;
@@ -183,6 +184,57 @@ function createTimelineElements() {
     timelineElements.description = description;
     
     return timelineElements;
+}
+
+function createTimelineLabelStroke(labelPosition, isGreater) {
+    let stroke = document.createElementNS("http://www.w3.org/2000/svg", "line");
+
+    stroke.setAttribute("id", Config.TIMELINE_LABEL_STROKE_ID);
+    stroke.setAttribute("x1", labelPosition.x);
+    stroke.setAttribute("x2", labelPosition.x);
+    stroke.setAttribute("stroke", Config.TIMELINE_COLOR);
+    if (isGreater) {
+        stroke.setAttribute("y1", labelPosition.y - Config.TIMELINE_LABEL_STROKE_OFFSET_Y_GREATER);
+        stroke.setAttribute("y2", labelPosition.y + Config.TIMELINE_LABEL_STROKE_OFFSET_Y_GREATER);
+        stroke.setAttribute("stroke-width", Config.TIMELINE_LABEL_STROKE_WIDTH_GREATER);
+    }
+    else {
+        stroke.setAttribute("y1", labelPosition.y - Config.TIMELINE_LABEL_STROKE_OFFSET_Y);
+        stroke.setAttribute("y2", labelPosition.y + Config.TIMELINE_LABEL_STROKE_OFFSET_Y);
+        stroke.setAttribute("stroke-width", Config.TIMELINE_LABEL_STROKE_WIDTH_NORMAL);
+    }
+    stroke.setAttribute("stroke-opacity", Config.TIMELINE_LABEL_STROKE_OPACITY_DEEMPHASIZED);
+    stroke.setAttribute("isGreater", isGreater);
+
+    return stroke;
+}
+
+function createTimelineLabelDescription(labelPosition, descriptionLines, isGreater) {
+    let description = document.createElementNS("http://www.w3.org/2000/svg", "text"),
+    newLine;
+    description.innerHTML = descriptionLines[0];
+    description.setAttribute("id", Config.TIMELINE_LABEL_DESCRIPTION_ID);
+    description.setAttribute("x", labelPosition.x);
+    description.setAttribute("font-family", Config.TIMELINE_LABEL_DESCRIPTION_FONT_FAMILY);
+    description.setAttribute("text-anchor", Config.TIMELINE_LABEL_DESCRIPTION_TEXT_ANCHOR);
+    description.setAttribute("fill", Config.TIMELINE_LABEL_DESCRIPTION_COLOR);
+    description.setAttribute("font-weight", Config.TIMELINE_LABEL_DESCRIPTION_FONT_WEIGHT);
+    if (isGreater) {
+        description.setAttribute("y", labelPosition.y - Config.TIMELINE_LABEL_DESCRIPTION_CENTER_OFFSET_Y_GREATER);
+        description.setAttribute("font-size", Config.TIMELINE_LABEL_DESCRIPTION_FONT_SIZE_GREATER);
+    }
+    else {
+        description.setAttribute("y", labelPosition.y - Config.TIMELINE_LABEL_DESCRIPTION_CENTER_OFFSET_Y);
+        description.setAttribute("font-size", Config.TIMELINE_LABEL_DESCRIPTION_FONT_SIZE);
+    }
+    description.setAttribute("fill-opacity", Config.TIMELINE_LABEL_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
+    description.setAttribute("isGreater", isGreater);
+    newLine = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+    newLine.setAttribute("x", labelPosition.x);
+    newLine.setAttribute("dy", Config.LINE_SPACING_SMALL);
+    newLine.innerHTML = descriptionLines[1];
+    description.appendChild(newLine);
+    return description;
 }
 
 export default new SvgFactory();

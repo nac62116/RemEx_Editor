@@ -33,7 +33,9 @@ class TreeView {
                 else {
                     for (let timelineKey in node.nodeElements.timelineElements) {
                         if (Object.prototype.hasOwnProperty.call(node.nodeElements.timelineElements, timelineKey)) {
-                            this.treeViewElement.appendChild(node.nodeElements.timelineElements[timelineKey]);
+                            if (timelineKey !== "labels") {
+                                this.treeViewElement.appendChild(node.nodeElements.timelineElements[timelineKey]);
+                            }
                         }
                     }
                 }

@@ -31,15 +31,15 @@ class ModelManager {
         return Storage.load();
     }
 
-    extendExperiment(parentType) {
+    extendExperiment(parent) {
         let experiment = Storage.load(),
-        properties = getNewModelProperties(parentType),
+        properties = getNewModelProperties(parent),
         newData;
 
-        if (parentType === Config.TYPE_EXPERIMENT) {
+        if (parent.type === Config.TYPE_EXPERIMENT) {
             newData = createNewExperimentGroup(properties, experiment);
         }
-        else if (parentType === Config.TYPE_EXPERIMENT_GROUP) {
+        else if (parent.type === Config.TYPE_EXPERIMENT_GROUP) {
             newData = createNewSurvey(properties, experiment);
         }
         else {
@@ -81,9 +81,9 @@ class ModelManager {
         Storage.save(experiment);
     }
 
-    updateExperiment(id, properties) {
+    updateExperiment(properties) {
         let experiment = Storage.load(),
-        data = this.getDataFromNodeId(id, experiment);
+        data = this.getDataFromNodeId(properties.id, experiment);
 
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
@@ -136,22 +136,26 @@ class ModelManager {
     }
 }
 
-function getNewModelProperties(parentType) {
-    let modelProperties = {};
+function getNewModelProperties(parent) {
+    let modelProperties = {
+        id: IdManager.getUnusedId(),
+        parent: parent,
+    };
 
-    if (parentType === Config.TYPE_EXPERIMENT) {
+    if (parent.type === Config.TYPE_EXPERIMENT) {
         modelProperties.name = Config.NEW_EXPERIMENT_GROUP_NAME;
     }
-    else if (parentType === Config.TYPE_EXPERIMENT_GROUP) {
+    else if (parent.type === Config.TYPE_EXPERIMENT_GROUP) {
         modelProperties.name = Config.NEW_SURVEY_NAME;
-        modelProperties.isRelative = false;
-        modelProperties.relativeStartTimeInMin = null;
+        modelProperties.absoluteStartAtMinute = 0;
+        modelProperties.absoluteStartAtHour = 12;
+        modelProperties.absoluteStartDaysOffset = 0;
         modelProperties.maxDurationInMin = Config.NEW_SURVEY_MAX_DURATION_IN_MIN;
         modelProperties.notificationDurationInMin = Config.NEW_SURVEY_NOTIFICATION_DURATION_IN_MIN;
     }
     // TODO
     else {
-        throw "TypeError: The node type \"" + parentType + "\" is not defined.";
+        throw "TypeError: The node type \"" + parent.type + "\" is not defined.";
     }
     return modelProperties;
 }
@@ -184,14 +188,13 @@ function createNewSurvey(properties, experiment) {
     survey.absoluteStartAtMinute = properties.absoluteStartAtMinute;
     survey.absoluteStartAtHour = properties.absoluteStartAtHour;
     survey.absoluteStartDaysOffset = properties.absoluteStartDaysOffset;
-    survey.nextSurveyId = properties.nextNode.id;
 
     for (let group of experiment.groups) {
-        if (group.id === properties.parentNode.id) {
+        if (group.id === properties.parent.id) {
             group.surveys.push(survey);
+            break;
         }
     }
-    experiment.groups.push(survey);
 
     return survey;
 }
