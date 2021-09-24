@@ -31,7 +31,7 @@ class ModelManager {
         return Storage.load();
     }
 
-    extendExperiment(parent) {
+    extendExperiment(parent, initialProperties) {
         let experiment = Storage.load(),
         properties = getNewModelProperties(parent),
         newData;
@@ -40,6 +40,11 @@ class ModelManager {
             newData = createNewExperimentGroup(properties, experiment);
         }
         else if (parent.type === Config.TYPE_EXPERIMENT_GROUP) {
+            for (let key in initialProperties) {
+                if (Object.prototype.hasOwnProperty.call(initialProperties, key)) {
+                    properties.key = initialProperties.key;
+                }
+            }
             newData = createNewSurvey(properties, experiment);
         }
         else {
@@ -58,22 +63,27 @@ class ModelManager {
         if (parentData.groups !== undefined) {
             index = parentData.groups.indexOf(data);
             parentData.groups.splice(index, 1);
+            IdManager.removeId(id);
         }
         else if (parentData.surveys !== undefined) {
             index = parentData.surveys.indexOf(data);
             parentData.surveys.splice(index, 1);
+            IdManager.removeId(id);
         }
         else if (parentData.steps !== undefined) {
             index = parentData.steps.indexOf(data);
             parentData.steps.splice(index, 1);
+            IdManager.removeId(id);
         }
         else if (parentData.questions !== undefined) {
             index = parentData.questions.indexOf(data);
             parentData.questions.splice(index, 1);
+            IdManager.removeId(id);
         }
         else if (parentData.answers !== undefined) {
             index = parentData.answers.indexOf(data);
             parentData.answers.splice(index, 1);
+            IdManager.removeId(id);
         }
         else {
             // Experiment was not shortened
@@ -147,9 +157,9 @@ function getNewModelProperties(parent) {
     }
     else if (parent.type === Config.TYPE_EXPERIMENT_GROUP) {
         modelProperties.name = Config.NEW_SURVEY_NAME;
-        modelProperties.absoluteStartAtMinute = 0;
-        modelProperties.absoluteStartAtHour = 12;
-        modelProperties.absoluteStartDaysOffset = 0;
+        modelProperties.absoluteStartAtMinute = undefined;
+        modelProperties.absoluteStartAtHour = undefined;
+        modelProperties.absoluteStartDaysOffset = undefined;
         modelProperties.maxDurationInMin = Config.NEW_SURVEY_MAX_DURATION_IN_MIN;
         modelProperties.notificationDurationInMin = Config.NEW_SURVEY_NOTIFICATION_DURATION_IN_MIN;
     }

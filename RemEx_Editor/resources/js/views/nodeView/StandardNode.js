@@ -76,7 +76,6 @@ class StandardNode extends NodeView {
             y: (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 4)), // eslint-disable-line no-magic-numbers
         };
         this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + this.top.y); // eslint-disable-line no-magic-numbers
-        console.log(this.center);
         this.nodeElements.addNextButton.setAttribute("cx", this.center.x + Config.NODE_ADD_PREV_NEXT_BUTTON_CENTER_OFFSET_X);
         this.nodeElements.addNextButton.setAttribute("cy", this.center.y);
         this.nodeElements.addPreviousButton.setAttribute("cx", this.center.x - Config.NODE_ADD_PREV_NEXT_BUTTON_CENTER_OFFSET_X);

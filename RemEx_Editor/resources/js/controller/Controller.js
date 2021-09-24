@@ -126,6 +126,11 @@ function createNode(that, parentNode, data) {
     for (let listener of that.nodeEventListener) {
         node.addEventListener(listener.eventType, listener.callback);
     }
+
+    node.parentNode = parentNode;
+    if (parentNode !== undefined) {
+        parentNode.childNodes.push(node);
+    }
     TreeView.insertNode(node);
     return node;
 }
@@ -164,6 +169,11 @@ function onNodeClicked(event) {
             clickedNode.updateTimelineLength();
         }
         if (TreeView.currentFocusedNode !== undefined) {
+            if (!TreeView.currentFocusedNode.childNodes.includes(clickedNode)) {
+                for (let childNode of TreeView.currentFocusedNode.childNodes) {
+                    childNode.hide();
+                }
+            }
             TreeView.currentFocusedNode.defocus();
             TreeView.currentFocusedNode.deemphasize();
         }
@@ -173,7 +183,7 @@ function onNodeClicked(event) {
 
         if (clickedNode.parentNode !== undefined) {
             if (clickedNode.parentNode.parentNode !== undefined) {
-                for (let childNode of clickedNode.parentNode.parentNode) {
+                for (let childNode of clickedNode.parentNode.parentNode.childNodes) {
                     if (childNode !== clickedNode.parentNode) {
                         childNode.hide();
                     }
@@ -266,7 +276,7 @@ function onNodeDrop() {
 
 function onAddNextNode(event) {
     let clickedNode = event.data.target,
-    inputData = ModelManager.extendExperiment(clickedNode.parentNode),
+    inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined),
     position = {
         x: clickedNode.center.x + Config.NODE_DISTANCE_HORIZONTAL,
         y: clickedNode.center.y,
@@ -274,7 +284,6 @@ function onAddNextNode(event) {
     newNode;
     newNode = createNode(this, clickedNode.parentNode, inputData);
     newNode.updatePosition(position.x, position.y, true);
-    clickedNode.parentNode.childNodes.push(newNode);
     if (clickedNode.nextNode !== undefined) {
         clickedNode.nextNode.previousNode = newNode;
         newNode.nextNode = clickedNode.nextNode;
@@ -286,7 +295,7 @@ function onAddNextNode(event) {
 
 function onAddPreviousNode(event) {
     let clickedNode = event.data.target,
-    inputData = ModelManager.extendExperiment(clickedNode.parentNode),
+    inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined),
     position = {
         x: clickedNode.center.x - Config.NODE_DISTANCE_HORIZONTAL,
         y: clickedNode.center.y,
@@ -295,7 +304,6 @@ function onAddPreviousNode(event) {
 
     newNode = createNode(this, clickedNode.parentNode, inputData);
     newNode.updatePosition(position.x, position.y, true);
-    clickedNode.parentNode.childNodes.push(newNode);
     if (clickedNode.previousNode !== undefined) {
         clickedNode.previousNode.nextNode = newNode;
         newNode.previousNode = clickedNode.previousNode;
@@ -323,42 +331,56 @@ function moveNextNodes(node) {
 
 function onAddChildNode(event) {
     let clickedNode = event.data.target,
-    inputData = ModelManager.extendExperiment(clickedNode),
+    inputData = ModelManager.extendExperiment(clickedNode, undefined),
     position = {},
-    newNode,
-    timeInMin,
-    properties,
-    timeSortedChildNodes;
+    newNode;
     
     newNode = createNode(this, clickedNode, inputData);
-    // TODO: Move to onTimelineClicked
-    if (clickedNode instanceof TimelineNode) {
-        timeInMin = inputData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + inputData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + inputData.absoluteStartAtMinute;
-        position = clickedNode.getPositionFromTime(timeInMin, newNode);
-        timeSortedChildNodes = clickedNode.getTimeSortedChildNodes();
-        for (let i = 0; i < timeSortedChildNodes.length - 1; i++) {
-            properties.id = timeSortedChildNodes[i].id;
-            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
-            ModelManager.updateExperiment(properties);
-        }
-    }
-    else {
-        position.x = clickedNode.center.x;
-        position.y = clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL;
-    }
+    position.x = clickedNode.center.x;
+    position.y = clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL;
     newNode.updatePosition(position.x, position.y, true);
-    clickedNode.childNodes.push(newNode);
-    // TODO: Move to onTimelineClicked
-    if (clickedNode instanceof TimelineNode) {
-        clickedNode.updateTimelineLength();
-    }
     clickedNode.hideAddChildButton();
 }
 
 // TimelineView event callbacks
 
 function onTimelineClicked(event) {
-    let clickedTime = event.data.time;
+    let correspondingNode = event.data.correspondingNode,
+    clickedPosition = event.data.position,
+    properties = {
+        absoluteStartDaysOffset: event.data.absoluteStartDaysOffset,
+        absoluteStartAtHour: event.data.absoluteStartAtHour,
+        absoluteStartAtMinute: event.data.absoluteStartAtMinute,
+    },
+    inputData = ModelManager.extendExperiment(correspondingNode, properties),
+    newNode,
+    timeInMin,
+    timeSortedChildNodes;
+
+    newNode = createNode(this, correspondingNode, inputData);
+    newNode.updatePosition(clickedPosition.x, clickedPosition.y, true);
+
+    timeInMin = event.data.timeInMin;
+    correspondingNode.updateTimeNodeMap(timeInMin, newNode);
+    timeSortedChildNodes = correspondingNode.getTimeSortedChildNodes();
+    for (let i = 0; i < timeSortedChildNodes.length; i++) {
+        if (i !== timeSortedChildNodes.length - 1) {
+            properties.id = timeSortedChildNodes[i].id;
+            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
+            ModelManager.updateExperiment(properties);
+        }
+        if (i === 0) {
+            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
+        }
+        else if (i === timeSortedChildNodes.length - 1) {
+            timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
+        }
+        else {
+            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
+            timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
+        }
+    }
+    correspondingNode.updateTimelineLength();
 }
 
 // InputView event callbacks

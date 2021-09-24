@@ -7,7 +7,7 @@ class TimelineNode extends LeafNode {
 
     constructor(nodeElements, id, type, description, parentNode, timelineEventListener, treeViewWidth) {
         super(nodeElements, id, type, description, parentNode);
-        this.timeline = new TimelineView(nodeElements.timelineElements, treeViewWidth);
+        this.timeline = new TimelineView(nodeElements.timelineElements, treeViewWidth, this);
         for (let listener of timelineEventListener) {
             this.timeline.addEventListener(listener.eventType, listener.callback);
         }
@@ -27,11 +27,17 @@ class TimelineNode extends LeafNode {
     updatePosition(centerX, centerY, makeStatic) {
         super.updatePosition(centerX, centerY, makeStatic);
         this.timeline.updatePosition(centerX, centerY);
+        // Update childNode positions with offsetVector
     }
 
     updateTimelineLength() {
-        let ascSortedTimes = this.getTimeSortedChildNodes(),
+        let ascSortedTimes = [],
         maxTimeInMin;
+        for (let key of this.timeNodeMap.keys()) {
+            ascSortedTimes.push(key);
+        }
+        ascSortedTimes.sort();
+
         if (ascSortedTimes.length === 0) {
             maxTimeInMin = Config.ONE_DAY_IN_MIN;
         }
@@ -39,16 +45,13 @@ class TimelineNode extends LeafNode {
             maxTimeInMin = ascSortedTimes[ascSortedTimes.length - 1];
         }
 
+        //console.log(ascSortedTimes);
+
         this.timeline.updateLength(maxTimeInMin);
     }
 
-    getPositionFromTime(timeInMin, correspondingNode) {
-        let position;
-
+    updateTimeNodeMap(timeInMin, correspondingNode) {
         this.timeNodeMap.set(timeInMin, correspondingNode);
-        position = this.timeline.getPositionOnTimeline(timeInMin);
-
-        return position;
     }
 
     getTimeSortedChildNodes() {
@@ -70,7 +73,7 @@ class TimelineNode extends LeafNode {
 
 class TimelineView extends Observable {
 
-    constructor(timelineElements, treeViewWidth) {
+    constructor(timelineElements, treeViewWidth, correspondingNode) {
         super();
         this.timelineElements = timelineElements;
         this.center = {
@@ -87,6 +90,7 @@ class TimelineView extends Observable {
         };
         this.height = Config.NODE_BODY_HEIGHT;
         this.width = treeViewWidth * Config.TIMELINE_WIDTH_IN_PERCENTAGE;
+        this.correspondingNode = correspondingNode;
         this.timelineLengthInMin = Config.ONE_DAY_IN_MIN;
         this.timelineElements.timeline.addEventListener("click", onClick.bind(this));
         this.timelineElements.timeline.addEventListener("mouseenter", onMouseEnter.bind(this));
@@ -187,7 +191,7 @@ class TimelineView extends Observable {
             treeView.removeChild(currentLabel.description);
         }
         this.timelineElements.labels = [];
-        for (let timeInMin = 0; timeInMin <= timelineLengthInMin; timeInMin += labelSteps) {
+        for (let timeInMin = 0; timeInMin <= this.timelineLengthInMin; timeInMin += labelSteps) {
             if (descriptionCount === labelDescriptions.length) {
                 descriptionCount = 0;
                 if (labelSteps === Config.SEVEN_DAYS_IN_MIN) {
@@ -200,21 +204,13 @@ class TimelineView extends Observable {
             isGreater = timeInMin % Config.ONE_DAY_IN_MIN === 0 || timeInMin % Config.ONE_HOUR_IN_MIN;
             descriptionLines[0] = Config.TIMELINE_LABEL_DESCRIPTIONS_PREFIX + " " + dayCount;
             descriptionLines[1] = labelDescriptions[descriptionCount];
-            position = this.getPositionOnTimeline(timeInMin);
+            position = getPositionFromTime(this, timeInMin);
             label = SvgFactory.createTimelineLabel(position, descriptionLines, isGreater);
             this.timelineElements.labels.push(label);
             treeView.appendChild(label.description);
             treeView.appendChild(label.stroke);
             descriptionCount++;
         }
-    }
-
-    getPositionOnTimeline(timeInMin) {
-        let position = {
-            x: this.start.x + (timeInMin / this.timelineLengthInMin * (this.end.x - this.start.x)),
-            y: this.center.y,
-        };
-        return position;
     }
 }
 
@@ -247,17 +243,44 @@ function deemphasize(that) {
 }
 
 function onClick(event) {
-    let data, controllerEvent;
+    let data,
+    controllerEvent,
+    timeInMin,
+    position = {
+        x: event.clientX,
+        y: event.clientY,
+    };
 
-    console.log(event);
-    /*data = {
-        positionOnTimeline: {
-            x: event.x,
-            y: this.center.y,
-        },
+    timeInMin = getTimeFromPosition(this, position);
+    data = {
+        correspondingNode: this.correspondingNode,
+        position: position,
+        absoluteStartDaysOffset: Math.floor(timeInMin / Config.ONE_DAY_IN_MIN),
+        absoluteStartAtHour: Math.floor((timeInMin % Config.ONE_DAY_IN_MIN) / Config.ONE_HOUR_IN_MIN),
+        absoluteStartAtMinute: timeInMin % Config.ONE_DAY_IN_MIN % Config.ONE_HOUR_IN_MIN,
+        timeInMin: timeInMin,
     };
     controllerEvent = new Event(Config.EVENT_TIMELINE_CLICKED, data);
-    this.notifyAll(controllerEvent);*/
+    this.notifyAll(controllerEvent);
+}
+
+function getPositionFromTime(that, timeInMin) {
+    let position = {
+        x: that.start.x + (timeInMin / that.timelineLengthInMin * (that.end.x - that.start.x)),
+        y: that.center.y,
+    };
+    return position;
+}
+
+function getTimeFromPosition(that, position) {
+    let timeInMin,
+    lengthFromStart;
+
+    lengthFromStart = position.x - that.start.x;
+    timeInMin = lengthFromStart / that.width * that.timelineLengthInMin;
+    timeInMin = Math.round(timeInMin);
+
+    return timeInMin;
 }
 
 export default TimelineNode;
