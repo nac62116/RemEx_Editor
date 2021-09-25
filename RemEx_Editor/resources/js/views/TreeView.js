@@ -106,22 +106,6 @@ class TreeView {
             this.clickNode(this.currentFocusedNode.childNodes[0]);
         }
     }
-
-    insertTimeline(timelineElement) {
-        let timelinePosition = {
-            x: undefined,
-            y: this.currentFocusedNode.center.y + Config.TREE_VIEW_ROW_DISTANCE,
-        };
-        if (this.currentTimelineElement !== undefined) {
-            this.treeViewElement.removeChild(this.currentTimelineElement);
-        }
-        else {
-            // No current element to remove
-        }
-        this.treeViewElement.appendChild(timelineElement);
-        this.currentTimelineElement = timelineElement;
-        return timelinePosition;
-    }
 }
 
 /*function removeNodeFromParentsList(node) {

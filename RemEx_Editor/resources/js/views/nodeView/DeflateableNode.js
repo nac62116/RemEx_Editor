@@ -24,12 +24,12 @@ class DeflateableNode extends StandardNode {
         };
         super.emphasize();
         if (!this.isFocused) {
-        this.nodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
-        this.nodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
-        this.nodeElements.nodeBody.setAttribute("x", this.nodeElements.nodeBody.getAttribute("x") * 1 + offsetVector.x);
-        this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
-        this.nodeElements.nodeDescription.removeAttribute("display");
-        this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y + offsetVector.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + (this.top.y + offsetVector.y)); // eslint-disable-line no-magic-numbers
+            this.nodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
+            this.nodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
+            this.nodeElements.nodeBody.setAttribute("x", this.nodeElements.nodeBody.getAttribute("x") * 1 + offsetVector.x);
+            this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
+            this.nodeElements.nodeDescription.removeAttribute("display");
+            this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y + offsetVector.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + (this.top.y + offsetVector.y)); // eslint-disable-line no-magic-numbers
         }
     }
 
@@ -42,9 +42,10 @@ class DeflateableNode extends StandardNode {
         bezierReferencePoint = {
             x: parentOutputPoint.x,
             y: (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 4)), // eslint-disable-line no-magic-numbers
-        };
+        },
+        isEmphasized = this.isEmphasized;
         super.deemphasize();
-        if (!this.isFocused) {
+        if (!this.isFocused && isEmphasized) {
             this.nodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
             this.nodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
             this.nodeElements.nodeBody.setAttribute("x", this.nodeElements.nodeBody.getAttribute("x") * 1 + offsetVector.x);

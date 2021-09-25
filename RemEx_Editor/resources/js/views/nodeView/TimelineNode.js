@@ -63,7 +63,7 @@ class TimelineNode extends LeafNode {
         for (key of this.timeNodeMap.keys()) {
             sortedKeys.push(key);
         }
-        sortedKeys.sort();
+        sortedKeys.sort(function(a, b){return a - b;});
         for (key of sortedKeys) {
             timeSortedChildNodes.push(this.timeNodeMap.get(key));
         }
