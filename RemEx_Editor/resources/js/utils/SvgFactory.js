@@ -19,26 +19,30 @@ class SvgFactory {
     }
 
     createRootNodeElements(/* TODO: nodeIcon */) {
-        let rootNodeElements = createMinimumNode();
+        let rootNodeElements = createMinimumNode(false);
         
         rootNodeElements.addChildButton = createAddNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
 
         return rootNodeElements;
     }
 
-    createStandardNodeElements() {
-        let standardNodeElements = createMinimumNode();
+    createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton) {
+        let standardNodeElements = createMinimumNode(false);
 
         standardNodeElements.inputPath = createNodeInputPath();
-        standardNodeElements.addNextButton = createAddNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
-        standardNodeElements.addPreviousButton = createAddNodeButton(Config.NODE_ADD_PREV_BUTTON_ID);
-        standardNodeElements.addChildButton = createAddNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+        if (hasAddNeighbourButtons) {
+            standardNodeElements.addNextButton = createAddNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
+            standardNodeElements.addPreviousButton = createAddNodeButton(Config.NODE_ADD_PREV_BUTTON_ID);
+        }
+        if (hasAddChildButton) {
+            standardNodeElements.addChildButton = createAddNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+        }
 
         return standardNodeElements;
     }
 
     createLeafNodeElements() {
-        let leafNodeElements = createMinimumNode();
+        let leafNodeElements = createMinimumNode(false);
 
         leafNodeElements.inputPath = createNodeInputPath();
         leafNodeElements.addNextButton = createAddNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
@@ -48,11 +52,21 @@ class SvgFactory {
     }
 
     createTimelineNodeElements() {
-        let timelineNodeElements = this.createStandardNodeElements();
+        let timelineNodeElements = this.createStandardNodeElements(true, true);
 
         timelineNodeElements.timelineElements = createTimelineElements();
 
         return timelineNodeElements;
+    }
+
+    createDeflateableNodeElements(hasAddNeighbourButtons, hasAddChildButton) {
+        let deflateableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton);
+
+        deflateableNodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
+        deflateableNodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
+        deflateableNodeElements.nodeDescription.setAttribute("display", "none");
+
+        return deflateableNodeElements;
     }
 
     createTimelineLabel(labelPosition, descriptionLines, isGreater) {
@@ -90,21 +104,27 @@ class SvgFactory {
     }
 }
 
-function createMinimumNode() {
+function createMinimumNode(isDeflateable) {
     let minimumNode = {
-        nodeBody: createNodeBody(),
-        nodeDescription: createNodeDescription(),
+        nodeBody: createNodeBody(isDeflateable),
+        nodeDescription: createNodeDescription(isDeflateable),
     };
     //TODO: insert node icon
 
     return minimumNode;
 }
 
-function createNodeBody() {
+function createNodeBody(isDeflateable) {
     let nodeBody = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     nodeBody.setAttribute("id", Config.NODE_BODY_ID);
-    nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
-    nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
+    if (isDeflateable) {
+        nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
+        nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
+    }
+    else {
+        nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
+        nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
+    }
     nodeBody.setAttribute("rx", Config.NODE_BODY_BORDER_RADIUS);
     nodeBody.setAttribute("ry", Config.NODE_BODY_BORDER_RADIUS);
     nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
@@ -117,7 +137,7 @@ function createNodeBody() {
     return nodeBody;
 }
 
-function createNodeDescription() {
+function createNodeDescription(isDeflateable) {
     let nodeDescription = document.createElementNS("http://www.w3.org/2000/svg", "text");
 
     nodeDescription.setAttribute("id", Config.NODE_DESCRIPTION_FIRST_LINE_ID);
@@ -127,6 +147,9 @@ function createNodeDescription() {
     nodeDescription.setAttribute("font-size", Config.NODE_DESCRIPTION_FONT_SIZE);
     nodeDescription.setAttribute("font-weight", Config.NODE_DESCRIPTION_FONT_WEIGHT);
     nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
+    if (isDeflateable) {
+        nodeDescription.setAttribute("display", "none");
+    }
     //nodeDescription.setAttribute("focusable", false);
 
     return nodeDescription;

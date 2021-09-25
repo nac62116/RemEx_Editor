@@ -6,8 +6,7 @@ import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
 import RootNode from "../views/nodeView/RootNode.js";
 import TimelineNode from "../views/nodeView/TimelineNode.js";
-import Storage from "../utils/Storage.js";
-import StandardNode from "../views/nodeView/StandardNode.js";
+import DeflateableNode from "../views/nodeView/DeflateableNode.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
@@ -90,6 +89,7 @@ class Controller {
                 callback: onTimelineClicked.bind(this),
             },
         ];
+        this.currentSelection = [];
         treeViewContainer.appendChild(treeViewElement);
         TreeView.init(treeViewContainer);
         experiment = ModelManager.initExperiment();
@@ -119,14 +119,13 @@ function createNode(that, parentNode, data) {
     }
     else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
         // TODO: Expandable node
-        elements = SvgFactory.createStandardNodeElements();
+        elements = SvgFactory.createDeflateableNodeElements(false, true);
         description = data.name;
-        node = new StandardNode(elements, id, Config.TYPE_SURVEY, description, parentNode);
+        node = new DeflateableNode(elements, id, Config.TYPE_SURVEY, description, parentNode);
     }
     for (let listener of that.nodeEventListener) {
         node.addEventListener(listener.eventType, listener.callback);
     }
-
     node.parentNode = parentNode;
     if (parentNode !== undefined) {
         parentNode.childNodes.push(node);
@@ -137,14 +136,14 @@ function createNode(that, parentNode, data) {
 
 // Node events
 
-function onNodeMouseEnter(event) {
-    let hoveredNode = event.data.target,
+function onNodeMouseEnter(/*event*/) {
+    /*let hoveredNode = event.data.target,
     experiment = Storage.load(),
     inputData;
 
     // inputData = ModelManager.getDataFromNodeId(hoveredNode, experiment);
     // InputViewManager.showInputView(hoveredNode, inputData, false);
-    // InfoView -> show Info
+    // InfoView -> show Info */
 }
 
 function onNodeMouseLeave(/*event*/) {
@@ -160,10 +159,12 @@ function onNodeClicked(event) {
     // experiment = Storage.load(),
     // inputData,
     movingVector = {
-        x: TreeView.getCenter().x - clickedNode.center.x,
-        y: TreeView.getCenter().y - clickedNode.center.y,
+        x: undefined,
+        y: undefined,
     };
 
+    this.currentSelection = [];
+    updateCurrentSelection(this, clickedNode);
     if (clickedNode !== TreeView.currentFocusedNode) {
         if (clickedNode instanceof TimelineNode) {
             clickedNode.updateTimelineLength();
@@ -174,12 +175,12 @@ function onNodeClicked(event) {
                     childNode.hide();
                 }
             }
-            TreeView.currentFocusedNode.defocus();
+            TreeView.currentFocusedNode.defocus(this.currentSelection);
             TreeView.currentFocusedNode.deemphasize();
         }
         TreeView.currentFocusedNode = clickedNode;
-        clickedNode.focus();
         clickedNode.emphasize();
+        clickedNode.focus();
 
         if (clickedNode.parentNode !== undefined) {
             if (clickedNode.parentNode.parentNode !== undefined) {
@@ -195,6 +196,9 @@ function onNodeClicked(event) {
             hideChildrenBeginningFromNode(childNode);
         }
         showNeighboursBeginningFromNode(clickedNode);
+        
+        movingVector.x = TreeView.getCenter().x - clickedNode.center.x;
+        movingVector.y = TreeView.getCenter().y - clickedNode.center.y;
         moveTree(clickedNode, movingVector);
 
         // InputViewManager -> Enable input
@@ -202,6 +206,14 @@ function onNodeClicked(event) {
         // InputViewManager.showInputView(clickedNode, inputData, true);
         // InputViewManager.selectInputField();
     }
+}
+
+function updateCurrentSelection(that, node) {
+    if (node === undefined) {
+        return;
+    }
+    that.currentSelection.push(node);
+    updateCurrentSelection(that, node.parentNode);
 }
 
 function hideChildrenBeginningFromNode(node) {

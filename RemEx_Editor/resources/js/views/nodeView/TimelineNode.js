@@ -19,15 +19,16 @@ class TimelineNode extends LeafNode {
         this.timeline.show();
     }
 
-    defocus() {
+    defocus(currentSelection) {
         super.defocus();
-        this.timeline.hide();
+        if (!currentSelection.includes(this)) {
+            this.timeline.hide();
+        }
     }
 
     updatePosition(centerX, centerY, makeStatic) {
         super.updatePosition(centerX, centerY, makeStatic);
         this.timeline.updatePosition(centerX, centerY);
-        // Update childNode positions with offsetVector
     }
 
     updateTimelineLength() {
@@ -125,9 +126,9 @@ class TimelineView extends Observable {
 
         this.center.x = correspondingNodeCenterX;
         this.center.y = correspondingNodeCenterY + Config.NODE_DISTANCE_VERTICAL;
-        this.start.x = correspondingNodeCenterX - this.width / 2;
+        this.start.x = correspondingNodeCenterX - this.width / 2; // eslint-disable-line no-magic-numbers
         this.start.y = correspondingNodeCenterY;
-        this.end.x = correspondingNodeCenterX + this.width / 2;
+        this.end.x = correspondingNodeCenterX + this.width / 2; // eslint-disable-line no-magic-numbers
         this.end.y = correspondingNodeCenterY;
         this.timelineElements.timeline.setAttribute("y1", this.center.y);
         this.timelineElements.timeline.setAttribute("x1", this.start.x);
@@ -195,7 +196,7 @@ class TimelineView extends Observable {
             if (descriptionCount === labelDescriptions.length) {
                 descriptionCount = 0;
                 if (labelSteps === Config.SEVEN_DAYS_IN_MIN) {
-                    dayCount += 7;
+                    dayCount += 7; // eslint-disable-line no-magic-numbers
                 }
                 else {
                     dayCount += 1;
@@ -207,8 +208,8 @@ class TimelineView extends Observable {
             position = getPositionFromTime(this, timeInMin);
             label = SvgFactory.createTimelineLabel(position, descriptionLines, isGreater);
             this.timelineElements.labels.push(label);
-            treeView.appendChild(label.description);
-            treeView.appendChild(label.stroke);
+            treeView.insertBefore(label.description, this.timelineElements.timeline);
+            treeView.insertBefore(label.stroke, this.timelineElements.timeline);
             descriptionCount++;
         }
     }
@@ -248,7 +249,7 @@ function onClick(event) {
     timeInMin,
     position = {
         x: event.clientX,
-        y: event.clientY,
+        y: this.center.y,
     };
 
     timeInMin = getTimeFromPosition(this, position);

@@ -7,15 +7,21 @@ class StandardNode extends NodeView {
     constructor(nodeElements, id, type, description, parentNode) {
         super(nodeElements, id, type, description, parentNode);
         
-        this.nodeElements.addNextButton.addEventListener("click", onAddNextNodeClicked.bind(this));
-        this.nodeElements.addNextButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
-        this.nodeElements.addNextButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
-        this.nodeElements.addPreviousButton.addEventListener("click", onAddPreviousNodeClicked.bind(this));
-        this.nodeElements.addPreviousButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
-        this.nodeElements.addPreviousButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
-        this.nodeElements.addChildButton.addEventListener("click", onAddChildNodeClicked.bind(this));
-        this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
-        this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+        if (this.nodeElements.addNextButton !== undefined) {
+            this.nodeElements.addNextButton.addEventListener("click", onAddNextNodeClicked.bind(this));
+            this.nodeElements.addNextButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
+            this.nodeElements.addNextButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+        }
+        if (this.nodeElements.addPreviousButton !== undefined) {
+            this.nodeElements.addPreviousButton.addEventListener("click", onAddPreviousNodeClicked.bind(this));
+            this.nodeElements.addPreviousButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
+            this.nodeElements.addPreviousButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+        }
+        if (this.nodeElements.addChildButton !== undefined) {
+            this.nodeElements.addChildButton.addEventListener("click", onAddChildNodeClicked.bind(this));
+            this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
+            this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+        }
     }
 
     show() {
@@ -31,8 +37,12 @@ class StandardNode extends NodeView {
     focus() {
         super.focus();
 
-        this.nodeElements.addNextButton.removeAttribute("display");
-        this.nodeElements.addPreviousButton.removeAttribute("display");
+        if (this.nodeElements.addNextButton !== undefined) {
+            this.nodeElements.addNextButton.removeAttribute("display");
+        }
+        if (this.nodeElements.addPreviousButton !== undefined) {
+            this.nodeElements.addPreviousButton.removeAttribute("display");
+        }
         if (this.childNodes.length === 0) {
             this.showAddChildButton();
         }
@@ -46,8 +56,12 @@ class StandardNode extends NodeView {
     defocus() {
         super.defocus();
 
-        this.nodeElements.addNextButton.setAttribute("display", "none");
-        this.nodeElements.addPreviousButton.setAttribute("display", "none");
+        if (this.nodeElements.addNextButton !== undefined) {
+            this.nodeElements.addNextButton.setAttribute("display", "none");
+        }
+        if (this.nodeElements.addPreviousButton !== undefined) {
+            this.nodeElements.addPreviousButton.setAttribute("display", "none");
+        }
         this.hideAddChildButton();
     }
 
@@ -76,20 +90,30 @@ class StandardNode extends NodeView {
             y: (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 4)), // eslint-disable-line no-magic-numbers
         };
         this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + this.top.y); // eslint-disable-line no-magic-numbers
-        this.nodeElements.addNextButton.setAttribute("cx", this.center.x + Config.NODE_ADD_PREV_NEXT_BUTTON_CENTER_OFFSET_X);
-        this.nodeElements.addNextButton.setAttribute("cy", this.center.y);
-        this.nodeElements.addPreviousButton.setAttribute("cx", this.center.x - Config.NODE_ADD_PREV_NEXT_BUTTON_CENTER_OFFSET_X);
-        this.nodeElements.addPreviousButton.setAttribute("cy", this.center.y);
-        this.nodeElements.addChildButton.setAttribute("cx", this.center.x);
-        this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y);
+        if (this.nodeElements.addNextButton !== undefined) {
+            this.nodeElements.addNextButton.setAttribute("cx", this.center.x + Config.NODE_ADD_PREV_NEXT_BUTTON_CENTER_OFFSET_X);
+            this.nodeElements.addNextButton.setAttribute("cy", this.center.y);
+        }
+        if (this.nodeElements.addPreviousButton !== undefined) {
+            this.nodeElements.addPreviousButton.setAttribute("cx", this.center.x - Config.NODE_ADD_PREV_NEXT_BUTTON_CENTER_OFFSET_X);
+            this.nodeElements.addPreviousButton.setAttribute("cy", this.center.y);
+        }
+        if (this.nodeElements.addChildButton !== undefined) {
+            this.nodeElements.addChildButton.setAttribute("cx", this.center.x);
+            this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y);
+        }
     }
 
     hideAddChildButton() {
-        this.nodeElements.addChildButton.setAttribute("display", "none");
+        if (this.nodeElements.addChildButton !== undefined) {
+            this.nodeElements.addChildButton.setAttribute("display", "none");
+        }
     }
 
     showAddChildButton() {
-        this.nodeElements.addChildButton.removeAttribute("display");
+        if (this.nodeElements.addChildButton !== undefined) {
+            this.nodeElements.addChildButton.removeAttribute("display");
+        }
     }
 }
 

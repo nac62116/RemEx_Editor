@@ -43,7 +43,7 @@ class TreeView {
         }
     }
 
-    removeNode(node) {
+    removeNode(/*node*/) {
         /*
         let isInsertion = false,
         nextFocusedNode;
@@ -56,7 +56,7 @@ class TreeView {
         return nextFocusedNode;*/
     }
 
-    focusNode(node) {
+    focusNode(/*node*/) {
         /* Moving animation
         let firstNodeOfRow = getFirstNodeOfRow(node),
         centerOffsetVector = getCenterOffsetVector(this, node),
@@ -124,7 +124,7 @@ class TreeView {
     }
 }
 
-function removeNodeFromParentsList(node) {
+/*function removeNodeFromParentsList(node) {
     let indexInParentList;
 
     indexInParentList = node.parentNode.childNodes.indexOf(node);
@@ -137,6 +137,6 @@ function removeNodeFromDOM(node) {
     for (let element of node.elements) {
         element.remove();
     }
-}
+}*/
 
 export default new TreeView();
