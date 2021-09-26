@@ -36,10 +36,6 @@ class ModelManager {
         return experiment;
     }
 
-    getExperiment() {
-        return Storage.load();
-    }
-
     extendExperiment(parentNode, initialProperties, stepType, questionType) {
         let experiment = Storage.load(),
         properties = getNewModelProperties(parentNode, stepType, questionType),
@@ -112,9 +108,7 @@ class ModelManager {
     updateExperiment(properties) {
         let experiment = Storage.load(),
         data = this.getDataFromNodeId(properties.id, experiment);
-        if (data === null) {
-            console.log(properties);
-        }
+        
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
                 data.key = properties.key;
@@ -171,7 +165,7 @@ function getNewModelProperties(parentNode, stepType, questionType) {
         id: IdManager.getUnusedId(),
         parentNode: parentNode,
     };
-
+    
     if (parentNode.type === Config.TYPE_EXPERIMENT) {
         modelProperties.name = Config.NEW_EXPERIMENT_GROUP_NAME;
     }

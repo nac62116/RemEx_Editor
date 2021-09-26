@@ -52,17 +52,146 @@ const Config = {
     INPUT_VIEW_HEADER_ID: "inputHeader",
     INPUT_VIEW_DELETE_BUTTON_ID: "inputDeleteButton",
     INPUT_VIEW_SAVE_BUTTON_ID: "inputSaveButton",
+    INPUT_FIELD_TEMPLATE_ID: "inputField",
 
     // CSS Class names:
 
     HIDDEN_CSS_CLASS_NAME: "hidden",
     INPUT_FIELD_CSS_CLASS_NAME: "input-field",
+    INPUT_FIELD_CONTAINER_CSS_CLASS_NAME: "input-field-container",
 
     // Input view
     INPUT_EXPERIMENT_NAME_ID: "experimentNameInput",
     INPUT_EXPERIMENT_NAME_LABEL: "Name des Experiments:",
     INPUT_EXPERIMENT_GROUP_NAME_ID: "experimentGroupNameInput",
     INPUT_EXPERIMENT_GROUP_NAME_LABEL: "Name der Experimentgruppe:",
+
+    INPUT_FIELD_DATA: [
+        {
+            label: "Name:",
+            correspondingModelProperty: "name",
+            inputType: "text",
+        },
+        {
+            label: "Befragungstag:",
+            correspondingModelProperty: "absoluteStartDaysOffset",
+            inputType: "text",
+        },
+        {
+            label: "Uhrzeit der Befragung:",
+            correspondingModelProperty: "absoluteStartAtHour",
+            inputType: "time",
+        },
+        {
+            label: "Uhrzeit der Befragung:",
+            correspondingModelProperty: "absoluteStartAtMinute",
+            inputType: "time",
+        },
+        {
+            label: "Maximale Dauer der Befragung (Minuten):",
+            correspondingModelProperty: "maxDurationInMin",
+            inputType: "text",
+        },
+        {
+            label: "Dauer der Benachrichtigung (Minuten):",
+            correspondingModelProperty: "notificationDurationInMin",
+            inputType: "text",
+        },
+        {
+            label: "Überschrift:",
+            correspondingModelProperty: "header",
+            inputType: "text",
+        },
+        {
+            label: "Text:",
+            correspondingModelProperty: "text",
+            inputType: "text",
+        },
+        {
+            label: "Bild:",
+            correspondingModelProperty: "imageFileName",
+            inputType: "image",
+        },
+        {
+            label: "Video:",
+            correspondingModelProperty: "videoFileName",
+            inputType: "video",
+        },
+        {
+            label: "Dauer (Minuten):",
+            correspondingModelProperty: "durationInMin",
+            inputType: "text",
+        },
+        {
+            label: "Auf Instruktion warten:",
+            correspondingModelProperty: "waitForStep",
+            inputType: "text",
+        },
+        {
+            label: "Wartetext:",
+            correspondingModelProperty: "waitingText",
+            inputType: "text",
+        },
+        {
+            label: "Atemfrequenz (Sekunden):",
+            correspondingModelProperty: "breathingFrequencyInSec",
+            inputType: "text",
+        },
+        {
+            label: "Modus:",
+            correspondingModelProperty: "breathingFrequencyInSec",
+            inputType: "radio",
+            values: ["Bewegender Kreis", "Stehender Kreis"],
+        },
+        {
+            label: "Hinweis:",
+            correspondingModelProperty: "hint",
+            inputType: "text",
+        },
+        {
+            label: "Auswahltyp:",
+            correspondingModelProperty: "choiceType",
+            inputType: "radio",
+            values: ["Mehrfachauswahl", "Einfachauswahl"],
+        },
+        {
+            label: "Skalenbeschriftung am Minimum:",
+            correspondingModelProperty: "scaleMinimumLabel",
+            inputType: "text",
+        },
+        {
+            label: "Skalenbeschriftung am Maximum:",
+            correspondingModelProperty: "scaleMaximumLabel",
+            inputType: "text",
+        },
+        {
+            label: "Anfangswert:",
+            correspondingModelProperty: "initialValue",
+            inputType: "text",
+        },
+        {
+            label: "Skalenlänge:",
+            correspondingModelProperty: "itemCount",
+            inputType: "text",
+        },
+        {
+            label: "Zeitpunktauswahl:",
+            correspondingModelProperty: "pointOfTimeTypes",
+            inputType: "checkbox",
+            values: ["Datum", "Uhrzeit"],
+        },
+        {
+            label: "Zeitraumauswahl:",
+            correspondingModelProperty: "timeIntervalTypes",
+            inputType: "checkbox",
+            values: ["Jahre", "Monate", "Tage", "Stunden", "Minuten", "Sekunden"],
+        },
+        {
+            label: "Antwortkodierung:",
+            correspondingModelProperty: "code",
+            inputType: "text",
+        },
+    ],
 
     // Colors, styles and dimensions:
 
@@ -215,7 +344,7 @@ const Config = {
     WHERE_AM_I_VIEW_BACKGROUND_OPACITY: "0.7",
     WHERE_AM_I_NODE_HEIGHT: 60,
     WHERE_AM_I_NODE_DISTANCE: 70,
-    WHERE_AM_I_NODE_DESCRIPTION_CENTER_OFFSET_Y: 10,
+    WHERE_AM_I_NODE_DESCRIPTION_CENTER_OFFSET_Y: 12,
 
     // Types
 
@@ -285,6 +414,24 @@ const Config = {
     // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
     CHOICE_TYPE_SINGLE_CHOICE: "SINGLE_CHOICE",
     CHOICE_TYPE_MULTIPLE_CHOICE: "MULTIPLE_CHOICE",
+
+    // Point of time types:
+
+    // If you change these values, change them accordingly in the RemEx_App model
+    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    POINT_OF_TIME_TYPE_DATE: "DATE",
+    POINT_OF_TIME_TYPE_DAYTIME: "DAYTIME",
+
+    // Time interval types:
+
+    // If you change these values, change them accordingly in the RemEx_App model
+    // -> https://github.com/nac62116/RemEx_App/tree/main/app/src/main/java/de/ur/remex/model/experiment
+    TIME_INTERVAL_TYPE_YEARS: "YEARS",
+    TIME_INTERVAL_TYPE_MONTHS: "MONTHS",
+    TIME_INTERVAL_TYPE_DAYS: "DAYS",
+    TIME_INTERVAL_TYPE_HOURS: "HOURS",
+    TIME_INTERVAL_TYPE_MINUTES: "MINUTES",
+    TIME_INTERVAL_TYPE_SECONDS: "SECONDS",
 };
 
 Object.freeze(Config);

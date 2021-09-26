@@ -60,6 +60,10 @@ body {
     scrollbar-width: thin;
 }
 
+input {
+    text-align: center;
+}
+
 .input-header {
     position: relative;
     width: 100%;

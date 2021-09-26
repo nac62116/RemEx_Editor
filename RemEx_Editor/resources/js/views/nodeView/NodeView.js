@@ -180,6 +180,10 @@ function insertDescriptionWithLineBreaks(that, description) {
         
         while (lineNumber <= Config.NODE_DESCRIPTION_MAX_NEW_LINE_COUNT) {
             newLine = SvgFactory.createNewTextLine();
+            if (that.nodeElements.nodeDescription.getAttribute("x") !== null) {
+                newLine.setAttribute("x", that.nodeElements.nodeDescription.getAttribute("x"));
+                newLine.setAttribute("y", that.nodeElements.nodeDescription.getAttribute("y"));
+            }
             newLine.setAttribute("dy", lineSpacing);
             // Last line
             if (currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT >= description.length) {

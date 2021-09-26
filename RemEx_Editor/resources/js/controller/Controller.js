@@ -1,6 +1,6 @@
 import TreeView from "../views/TreeView.js";
 import WhereAmIView from "../views/WhereAmIView.js";
-import InputViewManager from "./InputViewManager.js";
+import InputView from "../views/InputView.js";
 import ModelManager from "./ModelManager.js";
 import IdManager from "./IdManager.js";
 import SvgFactory from "../utils/SvgFactory.js";
@@ -9,13 +9,14 @@ import RootNode from "../views/nodeView/RootNode.js";
 import TimelineNode from "../views/nodeView/TimelineNode.js";
 import DeflateableNode from "../views/nodeView/DeflateableNode.js";
 import StandardNode from "../views/nodeView/StandardNode.js";
+import Storage from "../utils/Storage.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
 
 // TODO:
+// -> IMPORTANT: Fix model update issues
 // -> Finish Tree and InputView
-// -> WhereAmIView
 // -> InfoView
 // -> Up and download experiment.json
 // -> Input checks:
@@ -24,12 +25,12 @@ import StandardNode from "../views/nodeView/StandardNode.js";
 // --- Format checks inside the views input fields (Delete the ones without usage in the model)
 // -> Copy paste option
 // -> Code cleaning
-// (-> Tree spacing)
 // (-> Colors and style)
 
 // ENHANCEMENT: 
 // - Calculate the optimal duration for a survey depending on its
-// - Optimize key movement (more intuitive)
+// - Fullscreen Buttons
+// - Survey time randomization
 
 class Controller {
 
@@ -39,6 +40,7 @@ class Controller {
         treeViewElement = SvgFactory.createTreeViewElement(),
         whereAmIViewContainer = document.querySelector("#" + Config.WHERE_AM_I_VIEW_CONTAINER_ID),
         whereAmIViewElement = SvgFactory.createWhereAmIViewElement(),
+        inputViewContainer = document.querySelector("#" + Config.INPUT_VIEW_CONTAINER_ID),
         newNode;
         this.nodeEventListener = [
             {
@@ -104,7 +106,9 @@ class Controller {
         whereAmIViewContainer.appendChild(whereAmIViewElement);
         WhereAmIView.init(whereAmIViewContainer);
 
-        InputViewManager.initInputViews(this.inputViewEventListener);
+        InputView.init(inputViewContainer);
+        InputView.addEventListener(Config.EVENT_INPUT_CHANGED, onInputChanged.bind(this));
+        InputView.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNode.bind(this));
         // InfoViewManager.initInfoView();
         document.addEventListener("keyup", onKeyUp.bind(this));
     }
@@ -175,22 +179,37 @@ function createNode(that, parentNode, data, stepType, questionType) {
 // Node events
 
 function onNodeMouseEnter(event) {
-    let hoveredNode = event.data.target;
+    let hoveredNode = event.data.target,
+    experiment = Storage.load(),
+    modelData = ModelManager.getDataFromNodeId(hoveredNode.id, experiment);
 
     hoveredNode.emphasize(this.currentSelection);
+    if (hoveredNode !== TreeView.currentFocusedNode) {
+        InputView.show(hoveredNode, modelData);
+    }
     /* inputData = ModelManager.getDataFromNodeId(hoveredNode, experiment);
     // InputViewManager.showInputView(hoveredNode, inputData, false);
     // InfoView -> show Info */
 }
 
 function onNodeMouseLeave(event) {
-    let hoveredNode = event.data.target;
+    let hoveredNode = event.data.target,
+    experiment = Storage.load(),
+    modelData;
 
     hoveredNode.deemphasize(this.currentSelection);
-    // InputViewManager -> Enable input
-    // InputViewManager.showFocusedInputView();
-    // InputViewManager.selectInputField();
-    // InfoView -> show last focused info
+    if (TreeView.currentFocusedNode !== undefined) {
+        modelData = ModelManager.getDataFromNodeId(TreeView.currentFocusedNode.id, experiment);
+        InputView.show(TreeView.currentFocusedNode, modelData);
+        InputView.selectFirstInput();
+    }
+    else {
+        InputView.hide();
+    }
+    // InputView.show(inputData, hoveredNode)
+    // -> inputData for input fields
+    // -> hoveredNode for type, which should be placed right under the header
+    // InfoView
 }
 
 function onNodeClicked(event) {
@@ -257,10 +276,8 @@ function onNodeClicked(event) {
         moveTree(clickedNode, movingVector, movingMode);
 
         WhereAmIView.update(this.currentSelection);
-        // InputViewManager -> Enable input
-        // inputData = ModelManager.getDataFromNodeId(clickedNode.id, experiment);
-        // InputViewManager.showInputView(clickedNode, inputData, true);
-        // InputViewManager.selectInputField();
+
+        InputView.selectFirstInput();
     }
 }
 
@@ -543,28 +560,31 @@ function onTimelineClicked(event) {
 // InputView event callbacks
 
 function onRemoveNode(event) {
-    let nodeToRemove = event.data.correspondingNode,
-    nextFocusedNode;
+    let nodeToRemove = event.data.correspondingNode;
 
-    IdManager.removeId(nodeToRemove.id, nodeToRemove.type);
-    ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.type);
-    nextFocusedNode = TreeView.removeNode(nodeToRemove);
-    TreeView.clickNode(nextFocusedNode);
+    IdManager.removeId(nodeToRemove.id);
+    ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id);
+    // TODO: Update node linking
     // TODO: Update Timeline incl. nextSurveyIds
     // TODO: Update nextStepIds
     // TODO: Update nextQuestionIds
+    // TODO: Get nextFocusedNode and update positions for the right nodes
+    // TODO: remove() method in NodeView.js
 }
 
 function onInputChanged(event) {
     let correspondingNode = event.data.correspondingNode,
-    newModelProperties = event.data.newProperties,
-    newDescription = ModelManager.updateExperiment(newModelProperties),
-    inputData;
+    newModelProperties = event.data.newModelProperties;
 
-    TreeView.updateNodeDescription(correspondingNode, newDescription);
+    ModelManager.updateExperiment(newModelProperties);
+    if (newModelProperties.name !== undefined) {
+        correspondingNode.updateDescription(newModelProperties.name);
+    }
+    if (newModelProperties.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
+        correspondingNode.updateDescription(newModelProperties.text);
+    }
 
-    inputData = ModelManager.getDataFromNodeId(correspondingNode);
-    InputViewManager.updateFocusedInputView(inputData);
+    // TODO; If survey time changed update timeline
     WhereAmIView.update(this.currentSelection);
 }
 

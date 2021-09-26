@@ -8,8 +8,6 @@ class Survey {
         // Unique
         this.name = null;
         this.maxDurationInMin = null;
-        this.isRelative = false;
-        this.relativeStartTimeInMin = null;
         this.absoluteStartAtMinute = null;
         this.absoluteStartAtHour = null;
         this.absoluteStartDaysOffset = null;
