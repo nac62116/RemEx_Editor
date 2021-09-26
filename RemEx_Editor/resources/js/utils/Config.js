@@ -45,6 +45,7 @@ const Config = {
     // DOM Element ids:
 
     TREE_VIEW_CONTAINER_ID: "treeContainer",
+    WHERE_AM_I_VIEW_CONTAINER_ID: "whereAmIContainer",
     NODE_TEMPLATE_ID: "nodeTemplate",
     INPUT_VIEW_CONTAINER_ID: "inputContainer",
     INPUT_VIEW_FIELDS_CONTAINER_ID: "inputFieldsContainer",
@@ -69,8 +70,6 @@ const Config = {
     TREE_VIEW_ID: "treeView",
     TREE_VIEW_WIDTH: "100%",
     TREE_VIEW_HEIGHT: "100%",
-    TREE_VIEW_BACKGROUND_WIDTH: "100%",
-    TREE_VIEW_BACKGROUND_HEIGHT: "100%",
     TREE_VIEW_BACKGROUND_COLOR: "black",
     TREE_VIEW_BACKGROUND_OPACITY: "0.5",
     TREE_MOVEMENT_ANIMATION_STEPS: 10,
@@ -88,7 +87,6 @@ const Config = {
 
     // TimelineView description
     TIMELINE_DESCRIPTION_ID: "timelineDescription",
-    TIMELINE_DESCRIPTION_X: "50%",
     TIMELINE_DESCRIPTION_TEXT_ANCHOR: "middle",
     TIMELINE_DESCRIPTION_TEXT: "Zeitachse der Befragungen",
     TIMELINE_DESCRIPTION_COLOR: "white",
@@ -207,6 +205,18 @@ const Config = {
     NEW_TIME_INTERVAL_QUESTION_NAME: "Neue Zeitintervallfrage",
     NEW_ANSWER_TEXT: "Neue Antwort",
     
+    // WhereAmIView
+    
+    WHERE_AM_I_VIEW_ROOT_POINT_Y: 40,
+    WHERE_AM_I_VIEW_ID: "whereAmIView",
+    WHERE_AM_I_VIEW_WIDTH: "100%",
+    WHERE_AM_I_VIEW_HEIGHT: "100%",
+    WHERE_AM_I_VIEW_BACKGROUND_COLOR: "rgb(5, 5, 5)",
+    WHERE_AM_I_VIEW_BACKGROUND_OPACITY: "0.7",
+    WHERE_AM_I_NODE_HEIGHT: 60,
+    WHERE_AM_I_NODE_DISTANCE: 70,
+    WHERE_AM_I_NODE_DESCRIPTION_CENTER_OFFSET_Y: 10,
+
     // Types
 
     // Experiment

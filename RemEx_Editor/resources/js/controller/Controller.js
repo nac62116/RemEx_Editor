@@ -1,4 +1,5 @@
 import TreeView from "../views/TreeView.js";
+import WhereAmIView from "../views/WhereAmIView.js";
 import InputViewManager from "./InputViewManager.js";
 import ModelManager from "./ModelManager.js";
 import IdManager from "./IdManager.js";
@@ -36,6 +37,8 @@ class Controller {
         let experiment,
         treeViewContainer = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID),
         treeViewElement = SvgFactory.createTreeViewElement(),
+        whereAmIViewContainer = document.querySelector("#" + Config.WHERE_AM_I_VIEW_CONTAINER_ID),
+        whereAmIViewElement = SvgFactory.createWhereAmIViewElement(),
         newNode;
         this.nodeEventListener = [
             {
@@ -97,6 +100,9 @@ class Controller {
         experiment = ModelManager.initExperiment();
         newNode = createNode(this, undefined, experiment, undefined, undefined);
         newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
+        
+        whereAmIViewContainer.appendChild(whereAmIViewElement);
+        WhereAmIView.init(whereAmIViewContainer);
 
         InputViewManager.initInputViews(this.inputViewEventListener);
         // InfoViewManager.initInfoView();
@@ -250,6 +256,7 @@ function onNodeClicked(event) {
         movingVector.y = TreeView.getCenter().y - clickedNode.center.y;
         moveTree(clickedNode, movingVector, movingMode);
 
+        WhereAmIView.update(this.currentSelection);
         // InputViewManager -> Enable input
         // inputData = ModelManager.getDataFromNodeId(clickedNode.id, experiment);
         // InputViewManager.showInputView(clickedNode, inputData, true);
@@ -550,8 +557,6 @@ function onRemoveNode(event) {
 
 function onInputChanged(event) {
     let correspondingNode = event.data.correspondingNode,
-    id = correspondingNode.id,
-    type = correspondingNode.type,
     newModelProperties = event.data.newProperties,
     newDescription = ModelManager.updateExperiment(newModelProperties),
     inputData;
@@ -560,6 +565,7 @@ function onInputChanged(event) {
 
     inputData = ModelManager.getDataFromNodeId(correspondingNode);
     InputViewManager.updateFocusedInputView(inputData);
+    WhereAmIView.update(this.currentSelection);
 }
 
 // Whole page events

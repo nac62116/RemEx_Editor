@@ -12,6 +12,7 @@ class NodeView extends Observable {
         this.nodeElements = nodeElements;
         this.id = id;
         this.type = type;
+        this.description = description;
         this.parentNode = parentNode;
         this.previousNode = undefined;
         this.nextNode = undefined;
@@ -144,6 +145,7 @@ class NodeView extends Observable {
     }
 
     updateDescription(description) {
+        this.description = description;
         insertDescriptionWithLineBreaks(this, description);
     }
 }

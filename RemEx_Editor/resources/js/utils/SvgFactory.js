@@ -10,10 +10,6 @@ class SvgFactory {
         treeViewElement.setAttribute("id", Config.TREE_VIEW_ID);
         treeViewElement.setAttribute("width", Config.TREE_VIEW_WIDTH);
         treeViewElement.setAttribute("height", Config.TREE_VIEW_HEIGHT);
-        background.setAttribute("width", Config.TREE_VIEW_BACKGROUND_WIDTH);
-        background.setAttribute("height", Config.TREE_VIEW_BACKGROUND_HEIGHT);
-        background.setAttribute("fill", Config.TREE_VIEW_BACKGROUND_COLOR);
-        background.setAttribute("fill-opacity", Config.TREE_VIEW_BACKGROUND_OPACITY);
         treeViewElement.appendChild(background);
         return treeViewElement;
     }
@@ -89,8 +85,14 @@ class SvgFactory {
     }
 
     createWhereAmIViewElement() {
-        let element;
-        return element;
+        let whereAmIViewElement = document.createElementNS("http://www.w3.org/2000/svg", "svg"),
+        background = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+        whereAmIViewElement.setAttribute("id", Config.WHERE_AM_I_VIEW_ID);
+        whereAmIViewElement.setAttribute("width", Config.WHERE_AM_I_VIEW_WIDTH);
+        whereAmIViewElement.setAttribute("height", Config.WHERE_AM_I_VIEW_HEIGHT);
+        whereAmIViewElement.appendChild(background);
+        return whereAmIViewElement;
     }
 
     createInputViewElement() {
@@ -193,7 +195,6 @@ function createTimelineElements() {
     timeline.setAttribute("display", "none");
 
     description.setAttribute("id", Config.TIMELINE_DESCRIPTION_ID);
-    description.setAttribute("x", Config.TIMELINE_DESCRIPTION_X);
     description.setAttribute("text-anchor", Config.TIMELINE_DESCRIPTION_TEXT_ANCHOR);
     description.setAttribute("fill", Config.TIMELINE_DESCRIPTION_COLOR);
     description.setAttribute("font-family", Config.TIMELINE_DESCRIPTION_FONT_FAMILY);
