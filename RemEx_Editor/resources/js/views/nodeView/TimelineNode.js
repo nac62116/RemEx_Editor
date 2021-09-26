@@ -1,9 +1,9 @@
-import LeafNode from "./LeafNode.js";
 import {Observable, Event} from "../../utils/Observable.js";
 import SvgFactory from "../../utils/SvgFactory.js";
 import Config from "../../utils/Config.js";
+import StandardNode from "./StandardNode.js";
 
-class TimelineNode extends LeafNode {
+class TimelineNode extends StandardNode {
 
     constructor(nodeElements, id, type, description, parentNode, timelineEventListener, treeViewWidth) {
         super(nodeElements, id, type, description, parentNode);

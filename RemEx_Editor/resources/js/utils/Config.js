@@ -19,6 +19,9 @@ const Config = {
     ONE_DAY_IN_MIN: 1440,
     THREE_DAYS_IN_MIN: 4320,
     SEVEN_DAYS_IN_MIN: 30240,
+    MOVING_MODE_TIMELINE: "moveNodesOnTimeline",
+    MOVING_MODE_ROW: "moveNodesInsideRow",
+    MOVING_MODE_TREE: "moveTree",
  
     // View related:
 
@@ -194,9 +197,15 @@ const Config = {
     NEW_SURVEY_NAME: "Neue Befragung",
     NEW_SURVEY_MAX_DURATION_IN_MIN: 5,
     NEW_SURVEY_NOTIFICATION_DURATION_IN_MIN: 15,
-    NEW_STEP_DESCRIPTION: "Neuer Schritt",
-    NEW_QUESTION_DESCRIPTION: "Neue Frage",
-    BREATHING_EXERCISE_DESCRIPTION: "Atemübung",
+    NEW_INSTRUCTION_NAME: "Neue Instruktion",
+    NEW_BREATHING_EXERCISE_NAME: "Neue Atemübung",
+    NEW_QUESTIONNAIRE_NAME: "Neuer Fragebogen",
+    NEW_CHOICE_QUESTION_NAME: "Neue Auswahlfrage",
+    NEW_LIKERT_QUESTION_NAME: "Neue Likertfrage",
+    NEW_POINT_OF_TIME_QUESTION_NAME: "Neue Zeitpunktfrage",
+    NEW_TEXT_QUESTION_NAME: "Neue Textfrage",
+    NEW_TIME_INTERVAL_QUESTION_NAME: "Neue Zeitintervallfrage",
+    NEW_ANSWER_TEXT: "Neue Antwort",
     
     // Types
 

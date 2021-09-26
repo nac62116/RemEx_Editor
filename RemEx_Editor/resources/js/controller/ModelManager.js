@@ -4,6 +4,15 @@ import Experiment from "../model/Experiment.js";
 import ExperimentGroup from "../model/ExperimentGroup.js";
 import Survey from "../model/Survey.js";
 import IdManager from "./IdManager.js";
+import Instruction from "../model/Instruction.js";
+import BreathingExercise from "../model/BreathingExercise.js";
+import Questionnaire from "../model/Questionnaire.js";
+import ChoiceQuestion from "../model/questionnaire/ChoiceQuestion.js";
+import LikertQuestion from "../model/questionnaire/LikertQuestion.js";
+import PointOfTimeQuestion from "../model/questionnaire/PointOfTimeQuestion.js";
+import TextQuestion from "../model/questionnaire/TextQuestion.js";
+import TimeIntervalQuestion from "../model/questionnaire/TimeIntervalQuestion.js";
+import Answer from "../model/questionnaire/Answer.js";
 
 class ModelManager {
 
@@ -31,15 +40,15 @@ class ModelManager {
         return Storage.load();
     }
 
-    extendExperiment(parent, initialProperties) {
+    extendExperiment(parentNode, initialProperties, stepType, questionType) {
         let experiment = Storage.load(),
-        properties = getNewModelProperties(parent),
+        properties = getNewModelProperties(parentNode, stepType, questionType),
         newData;
 
-        if (parent.type === Config.TYPE_EXPERIMENT) {
+        if (parentNode.type === Config.TYPE_EXPERIMENT) {
             newData = createNewExperimentGroup(properties, experiment);
         }
-        else if (parent.type === Config.TYPE_EXPERIMENT_GROUP) {
+        else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
             for (let key in initialProperties) {
                 if (Object.prototype.hasOwnProperty.call(initialProperties, key)) {
                     properties.key = initialProperties.key;
@@ -47,8 +56,17 @@ class ModelManager {
             }
             newData = createNewSurvey(properties, experiment);
         }
+        else if (parentNode.type === Config.TYPE_SURVEY) {
+            newData = createNewStep(properties, experiment);
+        }
+        else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+            newData = createNewQuestion(properties, experiment);
+        }
+        else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
+            newData = createNewAnswer(properties, experiment);
+        }
         else {
-            // No such type
+            throw "The node type " + parentNode.type + " is not defined.";
         }
         Storage.save(experiment);
         return newData;
@@ -86,7 +104,7 @@ class ModelManager {
             IdManager.removeId(id);
         }
         else {
-            // Experiment was not shortened
+            throw "The model data was not shorten properly.";
         }
         Storage.save(experiment);
     }
@@ -94,7 +112,9 @@ class ModelManager {
     updateExperiment(properties) {
         let experiment = Storage.load(),
         data = this.getDataFromNodeId(properties.id, experiment);
-
+        if (data === null) {
+            console.log(properties);
+        }
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
                 data.key = properties.key;
@@ -146,26 +166,60 @@ class ModelManager {
     }
 }
 
-function getNewModelProperties(parent) {
+function getNewModelProperties(parentNode, stepType, questionType) {
     let modelProperties = {
         id: IdManager.getUnusedId(),
-        parent: parent,
+        parentNode: parentNode,
     };
 
-    if (parent.type === Config.TYPE_EXPERIMENT) {
+    if (parentNode.type === Config.TYPE_EXPERIMENT) {
         modelProperties.name = Config.NEW_EXPERIMENT_GROUP_NAME;
     }
-    else if (parent.type === Config.TYPE_EXPERIMENT_GROUP) {
+    else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
         modelProperties.name = Config.NEW_SURVEY_NAME;
-        modelProperties.absoluteStartAtMinute = undefined;
-        modelProperties.absoluteStartAtHour = undefined;
-        modelProperties.absoluteStartDaysOffset = undefined;
-        modelProperties.maxDurationInMin = Config.NEW_SURVEY_MAX_DURATION_IN_MIN;
-        modelProperties.notificationDurationInMin = Config.NEW_SURVEY_NOTIFICATION_DURATION_IN_MIN;
+    }
+    else if (parentNode.type === Config.TYPE_SURVEY) {
+        if (stepType === Config.STEP_TYPE_INSTRUCTION) {
+            modelProperties.name = Config.NEW_INSTRUCTION_NAME;
+        }
+        else if (stepType === Config.STEP_TYPE_BREATHING_EXERCISE) {
+            modelProperties.name = Config.NEW_BREATHING_EXERCISE_NAME;
+        }
+        else if (stepType === Config.STEP_TYPE_QUESTIONNAIRE) {
+            modelProperties.name = Config.NEW_QUESTIONNAIRE_NAME;
+        }
+        else {
+            throw "The step type \"" + stepType + "\" is not defined.";
+        }
+        modelProperties.type = stepType;
+    }
+    else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        if (questionType === Config.QUESTION_TYPE_CHOICE) {
+            modelProperties.name = Config.NEW_CHOICE_QUESTION_NAME;
+        }
+        else if (questionType === Config.QUESTION_TYPE_LIKERT) {
+            modelProperties.name = Config.NEW_LIKERT_QUESTION_NAME;
+        }
+        else if (questionType === Config.QUESTION_TYPE_POINT_OF_TIME) {
+            modelProperties.name = Config.NEW_POINT_OF_TIME_QUESTION_NAME;
+        }
+        else if (questionType === Config.QUESTION_TYPE_TEXT) {
+            modelProperties.name = Config.NEW_TEXT_QUESTION_NAME;
+        }
+        else if (questionType === Config.QUESTION_TYPE_TIME_INTERVAL) {
+            modelProperties.name = Config.NEW_TIME_INTERVAL_QUESTION_NAME;
+        }
+        else {
+            throw "The question type \"" + questionType + "\" is not defined.";
+        }
+        modelProperties.type = questionType;
+    }
+    else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
+        modelProperties.name = Config.NEW_ANSWER_TEXT;
     }
     // TODO
     else {
-        throw "TypeError: The node type \"" + parent.type + "\" is not defined.";
+        throw "The node type \"" + parentNode.type + "\" is not defined.";
     }
     return modelProperties;
 }
@@ -200,13 +254,112 @@ function createNewSurvey(properties, experiment) {
     survey.absoluteStartDaysOffset = properties.absoluteStartDaysOffset;
 
     for (let group of experiment.groups) {
-        if (group.id === properties.parent.id) {
+        if (group.id === properties.parentNode.id) {
             group.surveys.push(survey);
             break;
         }
     }
 
     return survey;
+}
+
+function createNewStep(properties, experiment) {
+    let step;
+    
+    if (properties.type === Config.STEP_TYPE_INSTRUCTION) {
+        step = new Instruction();
+    }
+    else if (properties.type === Config.STEP_TYPE_BREATHING_EXERCISE) {
+        step = new BreathingExercise();
+    }
+    else if (properties.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        step = new Questionnaire();
+    }
+    else {
+        throw "The step type " + properties.type + " is not defined.";
+    }
+    step.id = properties.id;
+    step.name = properties.name;
+    for (let group of experiment.groups) {
+        if (group.id === properties.parentNode.parentNode.id) {
+            for (let survey of group.surveys) {
+                if (survey.id === properties.parentNode.id) {
+                    survey.steps.push(step);
+                    break;
+                }
+            }
+        }
+    }
+
+    return step;
+}
+
+function createNewQuestion(properties, experiment) {
+    let question;
+    
+    if (properties.type === Config.QUESTION_TYPE_CHOICE) {
+        question = new ChoiceQuestion();
+    }
+    else if (properties.type === Config.QUESTION_TYPE_LIKERT) {
+        question = new LikertQuestion();
+    }
+    else if (properties.type === Config.QUESTION_TYPE_POINT_OF_TIME) {
+        question = new PointOfTimeQuestion();
+    }
+    else if (properties.type === Config.QUESTION_TYPE_TEXT) {
+        question = new TextQuestion();
+    }
+    else if (properties.type === Config.QUESTION_TYPE_TIME_INTERVAL) {
+        question = new TimeIntervalQuestion();
+    }
+    else {
+        throw "The question type " + properties.type + " is not defined.";
+    }
+    question.id = properties.id;
+    question.name = properties.name;
+    for (let group of experiment.groups) {
+        if (group.id === properties.parentNode.parentNode.parentNode.id) {
+            for (let survey of group.surveys) {
+                if (survey.id === properties.parentNode.parentNode.id) {
+                    for (let step of survey.steps) {
+                        if (step.id === properties.parentNode.id) {
+                            step.questions.push(question);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return question;
+}
+
+function createNewAnswer(properties, experiment) {
+    let answer = new Answer();
+    
+    answer.id = properties.id;
+    answer.text = properties.name;
+    for (let group of experiment.groups) {
+        if (group.id === properties.parentNode.parentNode.parentNode.parentNode.id) {
+            for (let survey of group.surveys) {
+                if (survey.id === properties.parentNode.parentNode.parentNode.id) {
+                    for (let step of survey.steps) {
+                        if (step.id === properties.parentNode.parentNode.id) {
+                            for (let question of step.questions) {
+                                if (question.id === properties.parentNode.id) {
+                                    question.answers.push(answer);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return answer;
 }
 
 export default new ModelManager();

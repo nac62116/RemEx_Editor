@@ -30,6 +30,10 @@ class DeflateableNode extends StandardNode {
             this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
             this.nodeElements.nodeDescription.removeAttribute("display");
             this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y + offsetVector.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + (this.top.y + offsetVector.y)); // eslint-disable-line no-magic-numbers
+            this.bottom.y -= offsetVector.y;
+            for (let childNode of this.childNodes) {
+                childNode.updatePosition(childNode.center.x, childNode.center.y, true);
+            }
         }
     }
 
@@ -52,6 +56,10 @@ class DeflateableNode extends StandardNode {
             this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
             this.nodeElements.nodeDescription.setAttribute("display", "none");
             this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 2)) + " T " + (this.top.x) + " " + (this.top.y)); // eslint-disable-line no-magic-numbers
+            this.bottom.y -= offsetVector.y;
+            for (let childNode of this.childNodes) {
+                childNode.updatePosition(childNode.center.x, childNode.center.y, true);
+            }
         }
     }
 }

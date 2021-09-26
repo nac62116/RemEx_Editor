@@ -163,7 +163,7 @@ function insertDescriptionWithLineBreaks(that, description) {
     // Description does not fit. It is breaked into several lines, if possible at whitespace positions.
     else {
         // First line
-        substring = description.substr(0, Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
+        substring = description.slice(0, Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
         lastWhitespaceIndex = substring.lastIndexOf(" ");
         // There is a whitespace where the line can be broken
         if (lastWhitespaceIndex !== -1) {
@@ -180,20 +180,20 @@ function insertDescriptionWithLineBreaks(that, description) {
             newLine = SvgFactory.createNewTextLine();
             newLine.setAttribute("dy", lineSpacing);
             // Last line
-            if (currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT > description.length) {
+            if (currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT >= description.length) {
                 substring = description.slice(currentIndex, description.length);
                 currentIndex = description.length;
+                lineNumber = Config.NODE_DESCRIPTION_MAX_NEW_LINE_COUNT;
             }
             // All other lines
             else {
-                substring = description.substr(0, currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
+                substring = description.slice(currentIndex, currentIndex + Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
                 lastWhitespaceIndex = substring.lastIndexOf(" ");
                 if (lastWhitespaceIndex !== -1) {
-                    substring = description.slice(currentIndex, lastWhitespaceIndex);
+                    substring = description.slice(currentIndex, currentIndex + lastWhitespaceIndex);
                     currentIndex += substring.length + 1;
                 }
                 else {
-                    substring = description.substr(currentIndex, Config.NODE_DESCRIPTION_LINE_BREAK_COUNT);
                     currentIndex += Config.NODE_DESCRIPTION_LINE_BREAK_COUNT;
                 }
             }
@@ -213,7 +213,6 @@ function insertDescriptionWithLineBreaks(that, description) {
 function onMouseEnter() {
     let data, controllerEvent;
     
-    this.emphasize();
     data = {
         target: this,
     };
@@ -224,7 +223,6 @@ function onMouseEnter() {
 function onMouseLeave() {
     let data, controllerEvent;
     
-    this.deemphasize();
     data = {
         target: this,
     };

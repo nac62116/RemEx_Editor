@@ -52,7 +52,7 @@ class SvgFactory {
     }
 
     createTimelineNodeElements() {
-        let timelineNodeElements = this.createStandardNodeElements(true, true);
+        let timelineNodeElements = this.createStandardNodeElements(true, false);
 
         timelineNodeElements.timelineElements = createTimelineElements();
 
