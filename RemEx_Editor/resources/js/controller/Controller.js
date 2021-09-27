@@ -2,7 +2,6 @@ import TreeView from "../views/TreeView.js";
 import WhereAmIView from "../views/WhereAmIView.js";
 import InputView from "../views/InputView.js";
 import ModelManager from "./ModelManager.js";
-import IdManager from "./IdManager.js";
 import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
 import RootNode from "../views/nodeView/RootNode.js";
@@ -382,10 +381,10 @@ function onAddNextNode(event) {
     firstNodeOfRow;
 
     if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-        stepType = Config.STEP_TYPE_INSTRUCTION;
+        stepType = Config.STEP_TYPE_BREATHING_EXERCISE;
     }
     if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_TEXT;
+        questionType = Config.QUESTION_TYPE_CHOICE;
     }
     inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined, stepType, questionType);
     newNode = createNode(this, clickedNode.parentNode, inputData, stepType, questionType);
@@ -423,7 +422,7 @@ function onAddPreviousNode(event) {
         stepType = Config.STEP_TYPE_INSTRUCTION;
     }
     if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_TEXT;
+        questionType = Config.QUESTION_TYPE_LIKERT;
     }
     inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined, stepType, questionType);
     newNode = createNode(this, clickedNode.parentNode, inputData, stepType, questionType);
@@ -501,7 +500,7 @@ function onAddChildNode(event) {
     questionType;
 
     if (clickedNode.type === Config.TYPE_SURVEY) {
-        stepType = Config.STEP_TYPE_INSTRUCTION;
+        stepType = Config.STEP_TYPE_QUESTIONNAIRE;
     }
     if (clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         questionType = Config.QUESTION_TYPE_TEXT;
@@ -534,26 +533,32 @@ function onTimelineClicked(event) {
         newNode = createNode(this, correspondingNode, inputData, undefined, undefined);
         newNode.updatePosition(clickedPosition.x, clickedPosition.y, true);
         timeInMin = event.data.timeInMin;
-        correspondingNode.updateTimeNodeMap(timeInMin, newNode);
+        correspondingNode.updateNodeTimeMap(newNode, timeInMin);
         timeSortedChildNodes = correspondingNode.getTimeSortedChildNodes();
-        for (let i = 0; i < timeSortedChildNodes.length; i++) {
-            if (i !== timeSortedChildNodes.length - 1) {
-                properties.id = timeSortedChildNodes[i].id;
-                properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
-                ModelManager.updateExperiment(properties);
-            }
-            if (i === 0) {
-                timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
-            }
-            else if (i === timeSortedChildNodes.length - 1) {
-                timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
-            }
-            else {
-                timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
-                timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
-            }
-        }
+        updateNextSurveyIds(timeSortedChildNodes, properties);
         correspondingNode.updateTimelineLength();
+    }
+}
+
+function updateNextSurveyIds(timeSortedChildNodes, properties) {
+    for (let i = 0; i < timeSortedChildNodes.length; i++) {
+        if (i !== timeSortedChildNodes.length - 1) {
+            properties.id = timeSortedChildNodes[i].id;
+            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
+            ModelManager.updateExperiment(properties);
+        }
+        if (i === 0) {
+            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
+            timeSortedChildNodes[i].previousNode = undefined;
+        }
+        else if (i === timeSortedChildNodes.length - 1) {
+            timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
+            timeSortedChildNodes[i].nextNode = undefined;
+        }
+        else {
+            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
+            timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
+        }
     }
 }
 
@@ -562,7 +567,6 @@ function onTimelineClicked(event) {
 function onRemoveNode(event) {
     let nodeToRemove = event.data.correspondingNode;
 
-    IdManager.removeId(nodeToRemove.id);
     ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id);
     // TODO: Update node linking
     // TODO: Update Timeline incl. nextSurveyIds
@@ -574,18 +578,34 @@ function onRemoveNode(event) {
 
 function onInputChanged(event) {
     let correspondingNode = event.data.correspondingNode,
-    newModelProperties = event.data.newModelProperties;
+    experiment = Storage.load(),
+    currentModelProperties = ModelManager.getDataFromNodeId(correspondingNode.id, experiment),
+    newModelProperties = event.data.newModelProperties,
+    timeInMin,
+    timeSortedChildNodes;
 
-    ModelManager.updateExperiment(newModelProperties);
     if (newModelProperties.name !== undefined) {
         correspondingNode.updateDescription(newModelProperties.name);
     }
     if (newModelProperties.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
         correspondingNode.updateDescription(newModelProperties.text);
     }
+    if (newModelProperties.absoluteStartDaysOffset !== undefined || newModelProperties.absoluteStartAtHour !== undefined) {
+        if (newModelProperties.absoluteStartDaysOffset === undefined) {
+            timeInMin = currentModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newModelProperties.absoluteStartAtMinute * 1;
+        }
+        else {
+            timeInMin = newModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentModelProperties.absoluteStartAtMinute * 1;
+        }
+        correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
+        timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
+        updateNextSurveyIds(timeSortedChildNodes, newModelProperties);
+        correspondingNode.parentNode.updateTimelineLength();
+    }
+    ModelManager.updateExperiment(newModelProperties);
 
-    // TODO; If survey time changed update timeline
     WhereAmIView.update(this.currentSelection);
+
 }
 
 // Whole page events

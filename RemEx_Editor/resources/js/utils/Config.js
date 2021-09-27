@@ -18,7 +18,9 @@ const Config = {
     SIX_HOURS_IN_MIN: 360,
     ONE_DAY_IN_MIN: 1440,
     THREE_DAYS_IN_MIN: 4320,
-    SEVEN_DAYS_IN_MIN: 30240,
+    ONE_WEEK_IN_MIN: 10080,
+    TWO_WEEKS_IN_MIN: 20160,
+    ONE_MONTH_IN_MIN: 44640,
     MOVING_MODE_TIMELINE: "moveNodesOnTimeline",
     MOVING_MODE_ROW: "moveNodesInsideRow",
     MOVING_MODE_TREE: "moveTree",
@@ -73,31 +75,6 @@ const Config = {
             inputType: "text",
         },
         {
-            label: "Befragungstag:",
-            correspondingModelProperty: "absoluteStartDaysOffset",
-            inputType: "text",
-        },
-        {
-            label: "Uhrzeit der Befragung:",
-            correspondingModelProperty: "absoluteStartAtHour",
-            inputType: "time",
-        },
-        {
-            label: "Uhrzeit der Befragung:",
-            correspondingModelProperty: "absoluteStartAtMinute",
-            inputType: "time",
-        },
-        {
-            label: "Maximale Dauer der Befragung (Minuten):",
-            correspondingModelProperty: "maxDurationInMin",
-            inputType: "text",
-        },
-        {
-            label: "Dauer der Benachrichtigung (Minuten):",
-            correspondingModelProperty: "notificationDurationInMin",
-            inputType: "text",
-        },
-        {
             label: "Überschrift:",
             correspondingModelProperty: "header",
             inputType: "text",
@@ -105,6 +82,11 @@ const Config = {
         {
             label: "Text:",
             correspondingModelProperty: "text",
+            inputType: "text",
+        },
+        {
+            label: "Hinweis:",
+            correspondingModelProperty: "hint",
             inputType: "text",
         },
         {
@@ -118,18 +100,28 @@ const Config = {
             inputType: "video",
         },
         {
+            label: "Befragungstag:",
+            correspondingModelProperty: "absoluteStartDaysOffset",
+            inputType: "text",
+        },
+        {
+            label: "Uhrzeit der Befragung:",
+            correspondingModelProperty: "absoluteStartAtHour",
+            inputType: "time",
+        },
+        {
             label: "Dauer (Minuten):",
             correspondingModelProperty: "durationInMin",
             inputType: "text",
         },
         {
-            label: "Auf Instruktion warten:",
-            correspondingModelProperty: "waitForStep",
+            label: "Maximale Dauer der Befragung (Minuten):",
+            correspondingModelProperty: "maxDurationInMin",
             inputType: "text",
         },
         {
-            label: "Wartetext:",
-            correspondingModelProperty: "waitingText",
+            label: "Dauer der Benachrichtigung (Minuten):",
+            correspondingModelProperty: "notificationDurationInMin",
             inputType: "text",
         },
         {
@@ -144,8 +136,13 @@ const Config = {
             values: ["Bewegender Kreis", "Stehender Kreis"],
         },
         {
-            label: "Hinweis:",
-            correspondingModelProperty: "hint",
+            label: "Auf Instruktion warten:",
+            correspondingModelProperty: "waitForStep",
+            inputType: "text",
+        },
+        {
+            label: "Wartetext:",
+            correspondingModelProperty: "waitingText",
             inputType: "text",
         },
         {
@@ -165,13 +162,13 @@ const Config = {
             inputType: "text",
         },
         {
-            label: "Anfangswert:",
-            correspondingModelProperty: "initialValue",
+            label: "Skalenlänge:",
+            correspondingModelProperty: "itemCount",
             inputType: "text",
         },
         {
-            label: "Skalenlänge:",
-            correspondingModelProperty: "itemCount",
+            label: "Anfangswert:",
+            correspondingModelProperty: "initialValue",
             inputType: "text",
         },
         {

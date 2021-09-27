@@ -11,7 +11,7 @@ class TimelineNode extends StandardNode {
         for (let listener of timelineEventListener) {
             this.timeline.addEventListener(listener.eventType, listener.callback);
         }
-        this.timeNodeMap = new Map();
+        this.nodeTimeMap = new Map();
     }
 
     focus() {
@@ -34,10 +34,10 @@ class TimelineNode extends StandardNode {
     updateTimelineLength() {
         let ascSortedTimes = [],
         maxTimeInMin;
-        for (let key of this.timeNodeMap.keys()) {
-            ascSortedTimes.push(key);
+        for (let time of this.nodeTimeMap.values()) {
+            ascSortedTimes.push(time);
         }
-        ascSortedTimes.sort();
+        ascSortedTimes.sort(function(a, b){return a - b;});
 
         if (ascSortedTimes.length === 0) {
             maxTimeInMin = Config.ONE_DAY_IN_MIN;
@@ -46,26 +46,60 @@ class TimelineNode extends StandardNode {
             maxTimeInMin = ascSortedTimes[ascSortedTimes.length - 1];
         }
 
-        //console.log(ascSortedTimes);
-
         this.timeline.updateLength(maxTimeInMin);
+        this.timeline.updateNodePositions(this.nodeTimeMap);
     }
 
-    updateTimeNodeMap(timeInMin, correspondingNode) {
-        this.timeNodeMap.set(timeInMin, correspondingNode);
+    updateNodeTimeMap(correspondingNode, timeInMin) {
+        this.nodeTimeMap.set(correspondingNode, timeInMin);
     }
 
     getTimeSortedChildNodes() {
         let timeSortedChildNodes = [],
-        sortedKeys = [],
-        key;
+        firstPart,
+        secondPart;
 
-        for (key of this.timeNodeMap.keys()) {
-            sortedKeys.push(key);
-        }
-        sortedKeys.sort(function(a, b){return a - b;});
-        for (key of sortedKeys) {
-            timeSortedChildNodes.push(this.timeNodeMap.get(key));
+        for (let [node, time] of this.nodeTimeMap.entries()) {
+            if (timeSortedChildNodes.length === 0) {
+                timeSortedChildNodes.push(node);
+            }
+            else if (timeSortedChildNodes.length === 1) {
+                if (timeSortedChildNodes[0] >= time) {
+                    timeSortedChildNodes.unshift(node);
+                }
+                else {
+                    timeSortedChildNodes.push(node);
+                }
+            }
+            else {
+                for (let i = 0; i < timeSortedChildNodes.length - 1; i++) {
+                    if (this.nodeTimeMap.get(timeSortedChildNodes[i]) <= time) {
+                        if (this.nodeTimeMap.get(timeSortedChildNodes[i + 1]) >= time) {
+                            firstPart = timeSortedChildNodes.slice(0, i + 1);
+                            firstPart.push(node);
+                            secondPart = timeSortedChildNodes.slice(i + 1);
+                            timeSortedChildNodes = firstPart.concat(secondPart);
+                            break;
+                        }
+                        else {
+                            if (i === timeSortedChildNodes.length - 2) {
+                                timeSortedChildNodes.push(node);
+                                break;
+                            }
+                            else {
+                                continue;
+                            }
+                        }
+                    }
+                    else {
+                        firstPart = timeSortedChildNodes.slice(0, i);
+                        firstPart.push(node);
+                        secondPart = timeSortedChildNodes.slice(i);
+                        timeSortedChildNodes = firstPart.concat(secondPart);
+                        break;
+                    }
+                }
+            }
         }
 
         return timeSortedChildNodes;
@@ -177,14 +211,19 @@ class TimelineView extends Observable {
             this.timelineLengthInMin = Config.THREE_DAYS_IN_MIN;
             labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_QUARTER_DAILY;
         }
-        else if (timelineLengthInMin <= Config.SEVEN_DAYS_IN_MIN) {
+        else if (timelineLengthInMin <= Config.ONE_WEEK_IN_MIN) {
             labelSteps = Config.ONE_DAY_IN_MIN;
-            this.timelineLengthInMin = Config.SEVEN_DAYS_IN_MIN;
+            this.timelineLengthInMin = Config.ONE_WEEK_IN_MIN;
+            labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
+        }
+        else if (timelineLengthInMin <= Config.TWO_WEEKS_IN_MIN) {
+            labelSteps = Config.ONE_DAY_IN_MIN;
+            this.timelineLengthInMin = Config.TWO_WEEKS_IN_MIN;
             labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
         }
         else {
-            labelSteps = Config.SEVEN_DAYS_IN_MIN;
-            this.timelineLengthInMin = timelineLengthInMin;
+            labelSteps = Config.ONE_WEEK_IN_MIN;
+            this.timelineLengthInMin = timelineLengthInMin + Config.ONE_DAY_IN_MIN;
             labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
         }
         for (let currentLabel of this.timelineElements.labels) {
@@ -195,7 +234,7 @@ class TimelineView extends Observable {
         for (let timeInMin = 0; timeInMin <= this.timelineLengthInMin; timeInMin += labelSteps) {
             if (descriptionCount === labelDescriptions.length) {
                 descriptionCount = 0;
-                if (labelSteps === Config.SEVEN_DAYS_IN_MIN) {
+                if (labelSteps === Config.ONE_WEEK_IN_MIN) {
                     dayCount += 7; // eslint-disable-line no-magic-numbers
                 }
                 else {
@@ -211,6 +250,20 @@ class TimelineView extends Observable {
             treeView.insertBefore(label.description, this.timelineElements.timeline);
             treeView.insertBefore(label.stroke, this.timelineElements.timeline);
             descriptionCount++;
+        }
+    }
+
+    updateNodePositions(nodeTimeMap) {
+        let position,
+        offsetX;
+
+        for (let [node, time] of nodeTimeMap.entries()) {
+            position = getPositionFromTime(this, time);
+            offsetX = position.x - node.center.x;
+            node.updatePosition(position.x, position.y, true);
+            for (let childNode of node.childNodes) {
+                childNode.updatePosition(childNode.center.x + offsetX, childNode.center.y, true);
+            }
         }
     }
 }

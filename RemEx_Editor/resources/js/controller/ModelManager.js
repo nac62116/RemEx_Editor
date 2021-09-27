@@ -37,34 +37,32 @@ class ModelManager {
     }
 
     extendExperiment(parentNode, initialProperties, stepType, questionType) {
-        let experiment = Storage.load(),
-        properties = getNewModelProperties(parentNode, stepType, questionType),
+        let properties = getNewModelProperties(parentNode, stepType, questionType),
         newData;
 
         if (parentNode.type === Config.TYPE_EXPERIMENT) {
-            newData = createNewExperimentGroup(properties, experiment);
+            newData = createNewExperimentGroup(properties);
         }
         else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
             for (let key in initialProperties) {
                 if (Object.prototype.hasOwnProperty.call(initialProperties, key)) {
-                    properties.key = initialProperties.key;
+                    properties[key] = initialProperties[key];
                 }
             }
-            newData = createNewSurvey(properties, experiment);
+            newData = createNewSurvey(properties);
         }
         else if (parentNode.type === Config.TYPE_SURVEY) {
-            newData = createNewStep(properties, experiment);
+            newData = createNewStep(properties);
         }
         else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-            newData = createNewQuestion(properties, experiment);
+            newData = createNewQuestion(properties);
         }
         else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
-            newData = createNewAnswer(properties, experiment);
+            newData = createNewAnswer(properties);
         }
         else {
             throw "The node type " + parentNode.type + " is not defined.";
         }
-        Storage.save(experiment);
         return newData;
     }
 
@@ -109,9 +107,10 @@ class ModelManager {
         let experiment = Storage.load(),
         data = this.getDataFromNodeId(properties.id, experiment);
         
+        // TODO
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
-                data.key = properties.key;
+                data[key] = properties[key];
             }
         }
         Storage.save(experiment);
@@ -228,18 +227,21 @@ function createNewExperiment(properties) {
     return experiment;
 }
 
-function createNewExperimentGroup(properties, experiment) {
-    let group = new ExperimentGroup();
+function createNewExperimentGroup(properties) {
+    let experiment = Storage.load(),
+    group = new ExperimentGroup();
     
     group.id = properties.id;
     group.name = properties.name;
     experiment.groups.push(group);
+    Storage.save(experiment);
 
     return group;
 }
 
-function createNewSurvey(properties, experiment) {
-    let survey = new Survey();
+function createNewSurvey(properties) {
+    let experiment = Storage.load(),
+    survey = new Survey();
     
     survey.id = properties.id;
     survey.name = properties.name;
@@ -253,12 +255,14 @@ function createNewSurvey(properties, experiment) {
             break;
         }
     }
+    Storage.save(experiment);
 
     return survey;
 }
 
-function createNewStep(properties, experiment) {
-    let step;
+function createNewStep(properties) {
+    let experiment = Storage.load(),
+    step;
     
     if (properties.type === Config.STEP_TYPE_INSTRUCTION) {
         step = new Instruction();
@@ -284,12 +288,14 @@ function createNewStep(properties, experiment) {
             }
         }
     }
+    Storage.save(experiment);
 
     return step;
 }
 
-function createNewQuestion(properties, experiment) {
-    let question;
+function createNewQuestion(properties) {
+    let experiment = Storage.load(),
+    question;
     
     if (properties.type === Config.QUESTION_TYPE_CHOICE) {
         question = new ChoiceQuestion();
@@ -325,12 +331,14 @@ function createNewQuestion(properties, experiment) {
             }
         }
     }
+    Storage.save(experiment);
 
     return question;
 }
 
-function createNewAnswer(properties, experiment) {
-    let answer = new Answer();
+function createNewAnswer(properties) {
+    let experiment = Storage.load(),
+    answer = new Answer();
     
     answer.id = properties.id;
     answer.text = properties.name;
@@ -352,6 +360,7 @@ function createNewAnswer(properties, experiment) {
             }
         }
     }
+    Storage.save(experiment);
 
     return answer;
 }

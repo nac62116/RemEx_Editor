@@ -16,6 +16,8 @@ class InputView extends Observable {
     }
 
     show(correspondingNode, correspondingModelObject) {
+        let correspondingModelValues = {};
+
         this.correspondingNode = correspondingNode;
         this.header.innerHTML = correspondingNode.description;
         this.inputFieldsContainer.remove();
@@ -23,17 +25,25 @@ class InputView extends Observable {
         this.inputFieldsContainer.setAttribute("id", Config.INPUT_VIEW_FIELDS_CONTAINER_ID);
         this.inputFieldsContainer.setAttribute("class", Config.INPUT_FIELD_CONTAINER_CSS_CLASS_NAME);
         this.inputViewContainer.firstElementChild.insertAdjacentElement("afterend", this.inputFieldsContainer);
-        for (let modelPropertyKey in correspondingModelObject) {
-            if (Object.prototype.hasOwnProperty.call(correspondingModelObject, modelPropertyKey)) {
-                console.log(modelPropertyKey);
-                for (let inputFieldData of Config.INPUT_FIELD_DATA) {
-
-                    
+        
+        for (let inputFieldData of Config.INPUT_FIELD_DATA) {
+            for (let modelPropertyKey in correspondingModelObject) {
+                if (Object.prototype.hasOwnProperty.call(correspondingModelObject, modelPropertyKey)) {
                     if (modelPropertyKey === inputFieldData.correspondingModelProperty) {
-                        //console.log("modelKey: ", modelPropertyKey, "inputField: ", inputFieldData.correspondingModelProperty);
-
-                        createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey]);
-                        break;
+                        if (modelPropertyKey === "absoluteStartAtHour") {
+                            correspondingModelValues[modelPropertyKey] = correspondingModelObject[modelPropertyKey];
+                            correspondingModelValues.absoluteStartAtMinute = correspondingModelObject.absoluteStartAtMinute;
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelValues);
+                            break;
+                        }
+                        else if (modelPropertyKey === "absoluteStartDaysOffset") {
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey] + 1);
+                            break;
+                        }
+                        else {
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey]);
+                            break;
+                        }
                     }
                 }
             }
@@ -95,6 +105,7 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
         inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
+        inputElement.value = modelValue.absoluteStartAtHour + ":" + modelValue.absoluteStartAtMinute;
         inputElement.addEventListener("keyup", onInputChanged.bind(that));
         inputField.appendChild(inputElement);
     }
@@ -119,7 +130,22 @@ function onInputChanged(event) {
     },
     correspondingModelProperty = event.target.getAttribute("name");
 
-    properties[correspondingModelProperty] = event.target.value;
+    if (correspondingModelProperty === "absoluteStartAtHour") {
+        if (event.target.value !== "") {
+            properties.absoluteStartAtHour = event.target.value.substr(0, 2);
+            properties.absoluteStartAtMinute = event.target.value.substr(3, 2);
+        }
+        else {
+            return;
+        }
+    }
+    else if (correspondingModelProperty === "absoluteStartDaysOffset") {
+        properties.absoluteStartDaysOffset = event.target.value - 1;
+    }
+    else {
+        properties[correspondingModelProperty] = event.target.value;
+    }
+
     data = {
         correspondingNode: this.correspondingNode,
         newModelProperties: properties,
