@@ -105,6 +105,12 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
         inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
+        if (modelValue.absoluteStartAtHour < 10) { // eslint-disable-line no-magic-numbers
+            modelValue.absoluteStartAtHour = "0" + modelValue.absoluteStartAtHour;
+        }
+        if (modelValue.absoluteStartAtMinute < 10) { // eslint-disable-line no-magic-numbers
+            modelValue.absoluteStartAtMinute = "0" + modelValue.absoluteStartAtMinute;
+        }
         inputElement.value = modelValue.absoluteStartAtHour + ":" + modelValue.absoluteStartAtMinute;
         inputElement.addEventListener("keyup", onInputChanged.bind(that));
         inputField.appendChild(inputElement);
@@ -125,9 +131,7 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
 function onInputChanged(event) {
     let data,
     controllerEvent,
-    properties = {
-        id: this.correspondingNode.id,
-    },
+    properties = {},
     correspondingModelProperty = event.target.getAttribute("name");
 
     if (correspondingModelProperty === "absoluteStartAtHour") {
@@ -140,7 +144,12 @@ function onInputChanged(event) {
         }
     }
     else if (correspondingModelProperty === "absoluteStartDaysOffset") {
-        properties.absoluteStartDaysOffset = event.target.value - 1;
+        if (event.target.value !== "") {
+            properties.absoluteStartDaysOffset = event.target.value - 1;
+        }
+        else {
+            return;
+        }
     }
     else {
         properties[correspondingModelProperty] = event.target.value;

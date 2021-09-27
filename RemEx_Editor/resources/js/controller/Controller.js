@@ -178,33 +178,18 @@ function createNode(that, parentNode, data, stepType, questionType) {
 // Node events
 
 function onNodeMouseEnter(event) {
-    let hoveredNode = event.data.target,
-    experiment = Storage.load(),
-    modelData = ModelManager.getDataFromNodeId(hoveredNode.id, experiment);
+    let hoveredNode = event.data.target;
 
     hoveredNode.emphasize(this.currentSelection);
-    if (hoveredNode !== TreeView.currentFocusedNode) {
-        InputView.show(hoveredNode, modelData);
-    }
     /* inputData = ModelManager.getDataFromNodeId(hoveredNode, experiment);
     // InputViewManager.showInputView(hoveredNode, inputData, false);
     // InfoView -> show Info */
 }
 
 function onNodeMouseLeave(event) {
-    let hoveredNode = event.data.target,
-    experiment = Storage.load(),
-    modelData;
+    let hoveredNode = event.data.target;
 
     hoveredNode.deemphasize(this.currentSelection);
-    if (TreeView.currentFocusedNode !== undefined) {
-        modelData = ModelManager.getDataFromNodeId(TreeView.currentFocusedNode.id, experiment);
-        InputView.show(TreeView.currentFocusedNode, modelData);
-        InputView.selectFirstInput();
-    }
-    else {
-        InputView.hide();
-    }
     // InputView.show(inputData, hoveredNode)
     // -> inputData for input fields
     // -> hoveredNode for type, which should be placed right under the header
@@ -215,8 +200,8 @@ function onNodeClicked(event) {
     let clickedNode = event.data.target,
     previousFocusedNode = TreeView.currentFocusedNode,
     parentNode = clickedNode.parentNode,
-    // experiment = Storage.load(),
-    // inputData,
+    experiment = Storage.load(),
+    inputData = ModelManager.getDataFromNodeId(clickedNode.id, experiment),
     movingVector = {
         x: undefined,
         y: undefined,
@@ -277,6 +262,7 @@ function onNodeClicked(event) {
 
         WhereAmIView.update(this.currentSelection);
 
+        InputView.show(clickedNode, inputData);
         InputView.selectFirstInput();
     }
 }
@@ -580,18 +566,22 @@ function onTimelineClicked(event) {
         timeInMin = event.data.timeInMin;
         correspondingNode.updateNodeTimeMap(newNode, timeInMin);
         timeSortedChildNodes = correspondingNode.getTimeSortedChildNodes();
-        updateNextSurveyIds(timeSortedChildNodes, properties);
+        updateNextSurveyIds(timeSortedChildNodes);
         correspondingNode.updateTimelineLength();
     }
 }
 
-function updateNextSurveyIds(timeSortedChildNodes, properties) {
+function updateNextSurveyIds(timeSortedChildNodes) {
+    let properties = {};
     for (let i = 0; i < timeSortedChildNodes.length; i++) {
+        properties.id = timeSortedChildNodes[i].id;
         if (i !== timeSortedChildNodes.length - 1) {
-            properties.id = timeSortedChildNodes[i].id;
             properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
-            ModelManager.updateExperiment(properties);
         }
+        else {
+            properties.nextSurveyId = undefined;
+        }
+        ModelManager.updateExperiment(properties);
         if (i === 0) {
             timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
             timeSortedChildNodes[i].previousNode = undefined;
@@ -629,6 +619,7 @@ function onInputChanged(event) {
     timeInMin,
     timeSortedChildNodes;
 
+    newModelProperties.id = correspondingNode.id;
     if (newModelProperties.name !== undefined) {
         correspondingNode.updateDescription(newModelProperties.name);
     }
@@ -644,9 +635,10 @@ function onInputChanged(event) {
         }
         correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
         timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
-        updateNextSurveyIds(timeSortedChildNodes, newModelProperties);
+        updateNextSurveyIds(timeSortedChildNodes);
         correspondingNode.parentNode.updateTimelineLength();
     }
+
     ModelManager.updateExperiment(newModelProperties);
 
     WhereAmIView.update(this.currentSelection);

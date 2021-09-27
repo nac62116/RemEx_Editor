@@ -110,7 +110,6 @@ class TimelineNode extends StandardNode {
                 }
             }
         }
-
         return timeSortedChildNodes;
     }
 }
