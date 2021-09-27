@@ -14,6 +14,11 @@ class TimelineNode extends StandardNode {
         this.nodeTimeMap = new Map();
     }
 
+    hide() {
+        super.hide();
+        this.timeline.hide();
+    }
+
     focus() {
         super.focus();
         this.timeline.show();
@@ -28,7 +33,11 @@ class TimelineNode extends StandardNode {
 
     updatePosition(centerX, centerY, makeStatic) {
         super.updatePosition(centerX, centerY, makeStatic);
-        this.timeline.updatePosition(centerX, centerY);
+        this.timeline.updatePosition(centerX, centerY + Config.NODE_DISTANCE_VERTICAL);
+    }
+
+    getTimelineCenter() {
+        return this.timeline.center;
     }
 
     updateTimelineLength() {
@@ -82,7 +91,7 @@ class TimelineNode extends StandardNode {
                             break;
                         }
                         else {
-                            if (i === timeSortedChildNodes.length - 2) {
+                            if (i === timeSortedChildNodes.length - 2) { // eslint-disable-line no-magic-numbers
                                 timeSortedChildNodes.push(node);
                                 break;
                             }
@@ -151,19 +160,19 @@ class TimelineView extends Observable {
         }
     }
 
-    updatePosition(correspondingNodeCenterX, correspondingNodeCenterY) {
+    updatePosition(centerX, centerY) {
         let offsetX;
         
         if (this.center.x !== undefined) {
-            offsetX = correspondingNodeCenterX - this.center.x;
+            offsetX = centerX - this.center.x;
         }
 
-        this.center.x = correspondingNodeCenterX;
-        this.center.y = correspondingNodeCenterY + Config.NODE_DISTANCE_VERTICAL;
-        this.start.x = correspondingNodeCenterX - this.width / 2; // eslint-disable-line no-magic-numbers
-        this.start.y = correspondingNodeCenterY;
-        this.end.x = correspondingNodeCenterX + this.width / 2; // eslint-disable-line no-magic-numbers
-        this.end.y = correspondingNodeCenterY;
+        this.center.x = centerX;
+        this.center.y = centerY;
+        this.start.x = centerX - this.width / 2; // eslint-disable-line no-magic-numbers
+        this.start.y = centerY;
+        this.end.x = centerX + this.width / 2; // eslint-disable-line no-magic-numbers
+        this.end.y = centerY;
         this.timelineElements.timeline.setAttribute("y1", this.center.y);
         this.timelineElements.timeline.setAttribute("x1", this.start.x);
         this.timelineElements.timeline.setAttribute("y2", this.center.y);

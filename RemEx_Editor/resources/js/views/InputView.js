@@ -132,8 +132,8 @@ function onInputChanged(event) {
 
     if (correspondingModelProperty === "absoluteStartAtHour") {
         if (event.target.value !== "") {
-            properties.absoluteStartAtHour = event.target.value.substr(0, 2);
-            properties.absoluteStartAtMinute = event.target.value.substr(3, 2);
+            properties.absoluteStartAtHour = event.target.value.substr(0, 2); // eslint-disable-line no-magic-numbers
+            properties.absoluteStartAtMinute = event.target.value.substr(3, 2); // eslint-disable-line no-magic-numbers
         }
         else {
             return;

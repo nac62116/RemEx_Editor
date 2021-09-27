@@ -214,65 +214,66 @@ function onNodeMouseLeave(event) {
 function onNodeClicked(event) {
     let clickedNode = event.data.target,
     previousFocusedNode = TreeView.currentFocusedNode,
+    parentNode = clickedNode.parentNode,
     // experiment = Storage.load(),
     // inputData,
     movingVector = {
         x: undefined,
         y: undefined,
-    },
-    movingMode = false;
+    };
 
     if (clickedNode !== previousFocusedNode) {
-        if (clickedNode instanceof TimelineNode) {
-            clickedNode.updateTimelineLength();
-        }
         this.currentSelection = [];
         updateCurrentSelection(this, clickedNode);
-        if (previousFocusedNode !== undefined) {
-            if (!previousFocusedNode.childNodes.includes(clickedNode)) {
-                for (let childNode of TreeView.currentFocusedNode.childNodes) {
-                    childNode.hide();
-                }
-            }
-            previousFocusedNode.defocus(this.currentSelection);
-            previousFocusedNode.deemphasize(this.currentSelection);
-        }
         TreeView.currentFocusedNode = clickedNode;
+
         clickedNode.emphasize(this.currentSelection);
         clickedNode.focus();
-
-        if (clickedNode.parentNode !== undefined) {
-            if (clickedNode.parentNode.parentNode !== undefined) {
-                for (let childNode of clickedNode.parentNode.parentNode.childNodes) {
-                    if (childNode !== clickedNode.parentNode) {
-                        childNode.hide();
-                    }
-                }
-            }
-        }
+        //clickedNode.show();
         for (let childNode of clickedNode.childNodes) {
             childNode.show();
             hideChildrenBeginningFromNode(childNode);
         }
+        hideNextNodesAndChildrenBeginningFromNode(clickedNode);
+        hidePreviousNodesAndChildrenBeginningFromNode(clickedNode);
+        while (parentNode !== undefined) {
+            hideNextNodesAndChildrenBeginningFromNode(parentNode);
+            hidePreviousNodesAndChildrenBeginningFromNode(parentNode);
+            parentNode = parentNode.parentNode;
+        }
         showNeighboursBeginningFromNode(clickedNode);
-
+        
         if (previousFocusedNode !== undefined) {
-            if (clickedNode.parentNode instanceof TimelineNode && previousFocusedNode.parentNode instanceof TimelineNode) {
-                movingMode = Config.MOVING_MODE_TREE;
+            previousFocusedNode.defocus(this.currentSelection);
+            previousFocusedNode.deemphasize(this.currentSelection);
+        }
+        
+        if (clickedNode instanceof TimelineNode && clickedNode.childNodes.length === 0) {
+            clickedNode.updateTimelineLength();
+        }
+
+        movingVector.x = TreeView.getCenter().x - clickedNode.center.x;
+        movingVector.y = TreeView.getCenter().y - clickedNode.center.y;
+        if (previousFocusedNode !== undefined) {
+            if (clickedNode instanceof RootNode) {
+                moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
+                moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_TREE);
+            }
+            else if (clickedNode.parentNode instanceof TimelineNode) {
+                moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
             }
             else if (clickedNode.parentNode === previousFocusedNode.parentNode) {
-                movingMode = Config.MOVING_MODE_ROW;
+                moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_ROW);
             }
             else {
-                movingMode = Config.MOVING_MODE_TREE;
+                moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
+                moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_ROW);
             }
         }
         else {
-            movingMode = Config.MOVING_MODE_TREE;
+            moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
+            moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_TREE);
         }
-        movingVector.x = TreeView.getCenter().x - clickedNode.center.x;
-        movingVector.y = TreeView.getCenter().y - clickedNode.center.y;
-        moveTree(clickedNode, movingVector, movingMode);
 
         WhereAmIView.update(this.currentSelection);
 
@@ -298,6 +299,24 @@ function hideChildrenBeginningFromNode(node) {
     }
 }
 
+function hideNextNodesAndChildrenBeginningFromNode(node) {
+    if (node.nextNode === undefined) {
+        return;
+    }
+    node.nextNode.hide();
+    hideChildrenBeginningFromNode(node.nextNode);
+    hideNextNodesAndChildrenBeginningFromNode(node.nextNode);
+}
+
+function hidePreviousNodesAndChildrenBeginningFromNode(node) {
+    if (node.previousNode === undefined) {
+        return;
+    }
+    node.previousNode.hide();
+    hideChildrenBeginningFromNode(node.previousNode);
+    hidePreviousNodesAndChildrenBeginningFromNode(node.previousNode);
+}
+
 function showNeighboursBeginningFromNode(node) {
     showRightNeighbours(node);
     showLeftNeighbours(node);
@@ -319,20 +338,36 @@ function showLeftNeighbours(node) {
     showLeftNeighbours(node.previousNode);
 }
 
-function moveTree(node, movingVector, movingMode) {
+function moveTreeVertical(clickedNode, movingVectorY, movingMode) {
     let startNode;
 
     if (movingMode === Config.MOVING_MODE_TREE) {
-        startNode = getRootNode(node);
-        startNode.updatePosition(startNode.center.x + movingVector.x, startNode.center.y + movingVector.y, true);
+        startNode = getRootNode(clickedNode);
+        startNode.updatePosition(startNode.center.x, startNode.center.y + movingVectorY, true);
     }
     else if (movingMode === Config.MOVING_MODE_ROW) {
-        startNode = node.parentNode;
+        startNode = clickedNode.parentNode;
     }
     else {
         throw "Moving mode " + movingMode + " is not defined.";
     }
-    moveChildNodes(startNode, movingVector);
+    moveChildNodesVertical(startNode, movingVectorY);
+}
+
+function moveTreeHorizontal(clickedNode, movingVectorX, movingMode) {
+    let startNode;
+
+    if (movingMode === Config.MOVING_MODE_TREE) {
+        startNode = getRootNode(clickedNode);
+        startNode.updatePosition(startNode.center.x + movingVectorX, startNode.center.y, true);
+    }
+    else if (movingMode === Config.MOVING_MODE_ROW) {
+        startNode = clickedNode.parentNode;
+    }
+    else {
+        throw "Moving mode " + movingMode + " is not defined.";
+    }
+    moveChildNodesHorizontal(startNode, movingVectorX);
 }
 
 function getRootNode(node) {
@@ -342,13 +377,23 @@ function getRootNode(node) {
     return getRootNode(node.parentNode);
 }
 
-function moveChildNodes(node, movingVector) {
+function moveChildNodesVertical(node, movingVectorY) {
     if (node.childNodes === undefined || node.childNodes.length === 0) {
         return;
     }
     for (let childNode of node.childNodes) {
-        childNode.updatePosition(childNode.center.x + movingVector.x, childNode.center.y + movingVector.y, true);
-        moveChildNodes(childNode, movingVector);
+        childNode.updatePosition(childNode.center.x, childNode.center.y + movingVectorY, true);
+        moveChildNodesVertical(childNode, movingVectorY);
+    }
+}
+
+function moveChildNodesHorizontal(node, movingVectorX) {
+    if (node.childNodes === undefined || node.childNodes.length === 0) {
+        return;
+    }
+    for (let childNode of node.childNodes) {
+        childNode.updatePosition(childNode.center.x + movingVectorX, childNode.center.y, true);
+        moveChildNodesHorizontal(childNode, movingVectorX);
     }
 }
 
