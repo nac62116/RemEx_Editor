@@ -1,5 +1,3 @@
-import Config from "../utils/Config.js";
-
 class TreeView {
 
     // treeViewElement
@@ -43,84 +41,50 @@ class TreeView {
         }
     }
 
-    removeNode(/*node*/) {
-        /*
-        let isInsertion = false,
-        nextFocusedNode;
-
-        updateNodeLinks(node);
-        nextFocusedNode = getNextFocusedNode(node);
-        updateNextNodePositions(node.nextNode, isInsertion);
-        removeNodeFromParentsList(node);
-        removeNodeFromDOM(node);
-        return nextFocusedNode;*/
-    }
-
-    focusNode(/*node*/) {
-        /* Moving animation
-        let firstNodeOfRow = getFirstNodeOfRow(node),
-        centerOffsetVector = getCenterOffsetVector(this, node),
-        partialVector = {
-            x: centerOffsetVector.x / Config.TREE_MOVEMENT_ANIMATION_STEPS,
-            y: centerOffsetVector.y / Config.TREE_MOVEMENT_ANIMATION_STEPS,
-        },
-        i = 0,
-        intervall;
-        
-        intervall = setInterval(() => {
-            moveHorizontal(firstNodeOfRow, partialVector);
-            moveVertical(this.experimentRootNode, null, partialVector);
-            i += 1;
-            if (i === Config.TREE_MOVEMENT_ANIMATION_STEPS) {
-                clearInterval(intervall);
+    removeNode(node) {
+        for (let nodeKey in node.nodeElements) {
+            if (Object.prototype.hasOwnProperty.call(node.nodeElements, nodeKey)) {
+                if (nodeKey !== "timelineElements") {
+                    node.nodeElements[nodeKey].remove();
+                }
+                else {
+                    for (let timelineKey in node.nodeElements.timelineElements) {
+                        if (Object.prototype.hasOwnProperty.call(node.nodeElements.timelineElements, timelineKey)) {
+                            if (timelineKey !== "labels") {
+                                node.nodeElements.timelineElements[timelineKey].remove();
+                            }
+                        }
+                    }
+                }
             }
-        }, Config.TREE_MOVEMENT_ANIMATION_FRAME_RATE_MS);
-        
-        showChildNodes(node, true);
-        defocusNextNodes(firstNodeOfRow);
-        deemphasizeNextNodes(firstNodeOfRow);
-        node.focus();
-        this.currentFocusedNode = node;*/
-    }
-
-    moveToPreviousNode() {
-        if (this.currentFocusedNode.previousNode !== undefined) {
-            this.clickNode(this.currentFocusedNode.previousNode);
         }
-    }
-
-    moveToNextNode() {
-        if (this.currentFocusedNode.nextNode !== undefined) {
-            this.clickNode(this.currentFocusedNode.nextNode);
-        }
-    }
-
-    moveToParentNode() {
-        if (this.currentFocusedNode.parentNode !== undefined) {
-            this.clickNode(this.currentFocusedNode.parentNode);
-        }
-    }
-
-    moveToFirstChildNode() {
-        if (this.currentFocusedNode.childNodes[0] !== undefined) {
-            this.clickNode(this.currentFocusedNode.childNodes[0]);
-        }
+        removeChildNodes(node);
     }
 }
 
-/*function removeNodeFromParentsList(node) {
-    let indexInParentList;
-
-    indexInParentList = node.parentNode.childNodes.indexOf(node);
-    if (indexInParentList !== -1) {
-        node.parentNode.childNodes.splice(indexInParentList, 1);
+function removeChildNodes(node) {
+    if (node.childNodes === undefined || node.childNodes.length === 0) {
+        return;
+    }
+    for (let childNode of node.childNodes) {
+        for (let nodeKey in childNode.nodeElements) {
+            if (Object.prototype.hasOwnProperty.call(childNode.nodeElements, nodeKey)) {
+                if (nodeKey !== "timelineElements") {
+                    childNode.nodeElements[nodeKey].remove();
+                }
+                else {
+                    for (let timelineKey in childNode.nodeElements.timelineElements) {
+                        if (Object.prototype.hasOwnProperty.call(childNode.nodeElements.timelineElements, timelineKey)) {
+                            if (timelineKey !== "labels") {
+                                childNode.nodeElements.timelineElements[timelineKey].remove();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        removeChildNodes(childNode);
     }
 }
-
-function removeNodeFromDOM(node) {
-    for (let element of node.elements) {
-        element.remove();
-    }
-}*/
 
 export default new TreeView();

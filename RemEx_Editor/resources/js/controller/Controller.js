@@ -14,7 +14,6 @@ import Storage from "../utils/Storage.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> IMPORTANT: Fix model update issues
 // -> Finish Tree and InputView
 // -> InfoView
 // -> Up and download experiment.json
@@ -434,7 +433,7 @@ function onAddNextNode(event) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
         updateQuestionLinks(firstNodeOfRow);
     }
-    moveNextNodes(newNode);
+    moveNextNodes(newNode, false);
 }
 
 function onAddPreviousNode(event) {
@@ -472,7 +471,7 @@ function onAddPreviousNode(event) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
         updateQuestionLinks(firstNodeOfRow);
     }
-    movePreviousNodes(newNode);
+    movePreviousNodes(newNode, false);
 }
 
 function updateStepLinks(node) {
@@ -496,7 +495,7 @@ function updateQuestionLinks(node) {
         properties.nextQuestionId = node.nextNode.id;
         ModelManager.updateExperiment(properties);
     }
-    updateStepLinks(node.nextNode);
+    updateQuestionLinks(node.nextNode);
 }
 
 function getFirstNodeOfRow(node) {
@@ -506,20 +505,50 @@ function getFirstNodeOfRow(node) {
     return getFirstNodeOfRow(node.previousNode);
 }
 
-function movePreviousNodes(node) {
+function movePreviousNodes(node, moveTowardsNode) {
     if (node.previousNode === undefined) {
         return;
     }
-    node.previousNode.updatePosition(node.previousNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
-    movePreviousNodes(node.previousNode);
+    if (moveTowardsNode) {
+        node.previousNode.updatePosition(node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
+        if (node.nextNode instanceof TimelineNode) {
+            for (let childNode of node.previousNode.childNodes) {
+                childNode.updatePosition(childNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
+            }
+        }
+    }
+    else {
+        node.previousNode.updatePosition(node.previousNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
+        if (node.nextNode instanceof TimelineNode) {
+            for (let childNode of node.previousNode.childNodes) {
+                childNode.updatePosition(childNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
+            }
+        }
+    }
+    movePreviousNodes(node.previousNode, moveTowardsNode);
 }
 
-function moveNextNodes(node) {
+function moveNextNodes(node, moveTowardsNode) {
     if (node.nextNode === undefined) {
         return;
     }
-    node.nextNode.updatePosition(node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
-    moveNextNodes(node.nextNode);
+    if (moveTowardsNode) {
+        node.nextNode.updatePosition(node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
+        if (node.nextNode instanceof TimelineNode) {
+            for (let childNode of node.nextNode.childNodes) {
+                childNode.updatePosition(childNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
+            }
+        }
+    }
+    else {
+        node.nextNode.updatePosition(node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
+        if (node.nextNode instanceof TimelineNode) {
+            for (let childNode of node.nextNode.childNodes) {
+                childNode.updatePosition(childNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
+            }
+        }
+    }
+    moveNextNodes(node.nextNode, moveTowardsNode);
 }
 
 function onAddChildNode(event) {
@@ -599,16 +628,60 @@ function updateNextSurveyIds(timeSortedChildNodes) {
 
 // InputView event callbacks
 
+// TODO: Fix: After deleting group node the surveys of the next/prev group node also get moved
+
 function onRemoveNode(event) {
-    let nodeToRemove = event.data.correspondingNode;
+    let nodeToRemove = event.data.correspondingNode,
+    firstNodeOfRow,
+    timeSortedChildNodes,
+    nextFocusedNode;
 
     ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id);
-    // TODO: Update node linking
-    // TODO: Update Timeline incl. nextSurveyIds
-    // TODO: Update nextStepIds
-    // TODO: Update nextQuestionIds
-    // TODO: Get nextFocusedNode and update positions for the right nodes
-    // TODO: remove() method in NodeView.js
+    if (nodeToRemove.parentNode instanceof TimelineNode) {
+        nodeToRemove.parentNode.shortenNodeTimeMap(nodeToRemove);
+        timeSortedChildNodes = nodeToRemove.parentNode.getTimeSortedChildNodes();
+        updateNextSurveyIds(timeSortedChildNodes);
+        nodeToRemove.parentNode.updateTimelineLength();
+        if (nodeToRemove.nextNode !== undefined) {
+            nextFocusedNode = nodeToRemove.nextNode;
+        }
+        else if (nodeToRemove.previousNode !== undefined) {
+            nextFocusedNode = nodeToRemove.previousNode;
+        }
+        else {
+            nextFocusedNode = nodeToRemove.parentNode;
+        }
+    }
+    else {
+        if (nodeToRemove.nextNode !== undefined) {
+            nodeToRemove.nextNode.previousNode = nodeToRemove.previousNode;
+            nextFocusedNode = nodeToRemove.nextNode;
+            moveNextNodes(nodeToRemove, true);
+            firstNodeOfRow = getFirstNodeOfRow(nodeToRemove.nextNode);
+        }
+        if (nodeToRemove.previousNode !== undefined) {
+            nodeToRemove.previousNode.nextNode = nodeToRemove.nextNode;
+            nextFocusedNode = nodeToRemove.previousNode;
+            if (nodeToRemove.nextNode === undefined) {
+                movePreviousNodes(nodeToRemove, true);
+            }
+            firstNodeOfRow = getFirstNodeOfRow(nodeToRemove.previousNode);
+        }
+        if (nodeToRemove.nextNode === undefined && nodeToRemove.previousNode === undefined) {
+            nodeToRemove.parentNode.showAddChildButton();
+            nextFocusedNode = nodeToRemove.parentNode;
+        }
+        if (firstNodeOfRow !== undefined) {
+            if (nodeToRemove.parentNode.type === Config.TYPE_SURVEY) {
+                updateStepLinks(firstNodeOfRow);
+            }
+            if (nodeToRemove.parentNode.type === Config.TYPE_QUESTIONNAIRE) {
+                updateQuestionLinks(firstNodeOfRow);
+            }
+        }
+    }
+    TreeView.removeNode(nodeToRemove);
+    nextFocusedNode.click();
 }
 
 function onInputChanged(event) {

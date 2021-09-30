@@ -11,7 +11,7 @@ class InputView extends Observable {
         this.inputFieldsContainer = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_FIELDS_CONTAINER_ID);
         this.header = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_HEADER_ID);
         this.deleteButton = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_DELETE_BUTTON_ID);
-        this.deleteButton.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNodeButtonClicked.bind(this));
+        this.deleteButton.addEventListener("click", onRemoveNodeButtonClicked.bind(this));
         this.correspondingNode = undefined;
     }
 

@@ -63,6 +63,10 @@ class TimelineNode extends StandardNode {
         this.nodeTimeMap.set(correspondingNode, timeInMin);
     }
 
+    shortenNodeTimeMap(correspondingNode) {
+        this.nodeTimeMap.delete(correspondingNode);
+    }
+
     getTimeSortedChildNodes() {
         let timeSortedChildNodes = [],
         firstPart,
