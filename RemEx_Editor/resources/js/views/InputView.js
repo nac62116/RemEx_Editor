@@ -71,7 +71,9 @@ class InputView extends Observable {
 }
 
 function createInputField(that, label, type, values, modelProperty, modelValue) {
-    let inputField, inputElement;
+    let inputField,
+    inputElement,
+    labelElement;
 
     inputField = document.createElement("div");
     inputField.innerHTML = INPUT_FIELD_TEMPLATE_STRING;
@@ -80,14 +82,23 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
 
     if (type === "radio" || type === "checkbox") {
         for (let value of values) {
+            labelElement = document.createElement("label");
+            labelElement.innerHTML = value.label;
+            labelElement.classList.add("radio-label");
             inputElement = document.createElement("input");
             inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
-            inputElement.setAttribute("value", value);
             inputElement.setAttribute("type", type);
             inputElement.setAttribute("name", modelProperty);
-            inputElement.value = modelValue;
+            inputElement.setAttribute("value", value.value);
+            if (modelValue !== null) {
+                if (modelValue === value.value || modelValue.includes(value.value)) {
+                    inputElement.setAttribute("checked", "true");
+                }
+            }
             inputElement.addEventListener("click", onInputChanged.bind(that));
-            inputField.appendChild(inputElement);
+            
+            labelElement.insertAdjacentElement("afterbegin", inputElement);
+            inputField.appendChild(labelElement);
         }
     }
     else if (type === "image" || type === "video") {
@@ -132,7 +143,8 @@ function onInputChanged(event) {
     let data,
     controllerEvent,
     properties = {},
-    correspondingModelProperty = event.target.getAttribute("name");
+    correspondingModelProperty = event.target.getAttribute("name"),
+    checkboxElements;
 
     if (correspondingModelProperty === "absoluteStartAtHour") {
         if (event.target.value !== "") {
@@ -149,6 +161,15 @@ function onInputChanged(event) {
         }
         else {
             return;
+        }
+    }
+    else if (event.target.type === "checkbox") {
+        checkboxElements = event.target.parentElement.parentElement.querySelectorAll("input");
+        properties[correspondingModelProperty] = [];
+        for (let checkboxElement of checkboxElements) {
+            if (checkboxElement.checked === true) {
+                properties[correspondingModelProperty].push(checkboxElement.value);
+            }
         }
     }
     else {

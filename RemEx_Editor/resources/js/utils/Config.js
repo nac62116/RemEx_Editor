@@ -131,9 +131,20 @@ const Config = {
         },
         {
             label: "Modus:",
-            correspondingModelProperty: "breathingFrequencyInSec",
+            correspondingModelProperty: "mode",
             inputType: "radio",
-            values: ["Bewegender Kreis", "Stehender Kreis"],
+            values: [
+                {
+                    label: "Bewegender Kreis",
+                    // For value see Configs model values
+                    value: "MOVING_CIRCLE",
+                },
+                {
+                    label: "Stehender Kreis",
+                    // For value see Configs model values
+                    value: "STATIC_CIRCLE",
+                },
+            ],
         },
         {
             label: "Auf Instruktion warten:",
@@ -149,7 +160,18 @@ const Config = {
             label: "Auswahltyp:",
             correspondingModelProperty: "choiceType",
             inputType: "radio",
-            values: ["Mehrfachauswahl", "Einfachauswahl"],
+            values: [
+                {
+                    label: "Einfachauswahl",
+                    // For value see Configs model values
+                    value: "SINGLE_CHOICE",
+                },
+                {
+                    label: "Mehrfachauswahl",
+                    // For value see Configs model values
+                    value: "MULTIPLE_CHOICE",
+                },
+            ],
         },
         {
             label: "Skalenbeschriftung am Minimum:",
@@ -175,13 +197,55 @@ const Config = {
             label: "Zeitpunktauswahl:",
             correspondingModelProperty: "pointOfTimeTypes",
             inputType: "checkbox",
-            values: ["Datum", "Uhrzeit"],
+            values: [
+                {
+                    label: "Datum",
+                    // For value see Configs model values
+                    value: "DATE",
+                },
+                {
+                    label: "Uhrzeit",
+                    // For value see Configs model values
+                    value: "DAYTIME",
+                },
+            ],
         },
         {
             label: "Zeitraumauswahl:",
             correspondingModelProperty: "timeIntervalTypes",
             inputType: "checkbox",
-            values: ["Jahre", "Monate", "Tage", "Stunden", "Minuten", "Sekunden"],
+            values: [
+                {
+                    label: "Jahre",
+                    // For value see Configs model values
+                    value: "YEARS",
+                },
+                {
+                    label: "Monate",
+                    // For value see Configs model values
+                    value: "MONTHS",
+                },
+                {
+                    label: "Tage",
+                    // For value see Configs model values
+                    value: "DAYS",
+                },
+                {
+                    label: "Stunden",
+                    // For value see Configs model values
+                    value: "HOURS",
+                },
+                {
+                    label: "Minuten",
+                    // For value see Configs model values
+                    value: "MINUTES",
+                },
+                {
+                    label: "Sekunden",
+                    // For value see Configs model values
+                    value: "SECONDS",
+                },
+            ],
         },
         {
             label: "Antwortkodierung:",

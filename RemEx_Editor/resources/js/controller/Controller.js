@@ -563,7 +563,7 @@ function onAddChildNode(event) {
         stepType = Config.STEP_TYPE_QUESTIONNAIRE;
     }
     if (clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_TEXT;
+        questionType = Config.QUESTION_TYPE_POINT_OF_TIME;
     }
     inputData = ModelManager.extendExperiment(clickedNode, undefined, stepType, questionType);
     newNode = createNode(this, clickedNode, inputData, stepType, questionType);

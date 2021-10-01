@@ -235,7 +235,7 @@ class TimelineView extends Observable {
         }
         else {
             labelSteps = Config.ONE_WEEK_IN_MIN;
-            this.timelineLengthInMin = timelineLengthInMin + Config.ONE_DAY_IN_MIN;
+            this.timelineLengthInMin = Math.ceil(timelineLengthInMin / Config.ONE_WEEK_IN_MIN) * Config.ONE_WEEK_IN_MIN;
             labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
         }
         for (let currentLabel of this.timelineElements.labels) {
