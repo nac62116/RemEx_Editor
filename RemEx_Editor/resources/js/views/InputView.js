@@ -25,6 +25,15 @@ class InputView extends Observable {
         this.inputFieldsContainer.setAttribute("id", Config.INPUT_VIEW_FIELDS_CONTAINER_ID);
         this.inputFieldsContainer.setAttribute("class", Config.INPUT_FIELD_CONTAINER_CSS_CLASS_NAME);
         this.inputViewContainer.firstElementChild.insertAdjacentElement("afterend", this.inputFieldsContainer);
+
+        if (correspondingNode.parentNode !== undefined) {
+            if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
+                createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, correspondingNode.type);
+            }
+            if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                createInputField(this, Config.INPUT_FIELD_QUESTION_TYPE_DATA.label, Config.INPUT_FIELD_QUESTION_TYPE_DATA.inputType, Config.INPUT_FIELD_QUESTION_TYPE_DATA.values, Config.TYPE_QUESTION, correspondingNode.type);
+            }
+        }
         
         for (let inputFieldData of Config.INPUT_FIELD_DATA) {
             for (let modelPropertyKey in correspondingModelObject) {
@@ -80,11 +89,18 @@ class InputView extends Observable {
     }
 
     selectFirstInput() {
-        this.inputFieldsContainer.querySelector("input").select();
+        let inputFields = this.inputFieldsContainer.querySelectorAll("input");
+
+        for (let inputField of inputFields) {
+            if (inputField.getAttribute("type") === "text") {
+                inputField.select();
+                return;
+            }
+        }
     }
 }
 
-function createInputField(that, label, type, values, modelProperty, modelValue) {
+function createInputField(that, label, type, values, modelProperty, currentModelValue) {
     let inputField,
     inputElement,
     labelElement;
@@ -104,10 +120,10 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
             inputElement.setAttribute("type", type);
             inputElement.setAttribute("name", modelProperty);
             inputElement.setAttribute("value", value.value);
-            if (modelValue !== null) {
-                if (modelValue === value.value 
-                    || modelValue instanceof Array 
-                    && modelValue.includes(value.value)) {
+            if (currentModelValue !== null) {
+                if (currentModelValue === value.value 
+                    || currentModelValue instanceof Array 
+                    && currentModelValue.includes(value.value)) {
                     inputElement.setAttribute("checked", "true");
                 }
             }
@@ -123,7 +139,7 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
         inputElement.setAttribute("type", "file");
         inputElement.setAttribute("accept", type + "/*");
         inputElement.setAttribute("name", modelProperty);
-        inputElement.value = modelValue;
+        inputElement.value = currentModelValue;
         inputElement.addEventListener("click", onInputChanged.bind(that));
         inputField.appendChild(inputElement);
     }
@@ -132,13 +148,13 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
         inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
-        if (modelValue.absoluteStartAtHour < 10) { // eslint-disable-line no-magic-numbers
-            modelValue.absoluteStartAtHour = "0" + modelValue.absoluteStartAtHour;
+        if (currentModelValue.absoluteStartAtHour < 10) { // eslint-disable-line no-magic-numbers
+            currentModelValue.absoluteStartAtHour = "0" + currentModelValue.absoluteStartAtHour;
         }
-        if (modelValue.absoluteStartAtMinute < 10) { // eslint-disable-line no-magic-numbers
-            modelValue.absoluteStartAtMinute = "0" + modelValue.absoluteStartAtMinute;
+        if (currentModelValue.absoluteStartAtMinute < 10) { // eslint-disable-line no-magic-numbers
+            currentModelValue.absoluteStartAtMinute = "0" + currentModelValue.absoluteStartAtMinute;
         }
-        inputElement.value = modelValue.absoluteStartAtHour + ":" + modelValue.absoluteStartAtMinute;
+        inputElement.value = currentModelValue.absoluteStartAtHour + ":" + currentModelValue.absoluteStartAtMinute;
         inputElement.addEventListener("keyup", onInputChanged.bind(that));
         inputField.appendChild(inputElement);
     }
@@ -147,7 +163,7 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
         inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
-        inputElement.value = modelValue;
+        inputElement.value = currentModelValue;
         inputElement.addEventListener("keyup", onInputChanged.bind(that));
         inputField.appendChild(inputElement);
     }
@@ -157,10 +173,14 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
 
 function onInputChanged(event) {
     let data,
-    controllerEvent,
+    inputChangeEvent,
     properties = {},
     correspondingModelProperty = event.target.getAttribute("name"),
-    checkboxElements;
+    checkboxElements,
+    stepType,
+    questionType,
+    addNodeEvent,
+    removeNodeEvent;
 
     if (correspondingModelProperty === "absoluteStartAtHour") {
         if (event.target.value !== "") {
@@ -179,6 +199,12 @@ function onInputChanged(event) {
             return;
         }
     }
+    else if (correspondingModelProperty === Config.TYPE_STEP) {
+        stepType = event.target.value;
+    }
+    else if (correspondingModelProperty === Config.TYPE_QUESTION) {
+        questionType = event.target.value;
+    }
     else if (event.target.type === "checkbox") {
         checkboxElements = event.target.parentElement.parentElement.querySelectorAll("input");
         properties[correspondingModelProperty] = [];
@@ -196,14 +222,34 @@ function onInputChanged(event) {
     else {
         properties[correspondingModelProperty] = event.target.value;
     }
-    console.log(properties[correspondingModelProperty]);
 
     data = {
         correspondingNode: this.correspondingNode,
         newModelProperties: properties,
     };
-    controllerEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
-    this.notifyAll(controllerEvent);
+    if (correspondingModelProperty === Config.TYPE_STEP || correspondingModelProperty === Config.TYPE_QUESTION) {
+        data.stepType = stepType;
+        data.questionType = questionType;
+        if (this.correspondingNode.previousNode !== undefined) {
+            data.target = this.correspondingNode.previousNode;
+            addNodeEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
+        }
+        else if (this.correspondingNode.nextNode !== undefined) {
+            data.target = this.correspondingNode.nextNode;
+            addNodeEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+        }
+        else {
+            data.target = this.correspondingNode.parentNode;
+            addNodeEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
+        }
+        removeNodeEvent = new Event(Config.EVENT_REMOVE_NODE, data);
+        this.notifyAll(removeNodeEvent);
+        this.notifyAll(addNodeEvent);
+    }
+    else {
+        inputChangeEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
+        this.notifyAll(inputChangeEvent);
+    }
 }
 
 function onRemoveNodeButtonClicked() {

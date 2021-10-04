@@ -87,6 +87,10 @@ class Controller {
                 eventType: Config.EVENT_REMOVE_NODE,
                 callback: onRemoveNode.bind(this),
             },
+            {
+                eventType: Config.EVENT_ADD_NEXT_NODE,
+                callback: onAddNextNode.bind(this),
+            },
         ];
         this.timelineEventListener = [
             {
@@ -106,6 +110,9 @@ class Controller {
 
         InputView.init(inputViewContainer);
         InputView.addEventListener(Config.EVENT_INPUT_CHANGED, onInputChanged.bind(this));
+        InputView.addEventListener(Config.EVENT_ADD_NEXT_NODE, onAddNextNode.bind(this));
+        InputView.addEventListener(Config.EVENT_ADD_PREV_NODE, onAddPreviousNode.bind(this));
+        InputView.addEventListener(Config.EVENT_ADD_CHILD_NODE, onAddChildNode.bind(this));
         InputView.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNode.bind(this));
         // InfoViewManager.initInfoView();
         document.addEventListener("keyup", onKeyUp.bind(this));
@@ -442,7 +449,7 @@ function onNodeDrag() {
 }
 
 function onNodeDrop() {
-    // TODO: update nextSurveyIds, nextQuestionIds from normal nodes and nextQuestionId from answer node
+    // TODO: update nextSurveyIds, nextQuestionIds from normal nodes
     // TreeView -> check for valid dropzone -> if valid (updatePosition(x, y, true))
     // -> if not valid (returnToLastStaticPosition)
     // -> Make all other items focusable
@@ -460,11 +467,17 @@ function onAddNextNode(event) {
     questionType,
     firstNodeOfRow;
 
-    if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
+    if (event.data.stepType === undefined && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
         stepType = Config.STEP_TYPE_BREATHING_EXERCISE;
     }
-    if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+    else {
+        stepType = event.data.stepType;
+    }
+    if (event.data.questionType === undefined && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         questionType = Config.QUESTION_TYPE_CHOICE;
+    }
+    else {
+        questionType = event.data.questionType;
     }
     inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined, stepType, questionType);
     newNode = createNode(this, clickedNode.parentNode, inputData, stepType, questionType);
@@ -479,11 +492,12 @@ function onAddNextNode(event) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
         updateStepLinks(firstNodeOfRow);
     }
-    if (clickedNode.parentNode.type === Config.TYPE_QUESTIONNAIRE) {
+    if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
         updateQuestionLinks(firstNodeOfRow);
     }
     moveNextNodes(newNode, false);
+    newNode.click();
 }
 
 function onAddPreviousNode(event) {
@@ -498,11 +512,17 @@ function onAddPreviousNode(event) {
     questionType,
     firstNodeOfRow;
 
-    if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
+    if (event.data.stepType === undefined && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
         stepType = Config.STEP_TYPE_INSTRUCTION;
     }
-    if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+    else {
+        stepType = event.data.stepType;
+    }
+    if (event.data.questionType === undefined && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         questionType = Config.QUESTION_TYPE_LIKERT;
+    }
+    else {
+        questionType = event.data.questionType;
     }
     inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined, stepType, questionType);
     newNode = createNode(this, clickedNode.parentNode, inputData, stepType, questionType);
@@ -517,11 +537,12 @@ function onAddPreviousNode(event) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
         updateStepLinks(firstNodeOfRow);
     }
-    if (clickedNode.parentNode.type === Config.TYPE_QUESTIONNAIRE) {
+    if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
         updateQuestionLinks(firstNodeOfRow);
     }
     movePreviousNodes(newNode, false);
+    newNode.click();
 }
 
 function updateStepLinks(node) {
@@ -609,11 +630,19 @@ function onAddChildNode(event) {
     stepType,
     questionType;
 
-    if (clickedNode.type === Config.TYPE_SURVEY) {
-        stepType = Config.STEP_TYPE_QUESTIONNAIRE;
-    }
-    if (clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_POINT_OF_TIME;
+    if (clickedNode.parentNode !== undefined) {
+        if (event.data.stepType === undefined && clickedNode.type === Config.TYPE_SURVEY) {
+            stepType = Config.STEP_TYPE_QUESTIONNAIRE;
+        }
+        else {
+            stepType = event.data.stepType;
+        }
+        if (event.data.questionType === undefined && clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+            questionType = Config.QUESTION_TYPE_POINT_OF_TIME;
+        }
+        else {
+            questionType = event.data.questionType;
+        }
     }
     inputData = ModelManager.extendExperiment(clickedNode, undefined, stepType, questionType);
     newNode = createNode(this, clickedNode, inputData, stepType, questionType);
@@ -621,6 +650,7 @@ function onAddChildNode(event) {
     position.y = clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL;
     newNode.updatePosition(position.x, position.y, true);
     clickedNode.hideAddChildButton();
+    newNode.click();
 }
 
 // TimelineView event callbacks
@@ -647,6 +677,7 @@ function onTimelineClicked(event) {
         timeSortedChildNodes = correspondingNode.getTimeSortedChildNodes();
         updateNextSurveyIds(timeSortedChildNodes);
         correspondingNode.updateTimelineLength();
+        newNode.click();
     }
 }
 
@@ -677,8 +708,6 @@ function updateNextSurveyIds(timeSortedChildNodes) {
 }
 
 // InputView event callbacks
-
-// TODO: Fix: After deleting group node the surveys of the next/prev group node also get moved
 
 function onRemoveNode(event) {
     let nodeToRemove = event.data.correspondingNode,
@@ -725,7 +754,7 @@ function onRemoveNode(event) {
             if (nodeToRemove.parentNode.type === Config.TYPE_SURVEY) {
                 updateStepLinks(firstNodeOfRow);
             }
-            if (nodeToRemove.parentNode.type === Config.TYPE_QUESTIONNAIRE) {
+            if (nodeToRemove.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
                 updateQuestionLinks(firstNodeOfRow);
             }
         }
@@ -765,7 +794,6 @@ function onInputChanged(event) {
     ModelManager.updateExperiment(newModelProperties);
 
     WhereAmIView.update(this.currentSelection);
-
 }
 
 // Whole page events

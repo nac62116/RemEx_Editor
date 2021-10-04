@@ -68,6 +68,58 @@ const Config = {
     INPUT_EXPERIMENT_GROUP_NAME_ID: "experimentGroupNameInput",
     INPUT_EXPERIMENT_GROUP_NAME_LABEL: "Name der Experimentgruppe:",
 
+    INPUT_FIELD_STEP_TYPE_DATA: {
+        label: "Typ:",
+        inputType: "radio",
+        values: [
+            {
+                label: "Instruktion",
+                // For value see Configs model values
+                value: "INSTRUCTION",
+            },
+            {
+                label: "Fragebogen",
+                // For value see Configs model values
+                value: "QUESTIONNAIRE",
+            },
+            {
+                label: "Atemübung",
+                // For value see Configs model values
+                value: "BREATHING_EXERCISE",
+            },
+        ],
+    },
+    INPUT_FIELD_QUESTION_TYPE_DATA: {
+        label: "Typ:",
+        inputType: "radio",
+        values: [
+            {
+                label: "Textfrage",
+                // For value see Configs model values
+                value: "TEXT",
+            },
+            {
+                label: "Auswahlfrage",
+                // For value see Configs model values
+                value: "CHOICE",
+            },
+            {
+                label: "Likertfrage",
+                // For value see Configs model values
+                value: "LIKERT",
+            },
+            {
+                label: "Zeitpunktfrage",
+                // For value see Configs model values
+                value: "POINT_OF_TIME",
+            },
+            {
+                label: "Zeitraumfrage",
+                // For value see Configs model values
+                value: "TIME_INTERVAL",
+            },
+        ],
+    },
     INPUT_FIELD_DATA: [
         {
             label: "Name:",
@@ -420,12 +472,8 @@ const Config = {
     TYPE_EXPERIMENT_GROUP: "experimentGroup",
     // Survey
     TYPE_SURVEY: "survey",
-    // Instruction
-    TYPE_INSTRUCTION: "instruction",
-    // Breathing exercise
-    TYPE_BREATHING_EXERCISE: "breathingExercise",
-    // Questionnaire
-    TYPE_QUESTIONNAIRE: "questionnaire",
+    // Step
+    TYPE_STEP: "step",
     // Question
     TYPE_QUESTION: "question",
     // Answer
