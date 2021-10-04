@@ -102,7 +102,7 @@ const Config = {
         {
             label: "Befragungstag:",
             correspondingModelProperty: "absoluteStartDaysOffset",
-            inputType: "text",
+            inputType: "number",
         },
         {
             label: "Uhrzeit der Befragung:",
@@ -112,22 +112,22 @@ const Config = {
         {
             label: "Dauer (Minuten):",
             correspondingModelProperty: "durationInMin",
-            inputType: "text",
+            inputType: "number",
         },
         {
             label: "Maximale Dauer der Befragung (Minuten):",
             correspondingModelProperty: "maxDurationInMin",
-            inputType: "text",
+            inputType: "number",
         },
         {
             label: "Dauer der Benachrichtigung (Minuten):",
             correspondingModelProperty: "notificationDurationInMin",
-            inputType: "text",
+            inputType: "number",
         },
         {
             label: "Atemfrequenz (Sekunden):",
             correspondingModelProperty: "breathingFrequencyInSec",
-            inputType: "text",
+            inputType: "number",
         },
         {
             label: "Modus:",
@@ -149,12 +149,17 @@ const Config = {
         {
             label: "Auf Instruktion warten:",
             correspondingModelProperty: "waitForStep",
-            inputType: "text",
+            inputType: "radio",
         },
         {
             label: "Wartetext:",
             correspondingModelProperty: "waitingText",
             inputType: "text",
+        },
+        {
+            label: "Nächste Frage:",
+            correspondingModelProperty: "nextQuestionId",
+            inputType: "radio",
         },
         {
             label: "Auswahltyp:",
@@ -186,12 +191,12 @@ const Config = {
         {
             label: "Skalenlänge:",
             correspondingModelProperty: "itemCount",
-            inputType: "text",
+            inputType: "number",
         },
         {
             label: "Anfangswert:",
             correspondingModelProperty: "initialValue",
-            inputType: "text",
+            inputType: "number",
         },
         {
             label: "Zeitpunktauswahl:",

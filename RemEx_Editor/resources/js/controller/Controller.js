@@ -204,7 +204,10 @@ function onNodeClicked(event) {
     movingVector = {
         x: undefined,
         y: undefined,
-    };
+    },
+    ongoingInstructionsForInputView = [],
+    firstNodeOfRow,
+    questionsForInputView = [];
 
     if (clickedNode !== previousFocusedNode) {
         this.currentSelection = [];
@@ -261,7 +264,16 @@ function onNodeClicked(event) {
 
         WhereAmIView.update(this.currentSelection);
 
-        InputView.show(clickedNode, inputData);
+        if (clickedNode.parentNode !== undefined) {
+            if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
+                ongoingInstructionsForInputView = getOngoingInstructionsForInputView(clickedNode, ongoingInstructionsForInputView);
+            }
+            if (clickedNode.parentNode.type === Config.QUESTION_TYPE_CHOICE) {
+                firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
+                questionsForInputView = getQuestionsForInputView(firstNodeOfRow, questionsForInputView);
+            }
+        }
+        InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView);
         InputView.selectFirstInput();
     }
 }
@@ -380,6 +392,44 @@ function moveChildNodesHorizontal(node, movingVectorX) {
         childNode.updatePosition(childNode.center.x + movingVectorX, childNode.center.y, true);
         moveChildNodesHorizontal(childNode, movingVectorX);
     }
+}
+
+function getOngoingInstructionsForInputView(node, ongoingInstructionsForInputView) {
+    let ongoingInstruction,
+    modelData,
+    experiment = Storage.load();
+
+    if (node.previousNode === undefined) {
+        return ongoingInstructionsForInputView;
+    }
+    modelData = ModelManager.getDataFromNodeId(node.previousNode.id, experiment);
+    if (modelData.type === Config.STEP_TYPE_INSTRUCTION 
+        && modelData.durationInMin !== null 
+        && modelData.durationInMin !== 0) {
+        ongoingInstruction = {
+            label: modelData.name,
+            value: modelData.id,
+        };
+        ongoingInstructionsForInputView.splice(0, 0, ongoingInstruction);
+    }
+    return getOngoingInstructionsForInputView(node.previousNode, ongoingInstructionsForInputView);
+}
+
+function getQuestionsForInputView(node, questionsForInputView) {
+    let question,
+    modelData,
+    experiment = Storage.load();
+
+    if (node === undefined) {
+        return questionsForInputView;
+    }
+    modelData = ModelManager.getDataFromNodeId(node.id, experiment);
+    question = {
+        label: modelData.name,
+        value: modelData.id,
+    };
+    questionsForInputView.push(question);
+    return getQuestionsForInputView(node.nextNode, questionsForInputView);
 }
 
 function onNodeStartDrag() {

@@ -15,7 +15,7 @@ class InputView extends Observable {
         this.correspondingNode = undefined;
     }
 
-    show(correspondingNode, correspondingModelObject) {
+    show(correspondingNode, correspondingModelObject, ongoingInstructions, questions) {
         let correspondingModelValues = {};
 
         this.correspondingNode = correspondingNode;
@@ -39,6 +39,20 @@ class InputView extends Observable {
                         else if (modelPropertyKey === "absoluteStartDaysOffset") {
                             createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey] + 1);
                             break;
+                        }
+                        else if (modelPropertyKey === "waitForStep") {
+                            if (ongoingInstructions.length !== 0) {
+                                createInputField(this, inputFieldData.label, inputFieldData.inputType,
+                                    ongoingInstructions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey]);
+                            }
+                        }
+                        else if (modelPropertyKey === "nextQuestionId") {
+                            if (correspondingNode.type === Config.TYPE_ANSWER) {
+                                if (questions.length !== 0) {
+                                    createInputField(this, inputFieldData.label, inputFieldData.inputType,
+                                        questions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey]);
+                                }
+                            }
                         }
                         else {
                             createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey]);
@@ -91,7 +105,9 @@ function createInputField(that, label, type, values, modelProperty, modelValue) 
             inputElement.setAttribute("name", modelProperty);
             inputElement.setAttribute("value", value.value);
             if (modelValue !== null) {
-                if (modelValue === value.value || modelValue.includes(value.value)) {
+                if (modelValue === value.value 
+                    || modelValue instanceof Array 
+                    && modelValue.includes(value.value)) {
                     inputElement.setAttribute("checked", "true");
                 }
             }
@@ -172,9 +188,15 @@ function onInputChanged(event) {
             }
         }
     }
+    else if (event.target.type === "number"
+            || correspondingModelProperty === "waitForStep"
+            || correspondingModelProperty === "nextQuestionId") {
+        properties[correspondingModelProperty] = event.target.value * 1;
+    }
     else {
         properties[correspondingModelProperty] = event.target.value;
     }
+    console.log(properties[correspondingModelProperty]);
 
     data = {
         correspondingNode: this.correspondingNode,
