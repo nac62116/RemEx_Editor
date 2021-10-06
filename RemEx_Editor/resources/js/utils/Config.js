@@ -162,11 +162,6 @@ const Config = {
             inputType: "time",
         },
         {
-            label: "Dauer (Minuten):",
-            correspondingModelProperty: "durationInMin",
-            inputType: "number",
-        },
-        {
             label: "Maximale Dauer der Befragung (Minuten):",
             correspondingModelProperty: "maxDurationInMin",
             inputType: "number",
@@ -175,6 +170,21 @@ const Config = {
             label: "Dauer der Benachrichtigung (Minuten):",
             correspondingModelProperty: "notificationDurationInMin",
             inputType: "number",
+        },
+        {
+            label: "Dauer (Minuten):",
+            correspondingModelProperty: "durationInMin",
+            inputType: "number",
+        },
+        {
+            label: "Wartetext:",
+            correspondingModelProperty: "waitingText",
+            inputType: "text",
+        },
+        {
+            label: "Auf Instruktion warten:",
+            correspondingModelProperty: "waitForStep",
+            inputType: "radio",
         },
         {
             label: "Atemfrequenz (Sekunden):",
@@ -197,16 +207,6 @@ const Config = {
                     value: "STATIC_CIRCLE",
                 },
             ],
-        },
-        {
-            label: "Auf Instruktion warten:",
-            correspondingModelProperty: "waitForStep",
-            inputType: "radio",
-        },
-        {
-            label: "Wartetext:",
-            correspondingModelProperty: "waitingText",
-            inputType: "text",
         },
         {
             label: "Nächste Frage:",

@@ -9,7 +9,7 @@ body {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .tree-container {
@@ -85,6 +85,16 @@ body {
     border-radius: 5px;
     background-color: darkgray;
     text-align: center;
+}
+
+.clear-input-button {
+    position: absolute;
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    padding-bottom: 15px;
+    right: 2%;
+    background-color: gray;
 }
 
 .radio-label {

@@ -1,5 +1,7 @@
 import Config from "../utils/Config.js";
 import Storage from "../utils/Storage.js";
+import IndexedDB from "../utils/IndexedDB.js";
+import EncodedResource from "../model/EncodedResource.js";
 import Experiment from "../model/Experiment.js";
 import ExperimentGroup from "../model/ExperimentGroup.js";
 import Survey from "../model/Survey.js";
@@ -16,11 +18,21 @@ import Answer from "../model/questionnaire/Answer.js";
 
 class ModelManager {
 
+    constructor() {
+        this.usedResourceFileNames = [];
+    }
+
+    removeExperiment() {
+        Storage.clear();
+        for (let fileName of this.usedResourceFileNames) {
+            IndexedDB.deleteResource(fileName);
+        }
+        this.usedResourceFileNames = [];
+    }
+
     initExperiment() {
         let experiment,
         properties = {};
-
-        Storage.clear(); // TODO: Remove this
 
         experiment = Storage.load();
         if (experiment === undefined) {
@@ -111,6 +123,11 @@ class ModelManager {
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
                 data[key] = properties[key];
+                if (key === "imageFileName" || key === "videoFileName") {
+                    if (!this.usedResourceFileNames.includes(properties[key])) {
+                        this.usedResourceFileNames.push(properties[key]);
+                    }
+                }
             }
         }
         Storage.save(experiment);
@@ -156,6 +173,51 @@ class ModelManager {
             }
         }
         return null;
+    }
+
+    addEncodedResource(fileName, base64String) {
+        let resource = IndexedDB.getResource(fileName),
+        encodedResource,
+        success;
+
+        return resource.then(function(result) {
+            if (result !== undefined && result.base64String !== base64String) {
+                success = false;
+            }
+            else if (result !== undefined && result.base64String === base64String) {
+                success = true;
+            }
+            else {
+                encodedResource = new EncodedResource(fileName, base64String);
+                IndexedDB.addResource(encodedResource);
+                success = true;
+            }
+            return success;
+        });
+    }
+
+    removeEncodedResource(fileName) {
+        let experiment = Storage.load();
+
+        for (let group of experiment.groups) {
+            for (let survey of group.surveys) {
+                for (let step of survey.steps) {
+                    if (step.type === Config.STEP_TYPE_INSTRUCTION) {
+                        if (step.imageFileName === fileName || step.videoFileName === fileName) {
+                            console.log("No removal due to ", step);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        IndexedDB.deleteResource(fileName);
+        console.log("Removal");
+        this.usedResourceFileNames.splice(this.usedResourceFileNames.indexOf(fileName), 1);
+    }
+
+    getEncodedResource(fileName) {
+        return IndexedDB.getResource(fileName);
     }
 }
 

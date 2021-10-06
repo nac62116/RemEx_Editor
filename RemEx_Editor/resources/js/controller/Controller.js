@@ -101,6 +101,10 @@ class Controller {
         this.currentSelection = [];
         treeViewContainer.appendChild(treeViewElement);
         TreeView.init(treeViewContainer);
+
+        // TODO: Remove this
+        ModelManager.removeExperiment();
+
         experiment = ModelManager.initExperiment();
         newNode = createNode(this, undefined, experiment, undefined, undefined);
         newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
@@ -214,7 +218,8 @@ function onNodeClicked(event) {
     },
     ongoingInstructionsForInputView = [],
     firstNodeOfRow,
-    questionsForInputView = [];
+    questionsForInputView = [],
+    promise;
 
     if (clickedNode !== previousFocusedNode) {
         this.currentSelection = [];
@@ -280,7 +285,30 @@ function onNodeClicked(event) {
                 questionsForInputView = getQuestionsForInputView(firstNodeOfRow, questionsForInputView);
             }
         }
-        InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView);
+        if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
+            if (inputData.imageFileName !== null) {
+                promise = ModelManager.getEncodedResource(inputData.imageFileName);
+            }
+            if (inputData.videoFileName !== null) {
+                promise = ModelManager.getEncodedResource(inputData.videoFileName);
+            }
+            if (promise !== undefined) {
+                promise.then(function(result) {
+                    if (typeof(result) === "string") {
+                        console.log(result);
+                    }
+                    else {
+                        InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView, result);
+                    }
+                });
+            }
+            else {
+                InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView, undefined);
+            }
+        }
+        else {
+            InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView, undefined);
+        }
         InputView.selectFirstInput();
     }
 }
@@ -468,13 +496,13 @@ function onAddNextNode(event) {
     firstNodeOfRow;
 
     if (event.data.stepType === undefined && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-        stepType = Config.STEP_TYPE_BREATHING_EXERCISE;
+        stepType = Config.STEP_TYPE_INSTRUCTION;
     }
     else {
         stepType = event.data.stepType;
     }
     if (event.data.questionType === undefined && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_CHOICE;
+        questionType = Config.QUESTION_TYPE_TEXT;
     }
     else {
         questionType = event.data.questionType;
@@ -519,7 +547,7 @@ function onAddPreviousNode(event) {
         stepType = event.data.stepType;
     }
     if (event.data.questionType === undefined && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_LIKERT;
+        questionType = Config.QUESTION_TYPE_TEXT;
     }
     else {
         questionType = event.data.questionType;
@@ -632,13 +660,13 @@ function onAddChildNode(event) {
 
     if (clickedNode.parentNode !== undefined) {
         if (event.data.stepType === undefined && clickedNode.type === Config.TYPE_SURVEY) {
-            stepType = Config.STEP_TYPE_QUESTIONNAIRE;
+            stepType = Config.STEP_TYPE_INSTRUCTION;
         }
         else {
             stepType = event.data.stepType;
         }
         if (event.data.questionType === undefined && clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-            questionType = Config.QUESTION_TYPE_POINT_OF_TIME;
+            questionType = Config.QUESTION_TYPE_TEXT;
         }
         else {
             questionType = event.data.questionType;
@@ -711,11 +739,21 @@ function updateNextSurveyIds(timeSortedChildNodes) {
 
 function onRemoveNode(event) {
     let nodeToRemove = event.data.correspondingNode,
+    experiment = Storage.load(),
+    inputData = ModelManager.getDataFromNodeId(nodeToRemove.id, experiment),
     firstNodeOfRow,
     timeSortedChildNodes,
     nextFocusedNode;
 
     ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id);
+    if (nodeToRemove.type === Config.STEP_TYPE_INSTRUCTION) {
+        if (inputData.imageFileName !== null) {
+            ModelManager.removeEncodedResource(inputData.imageFileName);
+        }
+        if (inputData.videoFileName !== null) {
+            ModelManager.removeEncodedResource(inputData.videoFileName);
+        }
+    }
     if (nodeToRemove.parentNode instanceof TimelineNode) {
         nodeToRemove.parentNode.shortenNodeTimeMap(nodeToRemove);
         timeSortedChildNodes = nodeToRemove.parentNode.getTimeSortedChildNodes();
@@ -769,7 +807,8 @@ function onInputChanged(event) {
     currentModelProperties = ModelManager.getDataFromNodeId(correspondingNode.id, experiment),
     newModelProperties = event.data.newModelProperties,
     timeInMin,
-    timeSortedChildNodes;
+    timeSortedChildNodes,
+    fileName;
 
     newModelProperties.id = correspondingNode.id;
     if (newModelProperties.name !== undefined) {
@@ -791,7 +830,33 @@ function onInputChanged(event) {
         correspondingNode.parentNode.updateTimelineLength();
     }
 
-    ModelManager.updateExperiment(newModelProperties);
+    if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
+        if (newModelProperties.imageFileName !== undefined) {
+            fileName = newModelProperties.imageFileName;
+        }
+        if (newModelProperties.videoFileName !== undefined){
+            fileName = newModelProperties.videoFileName;
+        }
+        if (fileName !== undefined && fileName !== null) {
+            if (!ModelManager.addEncodedResource(fileName, event.data.base64String)) {
+                // TODO: Alert, that another file with the same file name already exists
+                // InputView: Set file inputs values to null and display them
+            }
+            else {
+                ModelManager.updateExperiment(newModelProperties);
+            }
+        }
+        else {
+            ModelManager.updateExperiment(newModelProperties);
+        }
+        if (fileName === null) {
+            console.log(event.data.previousFileName);
+            ModelManager.removeEncodedResource(event.data.previousFileName);
+        }
+    }
+    else {
+        ModelManager.updateExperiment(newModelProperties);
+    }
 
     WhereAmIView.update(this.currentSelection);
 }
