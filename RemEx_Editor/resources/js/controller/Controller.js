@@ -14,18 +14,21 @@ import Storage from "../utils/Storage.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Finish Tree and InputView
+// -> Number input elements -> disable key control (up/down buttons)
+// -> Node dragging
 // -> InfoView
-// -> Up and download experiment.json
 // -> Input checks:
 // --- Defining max characters for several input fields
 // --- Input fields that allow only one type or type check after input
 // --- Format checks inside the views input fields (Delete the ones without usage in the model)
-// -> Copy paste option
+// -> Up and download experiment.json
 // -> Code cleaning
+// -> Node icons
+// -> Create .exe file for install
 // (-> Colors and style)
 
 // ENHANCEMENT: 
+// - Copy paste option
 // - Calculate the optimal duration for a survey depending on its
 // - Fullscreen Buttons
 // - Survey time randomization
@@ -128,6 +131,7 @@ function createNode(that, parentNode, data, stepType, questionType) {
     elements,
     description = data.name,
     node;
+
     if (parentNode === undefined) {
         elements = SvgFactory.createRootNodeElements();
         node = new RootNode(elements, id, Config.TYPE_EXPERIMENT, description);
@@ -287,10 +291,10 @@ function onNodeClicked(event) {
         }
         if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
             if (inputData.imageFileName !== null) {
-                promise = ModelManager.getEncodedResource(inputData.imageFileName);
+                promise = ModelManager.getResource(inputData.imageFileName);
             }
             if (inputData.videoFileName !== null) {
-                promise = ModelManager.getEncodedResource(inputData.videoFileName);
+                promise = ModelManager.getResource(inputData.videoFileName);
             }
             if (promise !== undefined) {
                 promise.then(function(result) {
@@ -743,17 +747,20 @@ function onRemoveNode(event) {
     inputData = ModelManager.getDataFromNodeId(nodeToRemove.id, experiment),
     firstNodeOfRow,
     timeSortedChildNodes,
-    nextFocusedNode;
+    nextFocusedNode,
+    childIds = [];
 
-    ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id);
+    getChildIds(nodeToRemove, childIds);
+    ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id, childIds);
     if (nodeToRemove.type === Config.STEP_TYPE_INSTRUCTION) {
-        if (inputData.imageFileName !== null) {
-            ModelManager.removeEncodedResource(inputData.imageFileName);
+        if (inputData.imageFileName !== null && inputData.imageFileName !== undefined) {
+            ModelManager.removeResource(inputData.imageFileName);
         }
-        if (inputData.videoFileName !== null) {
-            ModelManager.removeEncodedResource(inputData.videoFileName);
+        if (inputData.videoFileName !== null && inputData.videoFileName !== undefined) {
+            ModelManager.removeResource(inputData.videoFileName);
         }
     }
+    removeChildResources(nodeToRemove, experiment);
     if (nodeToRemove.parentNode instanceof TimelineNode) {
         nodeToRemove.parentNode.shortenNodeTimeMap(nodeToRemove);
         timeSortedChildNodes = nodeToRemove.parentNode.getTimeSortedChildNodes();
@@ -801,6 +808,36 @@ function onRemoveNode(event) {
     nextFocusedNode.click();
 }
 
+function getChildIds(node, childIds) {
+    if (node.childNodes.length === 0 || node.childNodes === undefined) {
+        return;
+    }
+    for (let childNode of node.childNodes) {
+        childIds.push(childNode.id);
+        getChildIds(childNode, childIds);
+    }
+}
+
+function removeChildResources(node, experiment) {
+    let inputData;
+
+    if (node.childNodes.length === 0 || node.childNodes === undefined) {
+        return;
+    }
+    for (let childNode of node.childNodes) {
+        inputData = ModelManager.getDataFromNodeId(childNode.id, experiment);
+        if (childNode.type === Config.STEP_TYPE_INSTRUCTION) {
+            if (inputData.imageFileName !== null && inputData.imageFileName !== undefined) {
+                ModelManager.removeResource(inputData.imageFileName);
+            }
+            if (inputData.videoFileName !== null && inputData.videoFileName !== undefined) {
+                ModelManager.removeResource(inputData.videoFileName);
+            }
+        }
+        removeChildResources(childNode, experiment);
+    }
+}
+
 function onInputChanged(event) {
     let correspondingNode = event.data.correspondingNode,
     experiment = Storage.load(),
@@ -838,7 +875,7 @@ function onInputChanged(event) {
             fileName = newModelProperties.videoFileName;
         }
         if (fileName !== undefined && fileName !== null) {
-            if (!ModelManager.addEncodedResource(fileName, event.data.base64String)) {
+            if (!ModelManager.addResource(fileName, event.data.base64String)) {
                 // TODO: Alert, that another file with the same file name already exists
                 // InputView: Set file inputs values to null and display them
             }
@@ -850,8 +887,7 @@ function onInputChanged(event) {
             ModelManager.updateExperiment(newModelProperties);
         }
         if (fileName === null) {
-            console.log(event.data.previousFileName);
-            ModelManager.removeEncodedResource(event.data.previousFileName);
+            ModelManager.removeResource(event.data.previousFileName);
         }
     }
     else {

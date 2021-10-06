@@ -78,36 +78,35 @@ class ModelManager {
         return newData;
     }
 
-    shortenExperiment(id, parentId) {
+    shortenExperiment(id, parentId, childIds) {
         let experiment = Storage.load(),
         data = this.getDataFromNodeId(id, experiment),
         parentData = this.getDataFromNodeId(parentId, experiment),
         index;
 
+        IdManager.removeId(id);
+        for (let childId of childIds) {
+            IdManager.removeId(childId);
+        }
         if (parentData.groups !== undefined) {
             index = parentData.groups.indexOf(data);
             parentData.groups.splice(index, 1);
-            IdManager.removeId(id);
         }
         else if (parentData.surveys !== undefined) {
             index = parentData.surveys.indexOf(data);
             parentData.surveys.splice(index, 1);
-            IdManager.removeId(id);
         }
         else if (parentData.steps !== undefined) {
             index = parentData.steps.indexOf(data);
             parentData.steps.splice(index, 1);
-            IdManager.removeId(id);
         }
         else if (parentData.questions !== undefined) {
             index = parentData.questions.indexOf(data);
             parentData.questions.splice(index, 1);
-            IdManager.removeId(id);
         }
         else if (parentData.answers !== undefined) {
             index = parentData.answers.indexOf(data);
             parentData.answers.splice(index, 1);
-            IdManager.removeId(id);
         }
         else {
             throw "The model data was not shorten properly.";
@@ -175,7 +174,7 @@ class ModelManager {
         return null;
     }
 
-    addEncodedResource(fileName, base64String) {
+    addResource(fileName, base64String) {
         let resource = IndexedDB.getResource(fileName),
         encodedResource,
         success;
@@ -196,7 +195,7 @@ class ModelManager {
         });
     }
 
-    removeEncodedResource(fileName) {
+    removeResource(fileName) {
         let experiment = Storage.load();
 
         for (let group of experiment.groups) {
@@ -216,7 +215,7 @@ class ModelManager {
         this.usedResourceFileNames.splice(this.usedResourceFileNames.indexOf(fileName), 1);
     }
 
-    getEncodedResource(fileName) {
+    getResource(fileName) {
         return IndexedDB.getResource(fileName);
     }
 }

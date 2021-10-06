@@ -121,7 +121,8 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     labelElement,
     imageElement,
     videoElement,
-    sourceElement;
+    sourceElement,
+    fileType;
 
     inputField = document.createElement("div");
     inputField.innerHTML = INPUT_FIELD_TEMPLATE_STRING;
@@ -167,17 +168,18 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         if (currentModelValue !== null) {
             if (modelProperty === "imageFileName") {
                 imageElement = document.createElement("img");
-                imageElement.setAttribute("width", "100");
-                imageElement.setAttribute("height", "auto");
+                imageElement.setAttribute("width", "auto");
+                imageElement.setAttribute("height", that.inputViewContainer.clientHeight);
                 imageElement.setAttribute("src", encodedResource.base64String);
             }
             else {
+                fileType = encodedResource.fileName.split(".")[1];
                 videoElement = document.createElement("video");
-                videoElement.setAttribute("width", "300");
-                videoElement.setAttribute("height", "auto");
+                videoElement.setAttribute("width", "auto");
+                videoElement.setAttribute("height", that.inputViewContainer.clientHeight);
                 videoElement.setAttribute("controls", "");
                 sourceElement = document.createElement("source");
-                sourceElement.setAttribute("type", "video/*");
+                sourceElement.setAttribute("type", "video/" + fileType);
                 sourceElement.setAttribute("src", encodedResource.base64String);
                 videoElement.appendChild(sourceElement);
             }
@@ -330,8 +332,8 @@ function onInputChanged(event) {
                     imageElement = this.inputFieldsContainer.querySelector("img");
                     if (imageElement === null) {
                         imageElement = document.createElement("img");
-                        imageElement.setAttribute("width", "100");
-                        imageElement.setAttribute("height", "auto");
+                        imageElement.setAttribute("width", "auto");
+                        imageElement.setAttribute("height", this.inputViewContainer.clientHeight);
                         imageElement.setAttribute("src", result);
                         event.target.parentElement.insertAdjacentElement("afterend", imageElement);
                     }
@@ -343,8 +345,8 @@ function onInputChanged(event) {
                     sourceElement = this.inputFieldsContainer.querySelector("source");
                     if (sourceElement === null) {
                         videoElement = document.createElement("video");
-                        videoElement.setAttribute("width", "300");
-                        videoElement.setAttribute("height", "auto");
+                        videoElement.setAttribute("width", "auto");
+                        videoElement.setAttribute("height", this.inputViewContainer.clientHeight);
                         videoElement.setAttribute("controls", "");
                         sourceElement = document.createElement("source");
                         sourceElement.setAttribute("type", event.target.files[0].type);
