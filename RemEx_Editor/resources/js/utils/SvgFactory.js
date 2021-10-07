@@ -17,7 +17,7 @@ class SvgFactory {
     createRootNodeElements(/* TODO: nodeIcon */) {
         let rootNodeElements = createMinimumNode(false);
         
-        rootNodeElements.addChildButton = createAddNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+        rootNodeElements.addChildButton = createAddOrMoveNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
 
         return rootNodeElements;
     }
@@ -27,24 +27,14 @@ class SvgFactory {
 
         standardNodeElements.inputPath = createNodeInputPath();
         if (hasAddNeighbourButtons) {
-            standardNodeElements.addNextButton = createAddNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
-            standardNodeElements.addPreviousButton = createAddNodeButton(Config.NODE_ADD_PREV_BUTTON_ID);
+            standardNodeElements.addNextButton = createAddOrMoveNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
+            standardNodeElements.addPreviousButton = createAddOrMoveNodeButton(Config.NODE_ADD_PREV_BUTTON_ID);
         }
         if (hasAddChildButton) {
-            standardNodeElements.addChildButton = createAddNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+            standardNodeElements.addChildButton = createAddOrMoveNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
         }
 
         return standardNodeElements;
-    }
-
-    createLeafNodeElements() {
-        let leafNodeElements = createMinimumNode(false);
-
-        leafNodeElements.inputPath = createNodeInputPath();
-        leafNodeElements.addNextButton = createAddNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
-        leafNodeElements.addPreviousButton = createAddNodeButton(Config.NODE_ADD_PREV_BUTTON_ID);
-
-        return leafNodeElements;
     }
 
     createTimelineNodeElements() {
@@ -63,6 +53,15 @@ class SvgFactory {
         deflateableNodeElements.nodeDescription.setAttribute("display", "none");
 
         return deflateableNodeElements;
+    }
+
+    createMoveableNodeElements(hasAddNeighbourButtons, hasAddChildButton) {
+        let moveableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton);
+
+        moveableNodeElements.moveRightButton = createAddOrMoveNodeButton(Config.NODE_MOVE_RIGHT_BUTTON_ID);
+        moveableNodeElements.moveLeftButton = createAddOrMoveNodeButton(Config.NODE_MOVE_LEFT_BUTTON_ID);
+
+        return moveableNodeElements;
     }
 
     createTimelineLabel(labelPosition, descriptionLines, isGreater) {
@@ -168,7 +167,7 @@ function createNodeInputPath() {
     return inputPath;
 }
 
-function createAddNodeButton(id) {
+function createAddOrMoveNodeButton(id /*TODO: Icon*/) {
     let addButton = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     addButton.setAttribute("id", id);
     addButton.setAttribute("r", Config.NODE_ADD_BUTTON_RADIUS);

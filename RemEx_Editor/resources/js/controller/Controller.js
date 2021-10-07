@@ -9,22 +9,22 @@ import TimelineNode from "../views/nodeView/TimelineNode.js";
 import DeflateableNode from "../views/nodeView/DeflateableNode.js";
 import StandardNode from "../views/nodeView/StandardNode.js";
 import Storage from "../utils/Storage.js";
+import MoveableNode from "../views/nodeView/MoveableNode.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
 
 // TODO:
 // -> Number input elements -> disable key control (up/down buttons)
-// -> Node dragging
-// -> InfoView
 // -> Input checks:
 // --- Defining max characters for several input fields
 // --- Input fields that allow only one type or type check after input
 // --- Format checks inside the views input fields (Delete the ones without usage in the model)
 // -> Up and download experiment.json
-// -> Code cleaning
 // -> Node icons
+// -> Code cleaning
 // -> Create .exe file for install
+// -> InfoView
 // (-> Colors and style)
 
 // ENHANCEMENT: 
@@ -57,18 +57,6 @@ class Controller {
                 callback: onNodeClicked.bind(this),
             },
             {
-                eventType: Config.EVENT_NODE_START_DRAG,
-                callback: onNodeStartDrag.bind(this),
-            },
-            {
-                eventType: Config.EVENT_NODE_ON_DRAG,
-                callback: onNodeDrag.bind(this),
-            },
-            {
-                eventType: Config.EVENT_NODE_ON_DROP,
-                callback: onNodeDrop.bind(this),
-            },
-            {
                 eventType: Config.EVENT_ADD_NEXT_NODE,
                 callback: onAddNextNode.bind(this),
             },
@@ -79,6 +67,14 @@ class Controller {
             {
                 eventType: Config.EVENT_ADD_CHILD_NODE,
                 callback: onAddChildNode.bind(this),
+            },
+            {
+                eventType: Config.EVENT_MOVE_NODE_RIGHT,
+                callback: onMoveNodeRight.bind(this),
+            },
+            {
+                eventType: Config.EVENT_MOVE_NODE_LEFT,
+                callback: onMoveNodeLeft.bind(this),
             },
         ];
         this.inputViewEventListener = [
@@ -146,12 +142,12 @@ function createNode(that, parentNode, data, stepType, questionType) {
     }
     else if (parentNode.type === Config.TYPE_SURVEY) {
         if (stepType === Config.STEP_TYPE_INSTRUCTION || stepType === Config.STEP_TYPE_BREATHING_EXERCISE) {
-            elements = SvgFactory.createStandardNodeElements(true, false);
-            node = new StandardNode(elements, id, stepType, description, parentNode);
+            elements = SvgFactory.createMoveableNodeElements(true, false);
+            node = new MoveableNode(elements, id, stepType, description, parentNode);
         }
         else if (stepType === Config.STEP_TYPE_QUESTIONNAIRE) {
-            elements = SvgFactory.createStandardNodeElements(true, true);
-            node = new StandardNode(elements, id, Config.STEP_TYPE_QUESTIONNAIRE, description, parentNode);
+            elements = SvgFactory.createMoveableNodeElements(true, true);
+            node = new MoveableNode(elements, id, Config.STEP_TYPE_QUESTIONNAIRE, description, parentNode);
         }
         else {
             throw "The step type " + stepType + " is not defined.";
@@ -159,12 +155,12 @@ function createNode(that, parentNode, data, stepType, questionType) {
     }
     else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         if (questionType === Config.QUESTION_TYPE_CHOICE) {
-            elements = SvgFactory.createStandardNodeElements(true, true);
-            node = new StandardNode(elements, id, Config.QUESTION_TYPE_CHOICE, description, parentNode);
+            elements = SvgFactory.createMoveableNodeElements(true, true);
+            node = new MoveableNode(elements, id, Config.QUESTION_TYPE_CHOICE, description, parentNode);
         }
         else if (questionType !== Config.QUESTION_TYPE_CHOICE && questionType !== undefined) {
-            elements = SvgFactory.createStandardNodeElements(true, false);
-            node = new StandardNode(elements, id, questionType, description, parentNode);
+            elements = SvgFactory.createMoveableNodeElements(true, false);
+            node = new MoveableNode(elements, id, questionType, description, parentNode);
         }
         else {
             throw "The question type " + questionType + " is not defined.";
@@ -195,18 +191,13 @@ function onNodeMouseEnter(event) {
     let hoveredNode = event.data.target;
 
     hoveredNode.emphasize(this.currentSelection);
-    /* inputData = ModelManager.getDataFromNodeId(hoveredNode, experiment);
-    // InputViewManager.showInputView(hoveredNode, inputData, false);
-    // InfoView -> show Info */
+    // InfoView
 }
 
 function onNodeMouseLeave(event) {
     let hoveredNode = event.data.target;
 
     hoveredNode.deemphasize(this.currentSelection);
-    // InputView.show(inputData, hoveredNode)
-    // -> inputData for input fields
-    // -> hoveredNode for type, which should be placed right under the header
     // InfoView
 }
 
@@ -471,22 +462,6 @@ function getQuestionsForInputView(node, questionsForInputView) {
     return getQuestionsForInputView(node.nextNode, questionsForInputView);
 }
 
-function onNodeStartDrag() {
-    // TreeView -> Make all other items unfocusable
-    // TreeView -> Bring this node to front
-}
-
-function onNodeDrag() {
-    // TreeView -> create empty spaces inside the current row
-}
-
-function onNodeDrop() {
-    // TODO: update nextSurveyIds, nextQuestionIds from normal nodes
-    // TreeView -> check for valid dropzone -> if valid (updatePosition(x, y, true))
-    // -> if not valid (returnToLastStaticPosition)
-    // -> Make all other items focusable
-}
-
 function onAddNextNode(event) {
     let clickedNode = event.data.target,
     inputData,
@@ -683,6 +658,95 @@ function onAddChildNode(event) {
     newNode.updatePosition(position.x, position.y, true);
     clickedNode.hideAddChildButton();
     newNode.click();
+}
+
+function onMoveNodeLeft(event) {
+    let correspondingNode = event.data.target,
+    tempPrevPrevNode,
+    tempPrevNode,
+    tempCorrNode,
+    tempNextNode,
+    tempPosition = {},
+    firstNodeOfRow,
+    movingVectorX = Config.NODE_DISTANCE_HORIZONTAL * -1;
+
+    tempPosition.x = correspondingNode.center.x;
+    tempPosition.y = correspondingNode.center.y;
+    correspondingNode.updatePosition(correspondingNode.previousNode.center.x, correspondingNode.previousNode.center.y, true);
+    correspondingNode.previousNode.updatePosition(tempPosition.x, tempPosition.y, true);
+
+    tempPrevPrevNode = correspondingNode.previousNode.previousNode;
+    tempPrevNode = correspondingNode.previousNode;
+    tempCorrNode = correspondingNode;
+    tempNextNode = correspondingNode.nextNode;
+
+    if (tempPrevPrevNode !== undefined) {
+        tempPrevPrevNode.nextNode = tempCorrNode;
+    }
+    tempCorrNode.previousNode = tempPrevPrevNode;
+    tempCorrNode.nextNode = tempPrevNode;
+    tempPrevNode.previousNode = tempCorrNode;
+    tempPrevNode.nextNode = tempNextNode;
+    if (tempNextNode !== undefined) {
+        tempNextNode.previousNode = tempPrevNode;
+    }
+
+    firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
+    if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
+        updateStepLinks(firstNodeOfRow);
+    }
+    if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        updateQuestionLinks(firstNodeOfRow);
+    }
+    correspondingNode.nextNode.click();
+    correspondingNode.click();
+    if (correspondingNode.childNodes.length !== 0 && correspondingNode.childNodes !== undefined) {
+        moveTreeHorizontal(correspondingNode.childNodes[0], movingVectorX, Config.MOVING_MODE_ROW);
+    }
+}
+
+function onMoveNodeRight(event) {
+    let correspondingNode = event.data.target,
+    tempPrevNode,
+    tempCorrNode,
+    tempNextNode,
+    tempNextNextNode,
+    tempPosition = {},
+    firstNodeOfRow,
+    movingVectorX = Config.NODE_DISTANCE_HORIZONTAL;
+
+    tempPosition.x = correspondingNode.center.x;
+    tempPosition.y = correspondingNode.center.y;
+    correspondingNode.updatePosition(correspondingNode.nextNode.center.x, correspondingNode.nextNode.center.y, true);
+    correspondingNode.nextNode.updatePosition(tempPosition.x, tempPosition.y, true);
+
+    tempPrevNode = correspondingNode.previousNode;
+    tempCorrNode = correspondingNode;
+    tempNextNode = correspondingNode.nextNode;
+    tempNextNextNode = correspondingNode.nextNode.nextNode;
+    if (tempPrevNode !== undefined) {
+        tempPrevNode.nextNode = tempNextNode;
+    }
+    tempNextNode.previousNode = tempPrevNode;
+    tempNextNode.nextNode = tempCorrNode;
+    tempCorrNode.previousNode = tempNextNode;
+    tempCorrNode.nextNode = tempNextNextNode;
+    if (tempNextNextNode !== undefined) {
+        tempNextNextNode.previousNode = tempCorrNode;
+    }
+
+    firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
+    if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
+        updateStepLinks(firstNodeOfRow);
+    }
+    if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        updateQuestionLinks(firstNodeOfRow);
+    }
+    correspondingNode.previousNode.click();
+    correspondingNode.click();
+    if (correspondingNode.childNodes.length !== 0 && correspondingNode.childNodes !== undefined) {
+        moveTreeHorizontal(correspondingNode.childNodes[0], movingVectorX, Config.MOVING_MODE_ROW);
+    }
 }
 
 // TimelineView event callbacks

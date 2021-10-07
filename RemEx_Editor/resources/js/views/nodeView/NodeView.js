@@ -2,8 +2,6 @@ import Config from "../../utils/Config.js";
 import {Observable, Event as ControllerEvent} from "../../utils/Observable.js";
 import SvgFactory from "../../utils/SvgFactory.js";
 
-const UNDRAGGABLE_TYPES = [Config.TYPE_EXPERIMENT, Config.TYPE_EXPERIMENT_GROUP];
-
 class NodeView extends Observable {
 
     // TODO: Insert icon via constructor
@@ -43,19 +41,12 @@ class NodeView extends Observable {
         };
         this.isEmphasized = false;
         this.isFocused = false;
-        this.isFocusable = true;
-        this.isDraging = false;
         this.nodeElements.nodeBody.addEventListener("click", onClick.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseleave", onMouseLeave.bind(this));
-        this.nodeElements.nodeBody.addEventListener("mousedown", onStartDrag.bind(this));
-        this.nodeElements.nodeBody.addEventListener("mouseup", onDrop.bind(this));
         this.nodeElements.nodeDescription.addEventListener("click", onClick.bind(this));
         this.nodeElements.nodeDescription.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeElements.nodeDescription.addEventListener("mouseleave", onMouseLeave.bind(this));
-        this.nodeElements.nodeDescription.addEventListener("mousedown", onStartDrag.bind(this));
-        this.nodeElements.nodeDescription.addEventListener("mouseup", onDrop.bind(this));
-        document.addEventListener("mousemove", onDrag.bind(this));
         this.updateDescription(description);
     }
 
@@ -77,6 +68,7 @@ class NodeView extends Observable {
         if (!this.isFocused) {
             this.isFocused = true;
             this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR_FOCUSED);
+            this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_FOCUSED);
         }
     }
 
@@ -84,12 +76,18 @@ class NodeView extends Observable {
         if (this.isFocused) {
             this.isFocused = false;
             this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
+            this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
         }
     }
 
     emphasize() {
         this.isEmphasized = true;
-        this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_EMPHASIZED);
+        if (this.isFocused) {
+            this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_FOCUSED);
+        }
+        else {
+            this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_EMPHASIZED);
+        }
         this.nodeElements.nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_EMPHASIZED);
         this.nodeElements.nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZED);
     }
@@ -243,53 +241,6 @@ function onClick() {
         target: this,
     };
     controllerEvent = new ControllerEvent(Config.EVENT_NODE_CLICKED, data);
-    this.notifyAll(controllerEvent);
-}
-
-function onStartDrag(event) {
-    let controllerEvent, data;
-
-    if (!UNDRAGGABLE_TYPES.includes(this.type)) {
-        this.centerOffsetVector.x = this.center.x - event.clientX;
-        this.centerOffsetVector.y = this.center.y - event.clientY;
-        this.isDraging = true;
-        data = {
-            target: this,
-        };
-        controllerEvent = new ControllerEvent(Config.EVENT_NODE_START_DRAG, data);
-        this.notifyAll(controllerEvent);
-    }
-    else {
-        // This node type is not draggable at all
-    }
-}
-
-function onDrag(event) {
-    let x, y, controllerEvent, data;
-
-    if (this.isDraggable) {
-        x = event.clientX + this.centerOffsetVector.x;
-        y = event.clientY + this.centerOffsetVector.y;
-        this.updatePosition(x, y, false);
-        data = {
-            target: this,
-        };
-        controllerEvent = new ControllerEvent(Config.EVENT_NODE_ON_DRAG, data);
-        this.notifyAll(controllerEvent);
-    }
-    else {
-        // This node is currently not draggable
-    }
-}
-
-function onDrop() {
-    let controllerEvent, data;
-
-    this.isDraggable = false;
-    data = {
-        target: this,
-    };
-    controllerEvent = new ControllerEvent(Config.EVENT_NODE_ON_DROP, data);
     this.notifyAll(controllerEvent);
 }
 

@@ -60,6 +60,7 @@ class TreeView {
         }
         removeChildNodes(node);
     }
+
 }
 
 function removeChildNodes(node) {

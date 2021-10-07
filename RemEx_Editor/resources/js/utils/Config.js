@@ -32,9 +32,8 @@ const Config = {
     EVENT_NODE_CLICKED: "nodeclicked",
     EVENT_NODE_MOUSE_ENTER: "nodeMouseEnter",
     EVENT_NODE_MOUSE_LEAVE: "nodeMouseLeave",
-    EVENT_NODE_START_DRAG: "nodeStartDrag",
-    EVENT_NODE_ON_DRAG: "nodeOnDrag",
-    EVENT_NODE_ON_DROP: "nodeOnDrop",
+    EVENT_MOVE_NODE_LEFT: "moveNodeLeft",
+    EVENT_MOVE_NODE_RIGHT: "moveNodeRight",
     EVENT_ADD_NEXT_NODE: "addNextNode",
     EVENT_ADD_PREV_NODE: "addPrevNode",
     EVENT_ADD_CHILD_NODE: "addChildNode",
@@ -396,15 +395,20 @@ const Config = {
     NODE_BODY_HEIGHT_DEFLATED: "15",
     NODE_BODY_BORDER_RADIUS: "10",
     NODE_BODY_FILL_COLOR: "black",
-    NODE_BODY_FILL_COLOR_FOCUSED: "rgb(10, 50, 10)",
+    NODE_BODY_FILL_COLOR_FOCUSED: "rgb(30, 50, 30)",
     NODE_BODY_FILL_OPACITY_DEEMPHASIZED: "0.1",
     NODE_BODY_FILL_OPACITY_EMPHASIZED: "0.5",
+    NODE_BODY_FILL_OPACITY_FOCUSED: "1",
     NODE_BODY_STROKE_WIDTH: "2",
     NODE_BODY_STROKE_COLOR: "black",
     NODE_BODY_STROKE_OPACITY_DEEMPHASIZED: "0.3",
     NODE_BODY_STROKE_OPACITY_EMPHASIZED: "1",
 
-    // NodeView add buttons
+    // NodeView add and move buttons
+    NODE_MOVE_RIGHT_BUTTON_ID: "moveNodeRightButton",
+    NODE_MOVE_LEFT_BUTTON_ID: "moveNodeLeftButton",
+    NODE_MOVE_BUTTON_CENTER_OFFSET_X: 70,
+    NODE_MOVE_BUTTON_CENTER_OFFSET_Y: 30,
     NODE_ADD_PREV_BUTTON_ID: "addPrevNodeButton",
     NODE_ADD_NEXT_BUTTON_ID: "addNextNodeButton",
     NODE_ADD_CHILD_BUTTON_ID: "addChildNodeButton",
@@ -454,7 +458,7 @@ const Config = {
     
     // WhereAmIView
     
-    WHERE_AM_I_VIEW_ROOT_POINT_Y: 40,
+    WHERE_AM_I_VIEW_ROOT_POINT_Y: 37.5,
     WHERE_AM_I_VIEW_ID: "whereAmIView",
     WHERE_AM_I_VIEW_WIDTH: "100%",
     WHERE_AM_I_VIEW_HEIGHT: "100%",
