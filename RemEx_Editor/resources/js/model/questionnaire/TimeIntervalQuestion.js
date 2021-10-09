@@ -4,8 +4,8 @@ import Question from "./Question.js";
 class TimeIntervalQuestion extends Question {
 
     constructor() {
-        super(Config.QUESTION_TYPE_TIME_INTERVAL);
-        this.timeIntervalTypes = [];
+        super(Config.QUESTION_TYPE_TIME_INTERVAL, "Neue Zeitraumfrage");
+        this.timeIntervalTypes = [Config.TIME_INTERVAL_TYPE_DAYS];
     }
 }
 

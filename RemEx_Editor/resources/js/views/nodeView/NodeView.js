@@ -41,6 +41,7 @@ class NodeView extends Observable {
         };
         this.isEmphasized = false;
         this.isFocused = false;
+        this.isClickable = true;
         this.nodeElements.nodeBody.addEventListener("click", onClick.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseleave", onMouseLeave.bind(this));
@@ -146,6 +147,10 @@ class NodeView extends Observable {
         this.description = description;
         insertDescriptionWithLineBreaks(this, description);
     }
+
+    setIsClickable(isClickable) {
+        this.isClickable = isClickable;
+    }
 }
 
 function insertDescriptionWithLineBreaks(that, description) {
@@ -217,31 +222,37 @@ function insertDescriptionWithLineBreaks(that, description) {
 function onMouseEnter() {
     let data, controllerEvent;
     
-    data = {
-        target: this,
-    };
-    controllerEvent = new ControllerEvent(Config.EVENT_NODE_MOUSE_ENTER, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new ControllerEvent(Config.EVENT_NODE_MOUSE_ENTER, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onMouseLeave() {
     let data, controllerEvent;
     
-    data = {
-        target: this,
-    };
-    controllerEvent = new ControllerEvent(Config.EVENT_NODE_MOUSE_LEAVE, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new ControllerEvent(Config.EVENT_NODE_MOUSE_LEAVE, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onClick() {
     let data, controllerEvent;
 
-    data = {
-        target: this,
-    };
-    controllerEvent = new ControllerEvent(Config.EVENT_NODE_CLICKED, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new ControllerEvent(Config.EVENT_NODE_CLICKED, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 export default NodeView;

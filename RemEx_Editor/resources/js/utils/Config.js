@@ -50,6 +50,7 @@ const Config = {
     NODE_TEMPLATE_ID: "nodeTemplate",
     INPUT_VIEW_CONTAINER_ID: "inputContainer",
     INPUT_VIEW_FIELDS_CONTAINER_ID: "inputFieldsContainer",
+    INPUT_VIEW_ALERT_ID: "inputAlert",
     INPUT_VIEW_HEADER_ID: "inputHeader",
     INPUT_VIEW_DELETE_BUTTON_ID: "inputDeleteButton",
     INPUT_VIEW_SAVE_BUTTON_ID: "inputSaveButton",
@@ -495,9 +496,15 @@ const Config = {
     ABSOLUTE_SURVEY_TIME_INVALID: "Deine eingestellte Absolute Erinnerungszeit entspricht nicht der richtigen Formatierung. Bitte gebe für den Minutenwert eine Zahl zwischen 0 und 59, für den Stundenwert eine Zahl zwischen 0 und 24 und für den Tagewert eine Zahl größer oder gleich 0 ein.",
     SURVEY_NOTIFICATION_DURATION_INVALID: "Du hast noch keine Erinnerungsdauer angegeben. Bitte wähle eine Dauer die größer als 0 ist.",
     SURVEY_NAME_NOT_UNIQUE: "Der gewählte Name deiner Befragung existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
-    SURVEY_OVERLAPS: "Die gewählte Startzeit und Dauer der Befragung überlappt mit dem Zeitfenster einer anderen Befragungen. Das Zeitfenster einer Befragung berechnet sich aus der Erinnerungsdauer und der Befragungsdauer. In diesem Zeitfenster sollten keine weiteren Befragungen geplant werden.",
+    SURVEY_OVERLAPS: "Die gewählte Startzeit und Dauer der Befragung überlappt mit dem Zeitfenster einer anderen Befragungen. Das Zeitfenster einer Befragung berechnet sich aus der Benachrichtigungsdauer und der Befragungsdauer. In diesem Zeitfenster sollten keine weiteren Befragungen geplant werden.",
     QUESTION_NAME_NOT_UNIQUE: "Der gewählte Name deiner Frage existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
     ANSWER_CODE_NOT_UNIQUE: "Der gewählte Code deiner Antwort existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
+    INPUT_TOO_LONG: "Die Eingabe überschreitet die maximal zulassige Länge. Bitte kürze deine Eingabe.",
+    INPUT_TOO_LONG_WITH_RESOURCE: "Die Eingabe überschreitet die maximal zulassige Länge für Instruktionen mit Bildern oder Videos. Bitte kürze deine Eingabe.",
+    BREATHING_EXERCISE_DURATION_TOO_LONG: "Die längste Atemübung die in dieser Anwendung unterstützt wird dauert 60 Minuten. Bitte reduziere die Dauer der Atemübung.",
+    LIKERT_SCALE_INITIAL_VALUE_NOT_IN_RANGE: "Der Anfangswert liegt nicht im Bereich der Skala. Bitte wähle einen Anfangswert der kleiner oder gleich der Skalenlänge ist.",
+    POINT_OF_TIME_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitpunkttyp muss gewählt werden.",
+    TIME_INTERVAL_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitraumtyp muss gewählt werden.",
     
     // Model related:
     
@@ -550,6 +557,15 @@ const Config = {
     TIME_INTERVAL_TYPE_HOURS: "HOURS",
     TIME_INTERVAL_TYPE_MINUTES: "MINUTES",
     TIME_INTERVAL_TYPE_SECONDS: "SECONDS",
+
+    // Input validation
+
+    INSTRUCTION_HEADER_MAX_LENGTH: 50,
+    INSTRUCTION_TEXT_WITH_RESOURCE_MAX_LENGTH: 350,
+    INSTRUCTION_TEXT_MAX_LENGTH: 500,
+    INSTRUCTION_WAITING_TEXT_MAX_LENGTH: 500,
+    BREATHING_EXERCISE_MAX_DURATION: 60,
+    LIKERT_QUESTION_SCALE_LABEL_TEXT_MAX_LENGTH: 30,
 };
 
 Object.freeze(Config);

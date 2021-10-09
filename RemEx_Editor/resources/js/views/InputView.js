@@ -12,6 +12,7 @@ class InputView extends Observable {
         this.header = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_HEADER_ID);
         this.deleteButton = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_DELETE_BUTTON_ID);
         this.deleteButton.addEventListener("click", onRemoveNodeButtonClicked.bind(this));
+        this.alertElement = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_ALERT_ID);
         this.correspondingNode = undefined;
         this.currentFileName = undefined;
     }
@@ -29,10 +30,10 @@ class InputView extends Observable {
 
         if (correspondingNode.parentNode !== undefined) {
             if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
-                createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, correspondingNode.type, encodedResource);
+                createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, correspondingNode.type, encodedResource, false);
             }
             if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                createInputField(this, Config.INPUT_FIELD_QUESTION_TYPE_DATA.label, Config.INPUT_FIELD_QUESTION_TYPE_DATA.inputType, Config.INPUT_FIELD_QUESTION_TYPE_DATA.values, Config.TYPE_QUESTION, correspondingNode.type, encodedResource);
+                createInputField(this, Config.INPUT_FIELD_QUESTION_TYPE_DATA.label, Config.INPUT_FIELD_QUESTION_TYPE_DATA.inputType, Config.INPUT_FIELD_QUESTION_TYPE_DATA.values, Config.TYPE_QUESTION, correspondingNode.type, encodedResource, false);
             }
         }
         
@@ -43,29 +44,29 @@ class InputView extends Observable {
                         if (modelPropertyKey === "absoluteStartAtHour") {
                             correspondingModelValues[modelPropertyKey] = correspondingModelObject[modelPropertyKey];
                             correspondingModelValues.absoluteStartAtMinute = correspondingModelObject.absoluteStartAtMinute;
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelValues, encodedResource);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelValues, encodedResource, false);
                             break;
                         }
                         else if (modelPropertyKey === "absoluteStartDaysOffset") {
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey] + 1, encodedResource);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey] + 1, encodedResource, false);
                             break;
                         }
                         else if (modelPropertyKey === "waitForStep") {
                             if (ongoingInstructions.length !== 0) {
                                 createInputField(this, inputFieldData.label, inputFieldData.inputType,
-                                    ongoingInstructions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource);
+                                    ongoingInstructions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, true);
                             }
                         }
                         else if (modelPropertyKey === "nextQuestionId") {
                             if (correspondingNode.type === Config.TYPE_ANSWER) {
                                 if (questions.length !== 0) {
                                     createInputField(this, inputFieldData.label, inputFieldData.inputType,
-                                        questions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource);
+                                        questions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, false);
                                 }
                             }
                         }
                         else {
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], false);
                             break;
                         }
                     }
@@ -102,6 +103,16 @@ class InputView extends Observable {
         this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
+    showAlert(alert) {
+        this.alertElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        this.alertElement.innerHTML = alert;
+    }
+
+    hideAlert() {
+        this.alertElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        this.alertElement.innerHTML = "";
+    }
+
     selectFirstInput() {
         let inputFields = this.inputFieldsContainer.querySelectorAll("input");
 
@@ -112,9 +123,49 @@ class InputView extends Observable {
             }
         }
     }
+
+    disableInputsExcept(modelProperty) {
+        let inputElements = this.inputFieldsContainer.querySelectorAll("input:not([name=" + modelProperty + "]"),
+        imageElement = this.inputFieldsContainer.querySelector("img"),
+        videoElement = this.inputFieldsContainer.querySelector("video");
+
+        if (this.inputFieldsContainer.firstElementChild.firstElementChild.innerHTML === "Typ:") {
+            this.inputFieldsContainer.firstElementChild.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        for (let inputElement of inputElements) {
+            inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        if (imageElement !== null) {
+            imageElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        if (videoElement !== null) {
+            videoElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+    }
+
+    enableInputs() {
+        let inputElements = this.inputFieldsContainer.querySelectorAll("input"),
+        imageElement = this.inputFieldsContainer.querySelector("img"),
+        videoElement = this.inputFieldsContainer.querySelector("video");
+
+        this.inputFieldsContainer.firstElementChild.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        for (let inputElement of inputElements) {
+            inputElement.parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        if (!(this.correspondingNode instanceof RootNode)) {
+            this.deleteButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        if (imageElement !== null) {
+            imageElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        if (videoElement !== null) {
+            videoElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+    }
 }
 
-function createInputField(that, label, type, values, modelProperty, currentModelValue, encodedResource) {
+function createInputField(that, label, type, values, modelProperty, currentModelValue, encodedResource, addNoSelection) {
     let inputField,
     inputElement,
     clearInputButton,
@@ -130,6 +181,25 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     inputField.firstElementChild.innerHTML = label;
 
     if (type === "radio" || type === "checkbox") {
+        if (addNoSelection) {
+            labelElement = document.createElement("label");
+            labelElement.innerHTML = "Keine Auswahl";
+            labelElement.classList.add("radio-label");
+            inputElement = document.createElement("input");
+            inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+            inputElement.setAttribute("type", type);
+            inputElement.setAttribute("name", modelProperty);
+            inputElement.setAttribute("value", 0);
+            if (currentModelValue !== null) {
+                if (currentModelValue === 0) {
+                    inputElement.setAttribute("checked", "true");
+                }
+            }
+            inputElement.addEventListener("click", onInputChanged.bind(that));
+            
+            labelElement.insertAdjacentElement("afterbegin", inputElement);
+            inputField.appendChild(labelElement);
+        }
         for (let value of values) {
             labelElement = document.createElement("label");
             labelElement.innerHTML = value.label;
@@ -192,6 +262,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
+        inputElement.setAttribute("required", "required");
         if (currentModelValue.absoluteStartAtHour < 10) { // eslint-disable-line no-magic-numbers
             currentModelValue.absoluteStartAtHour = "0" + currentModelValue.absoluteStartAtHour;
         }
@@ -200,6 +271,24 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         }
         inputElement.value = currentModelValue.absoluteStartAtHour + ":" + currentModelValue.absoluteStartAtMinute;
         inputElement.addEventListener("keyup", onInputChanged.bind(that));
+        inputField.appendChild(inputElement);
+    }
+    else if (type === "number") {
+        inputElement = document.createElement("input");
+        inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+        inputElement.setAttribute("type", type);
+        inputElement.setAttribute("name", modelProperty);
+        inputElement.value = currentModelValue;
+        
+        inputElement.addEventListener("keyup", onInputChanged.bind(that));
+        inputElement.addEventListener("wheel", function (event) {
+            event.preventDefault();
+        });
+        inputElement.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                event.preventDefault();
+            }
+        });
         inputField.appendChild(inputElement);
     }
     else {
@@ -212,6 +301,9 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         inputField.appendChild(inputElement);
     }
 
+    inputField.firstElementChild.addEventListener("click", function(event) {
+        event.preventDefault();
+    });
     that.inputFieldsContainer.appendChild(inputField);
     if (imageElement !== undefined) {
         that.inputFieldsContainer.appendChild(imageElement);
@@ -240,135 +332,163 @@ function onInputChanged(event) {
     videoElement,
     sourceElement;
 
-    if (correspondingModelProperty === "absoluteStartAtHour") {
-        if (event.target.value !== "") {
+    if (event.target.value !== "") {
+        if (event.target.type === "text") {
+            event.target.value = escapeHtml(event.target.value);
+        }
+    
+        if (correspondingModelProperty === "absoluteStartAtHour") {
             properties.absoluteStartAtHour = event.target.value.substr(0, 2) * 1; // eslint-disable-line no-magic-numbers
             properties.absoluteStartAtMinute = event.target.value.substr(3, 2) * 1; // eslint-disable-line no-magic-numbers
         }
-        else {
-            return;
-        }
-    }
-    else if (correspondingModelProperty === "absoluteStartDaysOffset") {
-        if (event.target.value !== "") {
-            properties.absoluteStartDaysOffset = event.target.value - 1;
-        }
-        else {
-            return;
-        }
-    }
-    else if (correspondingModelProperty === "imageFileName") {
-        inputElements = this.inputFieldsContainer.querySelectorAll("input");
-        for (let inputElement of inputElements) {
-            if (inputElement.name === "videoFileName") {
-                inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                break;
+        else if (correspondingModelProperty === "absoluteStartDaysOffset") {
+            if (event.target.value !== "") {
+                event.target.value = escapeNegativeValues(event.target.value);
+                event.target.value = escapeZeroValues(event.target.value);
+                properties.absoluteStartDaysOffset = event.target.value - 1;
+            }
+            else {
+                return;
             }
         }
-        properties.imageFileName = event.target.files[0].name;
-        this.currentFileName = event.target.files[0].name;
-        data.base64String = getBase64String(event.target.files[0]);
-    }
-    else if (correspondingModelProperty === "videoFileName") {
-        inputElements = this.inputFieldsContainer.querySelectorAll("input");
-        for (let inputElement of inputElements) {
-            if (inputElement.name === "imageFileName") {
-                inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                break;
+        else if (correspondingModelProperty === "imageFileName") {
+            inputElements = this.inputFieldsContainer.querySelectorAll("input");
+            for (let inputElement of inputElements) {
+                if (inputElement.name === "videoFileName") {
+                    inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    break;
+                }
+            }
+            properties.imageFileName = event.target.files[0].name;
+            this.currentFileName = event.target.files[0].name;
+            data.base64String = getBase64String(event.target.files[0]);
+        }
+        else if (correspondingModelProperty === "videoFileName") {
+            inputElements = this.inputFieldsContainer.querySelectorAll("input");
+            for (let inputElement of inputElements) {
+                if (inputElement.name === "imageFileName") {
+                    inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    break;
+                }
+            }
+            properties.videoFileName = event.target.files[0].name;
+            this.currentFileName = event.target.files[0].name;
+            data.base64String = getBase64String(event.target.files[0]);
+        }
+        else if (correspondingModelProperty === Config.TYPE_STEP) {
+            stepType = event.target.value;
+        }
+        else if (correspondingModelProperty === Config.TYPE_QUESTION) {
+            questionType = event.target.value;
+        }
+        else if (event.target.type === "checkbox") {
+            checkboxElements = event.target.parentElement.parentElement.querySelectorAll("input");
+            properties[correspondingModelProperty] = [];
+            for (let checkboxElement of checkboxElements) {
+                if (checkboxElement.checked === true) {
+                    properties[correspondingModelProperty].push(checkboxElement.value);
+                }
             }
         }
-        properties.videoFileName = event.target.files[0].name;
-        this.currentFileName = event.target.files[0].name;
-        data.base64String = getBase64String(event.target.files[0]);
-    }
-    else if (correspondingModelProperty === Config.TYPE_STEP) {
-        stepType = event.target.value;
-    }
-    else if (correspondingModelProperty === Config.TYPE_QUESTION) {
-        questionType = event.target.value;
-    }
-    else if (event.target.type === "checkbox") {
-        checkboxElements = event.target.parentElement.parentElement.querySelectorAll("input");
-        properties[correspondingModelProperty] = [];
-        for (let checkboxElement of checkboxElements) {
-            if (checkboxElement.checked === true) {
-                properties[correspondingModelProperty].push(checkboxElement.value);
+        else if (event.target.type === "number"
+                || correspondingModelProperty === "waitForStep"
+                || correspondingModelProperty === "nextQuestionId") {
+            if (event.target.type === "number") {
+                event.target.value = escapeNegativeValues(event.target.value);
+                if (!(correspondingModelProperty === "durationInMin" && this.correspondingNode.type === Config.STEP_TYPE_INSTRUCTION)) {
+                    event.target.value = escapeZeroValues(event.target.value);
+                }
             }
-        }
-    }
-    else if (event.target.type === "number"
-            || correspondingModelProperty === "waitForStep"
-            || correspondingModelProperty === "nextQuestionId") {
-        properties[correspondingModelProperty] = event.target.value * 1;
-    }
-    else {
-        properties[correspondingModelProperty] = event.target.value;
-    }
-    data.newModelProperties = properties;
-
-    if (correspondingModelProperty === Config.TYPE_STEP || correspondingModelProperty === Config.TYPE_QUESTION) {
-        data.stepType = stepType;
-        data.questionType = questionType;
-        if (this.correspondingNode.previousNode !== undefined) {
-            data.target = this.correspondingNode.previousNode;
-            addNodeEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
-        }
-        else if (this.correspondingNode.nextNode !== undefined) {
-            data.target = this.correspondingNode.nextNode;
-            addNodeEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+            properties[correspondingModelProperty] = event.target.value * 1;
         }
         else {
-            data.target = this.correspondingNode.parentNode;
-            addNodeEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
+            properties[correspondingModelProperty] = event.target.value;
         }
-        removeNodeEvent = new Event(Config.EVENT_REMOVE_NODE, data);
-        this.notifyAll(removeNodeEvent);
-        this.notifyAll(addNodeEvent);
-    }
-    else {
-        if (data.base64String !== undefined) {
-            data.base64String.then(function(result) {
-                if (properties.imageFileName !== undefined) {
-                    imageElement = this.inputFieldsContainer.querySelector("img");
-                    if (imageElement === null) {
-                        imageElement = document.createElement("img");
-                        imageElement.setAttribute("width", "auto");
-                        imageElement.setAttribute("height", this.inputViewContainer.clientHeight);
-                        imageElement.setAttribute("src", result);
-                        event.target.parentElement.insertAdjacentElement("afterend", imageElement);
+        data.newModelProperties = properties;
+    
+        if (correspondingModelProperty === Config.TYPE_STEP || correspondingModelProperty === Config.TYPE_QUESTION) {
+            data.stepType = stepType;
+            data.questionType = questionType;
+            if (this.correspondingNode.previousNode !== undefined) {
+                data.target = this.correspondingNode.previousNode;
+                addNodeEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
+            }
+            else if (this.correspondingNode.nextNode !== undefined) {
+                data.target = this.correspondingNode.nextNode;
+                addNodeEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+            }
+            else {
+                data.target = this.correspondingNode.parentNode;
+                addNodeEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
+            }
+            removeNodeEvent = new Event(Config.EVENT_REMOVE_NODE, data);
+            this.notifyAll(removeNodeEvent);
+            this.notifyAll(addNodeEvent);
+        }
+        else {
+            if (data.base64String !== undefined) {
+                data.base64String.then(function(result) {
+                    if (properties.imageFileName !== undefined) {
+                        imageElement = this.inputFieldsContainer.querySelector("img");
+                        if (imageElement === null) {
+                            imageElement = document.createElement("img");
+                            imageElement.setAttribute("width", "auto");
+                            imageElement.setAttribute("height", this.inputViewContainer.clientHeight);
+                            imageElement.setAttribute("src", result);
+                            event.target.parentElement.insertAdjacentElement("afterend", imageElement);
+                        }
+                        else {
+                            imageElement.setAttribute("src", result);
+                        }
                     }
                     else {
-                        imageElement.setAttribute("src", result);
+                        sourceElement = this.inputFieldsContainer.querySelector("source");
+                        if (sourceElement === null) {
+                            videoElement = document.createElement("video");
+                            videoElement.setAttribute("width", "auto");
+                            videoElement.setAttribute("height", this.inputViewContainer.clientHeight);
+                            videoElement.setAttribute("controls", "");
+                            sourceElement = document.createElement("source");
+                            sourceElement.setAttribute("type", event.target.files[0].type);
+                            sourceElement.setAttribute("src", result);
+                            videoElement.appendChild(sourceElement);
+                            event.target.parentElement.insertAdjacentElement("afterend", videoElement);
+                        }
+                        else {
+                            sourceElement.setAttribute("src", result);
+                        }
                     }
-                }
-                else {
-                    sourceElement = this.inputFieldsContainer.querySelector("source");
-                    if (sourceElement === null) {
-                        videoElement = document.createElement("video");
-                        videoElement.setAttribute("width", "auto");
-                        videoElement.setAttribute("height", this.inputViewContainer.clientHeight);
-                        videoElement.setAttribute("controls", "");
-                        sourceElement = document.createElement("source");
-                        sourceElement.setAttribute("type", event.target.files[0].type);
-                        sourceElement.setAttribute("src", result);
-                        videoElement.appendChild(sourceElement);
-                        event.target.parentElement.insertAdjacentElement("afterend", videoElement);
-                    }
-                    else {
-                        sourceElement.setAttribute("src", result);
-                    }
-                }
-                event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                data.base64String = result;
+                    event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    data.base64String = result;
+                    inputChangeEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
+                    this.notifyAll(inputChangeEvent);
+                }.bind(this));
+            }
+            else {
                 inputChangeEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
                 this.notifyAll(inputChangeEvent);
-            }.bind(this));
-        }
-        else {
-            inputChangeEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
-            this.notifyAll(inputChangeEvent);
+            }
         }
     }
+    else {
+        return;
+    }
+}
+
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "")
+        .replace(/</g, "")
+        .replace(/>/g, "")
+        .replace(/"/g, "\"");
+}
+
+function escapeNegativeValues(unescaped) {
+    return unescaped.replace(/[-]/g, "");
+}
+
+function escapeZeroValues(unescaped) {
+    return unescaped.replace(/\b0/g, "1");
 }
 
 function getBase64String(file) {

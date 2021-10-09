@@ -15,23 +15,19 @@ import MoveableNode from "../views/nodeView/MoveableNode.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Number input elements -> disable key control (up/down buttons)
-// -> Input checks:
-// --- Defining max characters for several input fields
-// --- Input fields that allow only one type or type check after input
-// --- Format checks inside the views input fields (Delete the ones without usage in the model)
-// -> Up and download experiment.json
+// -> Up and download experiment.json buttons, Export button answer.name <-> answer.code table 
 // -> Node icons
 // -> Code cleaning
 // -> Create .exe file for install
 // -> InfoView
 // (-> Colors and style)
 
-// ENHANCEMENT: 
+// ENHANCEMENT:
 // - Copy paste option
 // - Calculate the optimal duration for a survey depending on its
 // - Fullscreen Buttons
 // - Survey time randomization
+// - Show survey time windows (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
 
 class Controller {
 
@@ -868,6 +864,7 @@ function onRemoveNode(event) {
             }
         }
     }
+    nodeToRemove.parentNode.childNodes.splice(nodeToRemove.parentNode.childNodes.indexOf(nodeToRemove), 1);
     TreeView.removeNode(nodeToRemove);
     nextFocusedNode.click();
 }
@@ -911,54 +908,299 @@ function onInputChanged(event) {
     timeSortedChildNodes,
     fileName;
 
-    newModelProperties.id = correspondingNode.id;
-    if (newModelProperties.name !== undefined) {
-        correspondingNode.updateDescription(newModelProperties.name);
-    }
-    if (newModelProperties.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
-        correspondingNode.updateDescription(newModelProperties.text);
-    }
-    if (newModelProperties.absoluteStartDaysOffset !== undefined || newModelProperties.absoluteStartAtHour !== undefined) {
-        if (newModelProperties.absoluteStartDaysOffset === undefined) {
-            timeInMin = currentModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newModelProperties.absoluteStartAtMinute * 1;
+    if (inputIsValid(this, correspondingNode, correspondingNode.parentNode, newModelProperties, experiment)) {
+        newModelProperties.id = correspondingNode.id;
+        if (newModelProperties.name !== undefined) {
+            correspondingNode.updateDescription(newModelProperties.name);
         }
-        else {
-            timeInMin = newModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentModelProperties.absoluteStartAtMinute * 1;
+        if (newModelProperties.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
+            correspondingNode.updateDescription(newModelProperties.text);
         }
-        correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
-        timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
-        updateNextSurveyIds(timeSortedChildNodes);
-        correspondingNode.parentNode.updateTimelineLength();
-    }
-
-    if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
-        if (newModelProperties.imageFileName !== undefined) {
-            fileName = newModelProperties.imageFileName;
+        if (newModelProperties.absoluteStartDaysOffset !== undefined || newModelProperties.absoluteStartAtHour !== undefined) {
+            if (newModelProperties.absoluteStartDaysOffset === undefined) {
+                timeInMin = currentModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newModelProperties.absoluteStartAtMinute * 1;
+            }
+            else {
+                timeInMin = newModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentModelProperties.absoluteStartAtMinute * 1;
+            }
+            correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
+            timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
+            updateNextSurveyIds(timeSortedChildNodes);
+            correspondingNode.parentNode.updateTimelineLength();
         }
-        if (newModelProperties.videoFileName !== undefined){
-            fileName = newModelProperties.videoFileName;
-        }
-        if (fileName !== undefined && fileName !== null) {
-            if (!ModelManager.addResource(fileName, event.data.base64String)) {
-                // TODO: Alert, that another file with the same file name already exists
-                // InputView: Set file inputs values to null and display them
+    
+        if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
+            if (newModelProperties.imageFileName !== undefined) {
+                fileName = newModelProperties.imageFileName;
+            }
+            if (newModelProperties.videoFileName !== undefined){
+                fileName = newModelProperties.videoFileName;
+            }
+            if (fileName !== undefined && fileName !== null) {
+                if (!ModelManager.addResource(fileName, event.data.base64String)) {
+                    // TODO: Alert, that another file with the same file name already exists
+                    // InputView: Set file inputs values to null and display them
+                }
+                else {
+                    ModelManager.updateExperiment(newModelProperties);
+                }
             }
             else {
                 ModelManager.updateExperiment(newModelProperties);
+            }
+            if (fileName === null) {
+                ModelManager.removeResource(event.data.previousFileName);
             }
         }
         else {
             ModelManager.updateExperiment(newModelProperties);
         }
-        if (fileName === null) {
-            ModelManager.removeResource(event.data.previousFileName);
+    
+        WhereAmIView.update(this.currentSelection);
+    }
+}
+
+function inputIsValid(that, node, parentNode, newInput, experiment) {
+    let nodeData = ModelManager.getDataFromNodeId(node.id, experiment),
+    nextNodeData,
+    parentData,
+    newTimeInMin,
+    timeInMin,
+    timeWindow = {},
+    rootNode = getRootNode(node),
+    alert,
+    invalidInput,
+    isValid = true;
+
+    if (parentNode !== undefined) {
+        parentData = ModelManager.getDataFromNodeId(parentNode.id, experiment);
+    }
+    if (node.nextNode !== undefined) {
+        nextNodeData = ModelManager.getDataFromNodeId(node.nextNode.id, experiment);
+    }
+    if (node.type === Config.TYPE_EXPERIMENT_GROUP) {
+        if (newInput.name !== undefined) {
+            for (let group of parentData.groups) {
+                if (group.name === newInput.name && group !== nodeData) {
+                    invalidInput = "name";
+                    alert = Config.EXPERIMENT_GROUP_NAME_NOT_UNIQUE;
+                    isValid = false;
+                    break;
+                }
+            }
         }
     }
-    else {
-        ModelManager.updateExperiment(newModelProperties);
-    }
+    else if (node.type === Config.TYPE_SURVEY) {
+        if (newInput.name !== undefined) {
+            for (let survey of parentData.surveys) {
+                if (survey.name === newInput.name && survey !== nodeData) {
+                    invalidInput = "name";
+                    alert = Config.SURVEY_NAME_NOT_UNIQUE;
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+        // TODO: Alert also shows when only hours got typed or when minutes with a 0 value as first character got typed
+        if (newInput.absoluteStartDaysOffset !== undefined
+            || newInput.absoluteStartAtHour !== undefined
+            || newInput.absoluteStartAtMinute !== undefined) {
 
-    WhereAmIView.update(this.currentSelection);
+            if (newInput.absoluteStartDaysOffset !== undefined) {
+                newTimeInMin = newInput.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
+            }
+            if (newInput.absoluteStartAtHour !== undefined) {
+                newTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newInput.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
+            }
+            if (newInput.absoluteStartAtMinute !== undefined) {
+                newTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newInput.absoluteStartAtMinute;
+            }
+            for (let survey of parentData.surveys) {
+                if (survey !== nodeData) {
+                    timeInMin = survey.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + survey.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + survey.absoluteStartAtMinute;
+                    timeWindow.start = timeInMin - nodeData.maxDurationInMin - nodeData.notificationDurationInMin;
+                    timeWindow.end = timeInMin + survey.maxDurationInMin + survey.notificationDurationInMin;
+                    if (newTimeInMin >= timeWindow.start && newTimeInMin <= timeWindow.end) {
+                        alert = Config.SURVEY_OVERLAPS;
+                        if (newInput.absoluteStartDaysOffset !== undefined) {
+                            invalidInput = "absolutesStartDaysOffset";
+                        }
+                        else {
+                            invalidInput = "absoluteStartAtHour";
+                        }
+                        isValid = false;
+                    }
+                }
+            }
+        }
+        if (nextNodeData !== undefined) {
+            if (newInput.maxDurationInMin !== undefined || newInput.notificationDurationInMin !== undefined) {
+                timeInMin = nextNodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nextNodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nextNodeData.absoluteStartAtMinute;
+                newTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
+    
+                if (newInput.maxDurationInMin !== undefined) {
+                    if (newTimeInMin + nodeData.notificationDurationInMin + newInput.maxDurationInMin >= timeInMin) {
+                        invalidInput = "maxDurationInMin";
+                        alert = Config.SURVEY_OVERLAPS;
+                        isValid = false;
+                    }
+                }
+                else {
+                    if (newTimeInMin + newInput.notificationDurationInMin + nodeData.maxDurationInMin >= timeInMin) {
+                        invalidInput = "notificationDurationInMin";
+                        alert = Config.SURVEY_OVERLAPS;
+                        isValid = false;
+                    }
+                }
+            }
+        }
+    }
+    else if (node.type === Config.STEP_TYPE_INSTRUCTION) {
+        if (newInput.header !== undefined) {
+            if (newInput.header.length > Config.INSTRUCTION_HEADER_MAX_LENGTH) {
+                invalidInput = "header";
+                alert = Config.INPUT_TOO_LONG;
+                isValid = false;
+            }
+        }
+        if (newInput.text !== undefined) {
+            if (nodeData.imageFileName !== null || nodeData.videoFileName !== null) {
+                if (newInput.text.length > Config.INSTRUCTION_TEXT_WITH_RESOURCE_MAX_LENGTH) {
+                    invalidInput = "text";
+                    alert = Config.INPUT_TOO_LONG;
+                    isValid = false;
+                }
+            }
+            else {
+                if (newInput.text.length > Config.INSTRUCTION_TEXT_MAX_LENGTH) {
+                    invalidInput = "text";
+                    alert = Config.INPUT_TOO_LONG;
+                    isValid = false;
+                }
+            }
+        }
+        if ((newInput.imageFileName !== undefined && newInput.imageFileName !== null)
+            || (newInput.videoFileName !== undefined && newInput.videoFileName !== null)) {
+                if (nodeData.text.length > Config.INSTRUCTION_TEXT_WITH_RESOURCE_MAX_LENGTH) {
+                    invalidInput = "text";
+                    alert = Config.INPUT_TOO_LONG_WITH_RESOURCE;
+                    isValid = false;
+                }
+        }
+        if (newInput.waitingText !== undefined) {
+            if (newInput.waitingText.length > Config.INSTRUCTION_WAITING_TEXT_MAX_LENGTH) {
+                invalidInput = "waitingText";
+                alert = Config.INPUT_TOO_LONG;
+                isValid = false;
+            }
+        }
+    }
+    else if (node.type === Config.STEP_TYPE_BREATHING_EXERCISE) {
+        if (newInput.durationInMin !== undefined) {
+            if (newInput.durationInMin > Config.BREATHING_EXERCISE_MAX_DURATION) {
+                invalidInput = "durationInMin";
+                alert = Config.BREATHING_EXERCISE_DURATION_TOO_LONG;
+                isValid = false;
+            }
+        }
+    }
+    else if (node.parentNode !== undefined && node.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        if (newInput.name !== undefined) {
+            for (let question of parentData.questions) {
+                if (question.name === newInput.name && question !== nodeData) {
+                    invalidInput = "name";
+                    alert = Config.QUESTION_NAME_NOT_UNIQUE;
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+        if (node.type === Config.QUESTION_TYPE_LIKERT) {
+            if (newInput.scaleMinimumLabel !== undefined || newInput.scaleMaximumLabel !== undefined) {
+                for (let key in newInput) {
+                    if (Object.prototype.hasOwnProperty.call(newInput, key)) {
+                        if (newInput[key].length > Config.LIKERT_QUESTION_SCALE_LABEL_TEXT_MAX_LENGTH) {
+                            invalidInput = key;
+                            alert = Config.INPUT_TOO_LONG;
+                            isValid = false;
+                        }
+                    }
+                }
+            }
+            if (newInput.initialValue !== undefined) {
+                if (newInput.initialValue > nodeData.itemCount) {
+                    invalidInput = "initialValue";
+                    alert = Config.LIKERT_SCALE_INITIAL_VALUE_NOT_IN_RANGE;
+                    isValid = false;
+                }
+            }
+        }
+        if (node.type === Config.QUESTION_TYPE_POINT_OF_TIME) {
+            if (newInput.pointOfTimeTypes !== undefined) {
+                if (newInput.pointOfTimeTypes.length === 0) {
+                    invalidInput = Config.TYPE_QUESTION;
+                    alert = Config.POINT_OF_TIME_QUESTION_SELECT_AT_LEAST_ONE_TYPE;
+                    isValid = false;
+                }
+            }
+        }
+        if (node.type === Config.QUESTION_TYPE_TIME_INTERVAL) {
+            if (newInput.timeIntervalTypes !== undefined) {
+                if (newInput.timeIntervalTypes.length === 0) {
+                    invalidInput = Config.TYPE_QUESTION;
+                    alert = Config.TIME_INTERVAL_QUESTION_SELECT_AT_LEAST_ONE_TYPE;
+                    isValid = false;
+                }
+            }
+        }
+    }
+    else if (node.type === Config.TYPE_ANSWER) {
+        if (newInput.code !== undefined) {
+            for (let answer of parentData.answers && answer !== nodeData) {
+                if (answer.code === newInput.code) {
+                    invalidInput = "code";
+                    alert = Config.ANSWER_CODE_NOT_UNIQUE;
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+    }
+    if (!isValid) {
+        InputView.showAlert(alert);
+        InputView.disableInputsExcept(invalidInput);
+        disableNodeActions(that, rootNode);
+        // TODO
+        //TreeView.hideSaveLoadButtons();
+    }
+    else {
+        InputView.hideAlert();
+        InputView.enableInputs();
+        enableNodeActions(that, rootNode);
+        // TODO
+        //TreeView.showSaveLoadButtons();
+    }
+    return isValid;
+}
+
+function disableNodeActions(that, node) {
+    if (node === undefined) {
+        return;
+    }
+    node.setIsClickable(false);
+    for (let childNode of node.childNodes) {
+        disableNodeActions(that, childNode);
+    }
+}
+
+function enableNodeActions(that, node) {
+    if (node === undefined) {
+        return;
+    }
+    node.setIsClickable(true);
+    for (let childNode of node.childNodes) {
+        enableNodeActions(that, childNode);
+    }
 }
 
 // Whole page events

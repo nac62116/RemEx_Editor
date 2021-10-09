@@ -4,7 +4,7 @@ import Question from "./Question.js";
 class TextQuestion extends Question {
 
     constructor() {
-        super(Config.QUESTION_TYPE_TEXT);
+        super(Config.QUESTION_TYPE_TEXT, "Neue Textfrage");
     }
 }
 

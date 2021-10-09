@@ -4,17 +4,13 @@ import Step from "./Step.js";
 class Instruction extends Step {
 
     constructor() {
-        super(Config.STEP_TYPE_INSTRUCTION);
-        // Max characters: 50
-        this.header = null;
-        // Max characters: 350 (with image), 500 (without image)
-        this.text = null;
-        // Either image or video or none of both in one Instruction
+        super(Config.STEP_TYPE_INSTRUCTION, "Neue Instruktion");
+        this.header = "Überschrift";
+        this.text = "Text";
         this.imageFileName = null;
         this.videoFileName = null;
-        this.durationInMin = null;
-        // Max characters: 500
-        this.waitingText = null;
+        this.durationInMin = 0;
+        this.waitingText = "Wartetext";
         this.isFinished = false;
     }
 }

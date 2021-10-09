@@ -4,6 +4,18 @@
     box-sizing: border-box;
 }
 
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
 body { 
     min-height: 100vh;
 }
@@ -57,6 +69,17 @@ body {
     color: cornsilk;
     overflow: auto;
     scrollbar-color: rgb(155, 155, 155) rgb(53, 53, 53);
+    scrollbar-width: thin;
+}
+
+.input-alert {
+    position: relative;
+    left: 10%;
+    width: 80%;
+    height: auto;
+    margin-bottom: 5px;
+    background-color: rgb(100, 0, 0);
+    scrollbar-color: rgb(75, 0, 0) rgb(0, 0, 0);
     scrollbar-width: thin;
 }
 

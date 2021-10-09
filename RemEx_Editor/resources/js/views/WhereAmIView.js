@@ -49,11 +49,17 @@ class WhereAmIView {
 }
 
 function onRepresentingNodeMouseEnter(event) {
-    event.data.target.emphasize();
+    let actualNode = this.representationMap.get(event.data.target);
+    if (actualNode.isClickable) {
+        event.data.target.emphasize();
+    }
 }
 
 function onRepresentingNodeMouseLeave(event) {
-    event.data.target.deemphasize();
+    let actualNode = this.representationMap.get(event.data.target);
+    if (actualNode.isClickable) {
+        event.data.target.deemphasize();
+    }
 }
 
 function onRepresentingNodeClicked(event) {

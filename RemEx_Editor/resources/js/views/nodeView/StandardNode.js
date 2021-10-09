@@ -120,41 +120,51 @@ class StandardNode extends NodeView {
 function onAddNextNodeClicked() {
     let controllerEvent, data;
 
-    data = {
-        target: this,
-    };
-    controllerEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onAddPreviousNodeClicked() {
     let controllerEvent, data;
 
-    data = {
-        target: this,
-    };
-    controllerEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onAddChildNodeClicked() {
     let controllerEvent, data;
 
-    data = {
-        target: this,
-    };
-    controllerEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onAddButtonMouseEnter(event) {
-    event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED);
-    event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED);
+    if (this.isClickable) {
+        event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED);
+        event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED);
+    }
 }
 
 function onAddButtonMouseLeave(event) {
-    event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
-    event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+    if (this.isClickable) {
+        event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
+        event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+    }
 }
 
 export default StandardNode;

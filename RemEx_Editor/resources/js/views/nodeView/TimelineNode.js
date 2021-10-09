@@ -36,6 +36,11 @@ class TimelineNode extends StandardNode {
         this.timeline.updatePosition(centerX, centerY + Config.NODE_DISTANCE_VERTICAL);
     }
 
+    setIsClickable(isClickable) {
+        super.setIsClickable(isClickable);
+        this.timeline.isClickable = isClickable;
+    }
+
     getTimelineCenter() {
         return this.timeline.center;
     }
@@ -137,6 +142,7 @@ class TimelineView extends Observable {
         };
         this.height = Config.NODE_BODY_HEIGHT;
         this.width = treeViewWidth * Config.TIMELINE_WIDTH_IN_PERCENTAGE;
+        this.isClickable = true;
         this.correspondingNode = correspondingNode;
         this.timelineLengthInMin = Config.ONE_DAY_IN_MIN;
         this.timelineElements.timeline.addEventListener("click", onClick.bind(this));
@@ -283,7 +289,9 @@ class TimelineView extends Observable {
 // Event callback functions
 
 function onMouseEnter() {
-    emphasize(this);
+    if (this.isClickable) {
+        emphasize(this);
+    }
 }
 
 function emphasize(that) {
@@ -296,7 +304,9 @@ function emphasize(that) {
 }
 
 function onMouseLeave() {
-    deemphasize(this);
+    if (this.isClickable) {
+        deemphasize(this);
+    }
 }
 
 function deemphasize(that) {
@@ -317,17 +327,19 @@ function onClick(event) {
         y: this.center.y,
     };
 
-    timeInMin = getTimeFromPosition(this, position);
-    data = {
-        correspondingNode: this.correspondingNode,
-        position: position,
-        absoluteStartDaysOffset: Math.floor(timeInMin / Config.ONE_DAY_IN_MIN),
-        absoluteStartAtHour: Math.floor((timeInMin % Config.ONE_DAY_IN_MIN) / Config.ONE_HOUR_IN_MIN),
-        absoluteStartAtMinute: timeInMin % Config.ONE_DAY_IN_MIN % Config.ONE_HOUR_IN_MIN,
-        timeInMin: timeInMin,
-    };
-    controllerEvent = new Event(Config.EVENT_TIMELINE_CLICKED, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        timeInMin = getTimeFromPosition(this, position);
+        data = {
+            correspondingNode: this.correspondingNode,
+            position: position,
+            absoluteStartDaysOffset: Math.floor(timeInMin / Config.ONE_DAY_IN_MIN),
+            absoluteStartAtHour: Math.floor((timeInMin % Config.ONE_DAY_IN_MIN) / Config.ONE_HOUR_IN_MIN),
+            absoluteStartAtMinute: timeInMin % Config.ONE_DAY_IN_MIN % Config.ONE_HOUR_IN_MIN,
+            timeInMin: timeInMin,
+        };
+        controllerEvent = new Event(Config.EVENT_TIMELINE_CLICKED, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function getPositionFromTime(that, timeInMin) {

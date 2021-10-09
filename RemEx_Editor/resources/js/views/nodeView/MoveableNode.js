@@ -45,31 +45,39 @@ class MoveableNode extends StandardNode {
 function onMoveRightButtonClicked() {
     let controllerEvent, data;
 
-    data = {
-        target: this,
-    };
-    controllerEvent = new Event(Config.EVENT_MOVE_NODE_RIGHT, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new Event(Config.EVENT_MOVE_NODE_RIGHT, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onMoveLeftButtonClicked() {
     let controllerEvent, data;
 
-    data = {
-        target: this,
-    };
-    controllerEvent = new Event(Config.EVENT_MOVE_NODE_LEFT, data);
-    this.notifyAll(controllerEvent);
+    if (this.isClickable) {
+        data = {
+            target: this,
+        };
+        controllerEvent = new Event(Config.EVENT_MOVE_NODE_LEFT, data);
+        this.notifyAll(controllerEvent);
+    }
 }
 
 function onMoveButtonMouseEnter(event) {
-    event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED);
-    event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED);
+    if (this.isClickable) {
+        event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED);
+        event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED);
+    }
 }
 
 function onMoveButtonMouseLeave(event) {
-    event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
-    event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+    if (this.isClickable) {
+        event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
+        event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+    }
 }
 
 export default MoveableNode;

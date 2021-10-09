@@ -4,11 +4,10 @@ import Step from "./Step.js";
 class BreathingExercise extends Step {
 
     constructor() {
-        super(Config.STEP_TYPE_BREATHING_EXERCISE);
-        // Max duration = 60
-        this.durationInMin = null;
-        this.breathingFrequencyInSec = null;
-        this.mode = null;
+        super(Config.STEP_TYPE_BREATHING_EXERCISE, "Neue Atemübung");
+        this.durationInMin = 1;
+        this.breathingFrequencyInSec = 5;
+        this.mode = Config.BREATHING_MODE_MOVING_CIRCLE;
     }
 }
 
