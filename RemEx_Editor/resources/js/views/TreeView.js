@@ -1,19 +1,16 @@
 import Config from "../utils/Config.js";
-import {Observable, Event} from "../utils/Observable.js";
 
-class TreeView extends Observable {
+class TreeView {
 
     init(treeViewContainer) {
         this.treeViewContainer = treeViewContainer;
         this.treeViewElement = treeViewContainer.querySelector("#" + Config.TREE_VIEW_ID);
-        this.importExportContainer = treeViewContainer.querySelector("#" + Config.IMPORT_EXPORT_CONTAINER_ID);
-        this.saveButton = this.importExportContainer.querySelector("#" + Config.SAVE_EXPERIMENT_BUTTON_ID);
-        this.loadButton = this.importExportContainer.querySelector("#" + Config.LOAD_EXPERIMENT_BUTTON_ID);
-        this.newButton = this.importExportContainer.querySelector("#" + Config.NEW_EXPERIMENT_BUTTON_ID);
-        this.saveButton.addEventListener("click", onSaveButtonClicked.bind(this));
-        this.loadButton.addEventListener("click", onLoadButtonClicked.bind(this));
-        this.newButton.addEventListener("click", onNewButtonClicked.bind(this));
         this.currentFocusedNode = undefined;
+        this.rootNode = undefined;
+    }
+
+    setRoot(rootNode) {
+        this.rootNode = rootNode;
     }
 
     getCenter() {
@@ -30,14 +27,6 @@ class TreeView extends Observable {
 
     getHeight() {
         return this.treeViewElement.clientHeight;
-    }
-
-    hideImportExportButtons() {
-        this.importExportContainer.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-    }
-    
-    showImportExportButtons() {
-        this.importExportContainer.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
     insertNode(node) {
@@ -71,6 +60,12 @@ class TreeView extends Observable {
                             if (timelineKey !== "labels") {
                                 node.nodeElements.timelineElements[timelineKey].remove();
                             }
+                            else {
+                                for (let label of node.nodeElements.timelineElements.labels) {
+                                    label.stroke.remove();
+                                    label.description.remove();
+                                }
+                            }
                         }
                     }
                 }
@@ -97,6 +92,12 @@ function removeChildNodes(node) {
                             if (timelineKey !== "labels") {
                                 childNode.nodeElements.timelineElements[timelineKey].remove();
                             }
+                            else {
+                                for (let label of childNode.nodeElements.timelineElements.labels) {
+                                    label.stroke.remove();
+                                    label.description.remove();
+                                }
+                            }
                         }
                     }
                 }
@@ -104,24 +105,6 @@ function removeChildNodes(node) {
         }
         removeChildNodes(childNode);
     }
-}
-
-function onSaveButtonClicked() {
-    let controllerEvent = new Event(Config.EVENT_SAVE_EXPERIMENT, null);
-
-    this.notifyAll(controllerEvent);
-}
-
-function onLoadButtonClicked() {
-    let controllerEvent = new Event(Config.EVENT_LOAD_EXPERIMENT, null);
-
-    this.notifyAll(controllerEvent);
-}
-
-function onNewButtonClicked() {
-    let controllerEvent = new Event(Config.EVENT_NEW_EXPERIMENT, null);
-
-    this.notifyAll(controllerEvent);
 }
 
 export default new TreeView();

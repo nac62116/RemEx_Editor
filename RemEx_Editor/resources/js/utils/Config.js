@@ -51,10 +51,11 @@ const Config = {
     // DOM Element ids:
 
     DOWNLOAD_LINK_ID: "downloadLink",
+    UPLOAD_INPUT_ID: "uploadInput",
     TREE_VIEW_CONTAINER_ID: "treeContainer",
     IMPORT_EXPORT_CONTAINER_ID: "importExportContainer",
     SAVE_EXPERIMENT_BUTTON_ID: "saveExperimentButton",
-    LOAD_EXPERIMENT_BUTTON_ID: "loadExperimentButton",
+    UPLOAD_EXPERIMENT_BUTTON_ID: "uploadExperimentButton",
     NEW_EXPERIMENT_BUTTON_ID: "newExperimentButton",
     WHERE_AM_I_VIEW_CONTAINER_ID: "whereAmIContainer",
     NODE_TEMPLATE_ID: "nodeTemplate",

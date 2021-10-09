@@ -10,20 +10,7 @@
 
 <body>
     
-    <a id="downloadLink" href="" download=""></a>
-    <div id="treeContainer" class="tree-container">
-        <div id="importExportContainer" class="import-export-container">
-            <div id="saveExperimentButton" class="save-experiment-button">
-                <img id="saveIcon" src="" alt="">
-            </div>
-            <div id="loadExperimentButton" class="load-experiment-button">
-                <img id="loadIcon" src="" alt="">
-            </div>
-            <div id="newExperimentButton" class="new-experiment-button">
-                <img id="newIcon" src="" alt="">
-            </div>
-        </div>
-    </div>
+    <div id="treeContainer" class="tree-container"></div>
     <div id="whereAmIContainer" class="where-am-i-container"></div>
     <div id="inputContainer" class="input-container">
         <h1 id="inputHeader" class="input-header hidden">Header</h1>
@@ -36,6 +23,19 @@
         <div id="inputAlert" class="input-alert hidden"></div>
     </div>
     <div id="infoContainer" class="info-container"></div>
+    <a id="downloadLink" href="" download=""></a>
+    <input id="uploadInput" type="file" accept="application/json"></input>
+    <div id="importExportContainer" class="import-export-container">
+        <div id="saveExperimentButton" class="save-experiment-button">
+            <img id="saveIcon" src="images/save_button.png" alt="">
+        </div>
+        <div id="uploadExperimentButton" class="upload-experiment-button">
+            <img id="uploadIcon" src="images/upload_button.png" alt="">
+        </div>
+        <div id="newExperimentButton" class="new-experiment-button">
+            <img id="newIcon" src="images/new_button.png" alt="">
+        </div>
+    </div>
 
     <script type="module" src="resources/js/index.js"></script>
 </body>

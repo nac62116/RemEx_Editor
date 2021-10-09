@@ -11,6 +11,7 @@ import InputValidator from "../utils/InputValidator.js";
 import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
 import Storage from "../utils/Storage.js";
+import IdManager from "../utils/IdManager.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
@@ -34,13 +35,18 @@ import Storage from "../utils/Storage.js";
 class Controller {
 
     init() {
-        let experiment,
+        let importExportContainer = document.querySelector("#" + Config.IMPORT_EXPORT_CONTAINER_ID),
         treeViewContainer = document.querySelector("#" + Config.TREE_VIEW_CONTAINER_ID),
         treeViewElement = SvgFactory.createTreeViewElement(),
         whereAmIViewContainer = document.querySelector("#" + Config.WHERE_AM_I_VIEW_CONTAINER_ID),
         whereAmIViewElement = SvgFactory.createWhereAmIViewElement(),
         inputViewContainer = document.querySelector("#" + Config.INPUT_VIEW_CONTAINER_ID),
-        newNode;
+        experiment,
+        newNode,
+        saveButton,
+        uploadButton,
+        newButton;
+
         this.nodeEventListener = [
             {
                 eventType: Config.EVENT_NODE_MOUSE_ENTER,
@@ -96,19 +102,24 @@ class Controller {
             },
         ];
         this.currentSelection = [];
+
+        // Save/Load Buttons
+        this.saveButton = importExportContainer.querySelector("#" + Config.SAVE_EXPERIMENT_BUTTON_ID);
+        uploadButton = importExportContainer.querySelector("#" + Config.UPLOAD_EXPERIMENT_BUTTON_ID);
+        newButton = importExportContainer.querySelector("#" + Config.NEW_EXPERIMENT_BUTTON_ID);
+        this.saveButton.addEventListener("click", onSaveExperimentButtonClicked.bind(this));
+        uploadButton.addEventListener("click", onUploadExperimentButtonClicked.bind(this));
+        newButton.addEventListener("click", onNewExperimentButtonClicked.bind(this));
+        
+        // TreeView
         treeViewContainer.appendChild(treeViewElement);
         TreeView.init(treeViewContainer);
-        TreeView.addEventListener(Config.EVENT_SAVE_EXPERIMENT, onSaveExperiment.bind(this));
-        TreeView.addEventListener(Config.EVENT_LOAD_EXPERIMENT, onLoadExperiment.bind(this));
-        TreeView.addEventListener(Config.EVENT_NEW_EXPERIMENT, onNewExperiment.bind(this));
-
-        // TODO: Remove this
-        ModelManager.removeExperiment();
 
         experiment = ModelManager.initExperiment();
         newNode = createNode(this, undefined, experiment, undefined, undefined);
         newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
-        
+        TreeView.setRoot(newNode);
+
         whereAmIViewContainer.appendChild(whereAmIViewElement);
         WhereAmIView.init(whereAmIViewContainer);
 
@@ -123,7 +134,7 @@ class Controller {
     }
 }
 
-function onSaveExperiment() {
+function onSaveExperimentButtonClicked() {
     let downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID),
     experiment = ModelManager.getExperiment(),
     encodedResources = ModelManager.getAllResources(),
@@ -162,19 +173,53 @@ function generateFile(input, mimeType){
     return textFile; 
   }
 
-function onLoadExperiment() {
+function onUploadExperimentButtonClicked() {
+    let uploadElement,
+    experiment,
+    ids;
+
     if (confirm(Config.LOAD_EXPERIMENT_ALERT)) { // eslint-disable-line no-alert
-        //TODO load experimentJSON
-        //TODO reset IdManager
-        //TODO save experiment and resources
-        //TreeView init and createNodes
+        uploadElement = document.querySelector("#" + Config.UPLOAD_INPUT_ID);
+        uploadElement.addEventListener("change", function(event) {
+            new Promise(function(resolve, reject) {
+                var reader = new FileReader();
+                reader.onload = function() { resolve(reader.result); };
+                reader.onerror = reject;
+                reader.readAsText(event.target.files[0]);
+            }).then(function(result) {
+                experiment = JSON.parse(result);
+                ModelManager.removeExperiment();
+                TreeView.removeNode(TreeView.rootNode);
+                for (let encodedResource of experiment.encodedResources) {
+                    ModelManager.addResource(encodedResource.fileName, encodedResource.base64String);
+                }
+                ModelManager.saveExperiment(experiment);
+                ids = ModelManager.getIds(experiment);
+                IdManager.setIds(ids);
+                WhereAmIView.update([]);
+                InputView.hide();
+                // TODO
+                //TreeView init and createNodes
+            }.bind(this));
+        }.bind(this));
+        uploadElement.click();
     }
 }
 
-function onNewExperiment() {
+function onNewExperimentButtonClicked() {
+    let experiment,
+    newNode;
+
     if (confirm(Config.NEW_EXPERIMENT_ALERT)) { // eslint-disable-line no-alert
-        //TODO reset IdManager
-        //TODO TreeView init and create new experiment
+        IdManager.removeIds();
+        ModelManager.removeExperiment();
+        TreeView.removeNode(TreeView.rootNode);
+        WhereAmIView.update([]);
+        InputView.hide();
+        experiment = ModelManager.initExperiment();
+        newNode = createNode(this, undefined, experiment, undefined, undefined);
+        newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
+        TreeView.setRoot(newNode);
     }
 }
 
@@ -827,9 +872,9 @@ function onTimelineClicked(event) {
         timeInMin = event.data.timeInMin;
         correspondingNode.updateNodeTimeMap(newNode, timeInMin);
         timeSortedChildNodes = correspondingNode.getTimeSortedChildNodes();
-        updateNextSurveyIds(timeSortedChildNodes);
         correspondingNode.updateTimelineLength();
         newNode.click();
+        updateNextSurveyIds(timeSortedChildNodes);
     }
 }
 
@@ -983,7 +1028,7 @@ function onInputChanged(event) {
         InputView.hideAlert();
         InputView.enableInputs();
         enableNodeActions(this, rootNode);
-        TreeView.showImportExportButtons();
+        this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
 
         newDataModel.id = correspondingNode.id;
         if (newDataModel.name !== undefined) {
@@ -1039,7 +1084,7 @@ function onInputChanged(event) {
         InputView.showAlert(validationResult.alert);
         InputView.disableInputsExcept(validationResult.invalidInput);
         disableNodeActions(this, rootNode);
-        TreeView.hideImportExportButtons();
+        this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
 }
 

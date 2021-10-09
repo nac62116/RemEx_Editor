@@ -8,6 +8,14 @@ class IdManager {
         this.ids = [];
     }
 
+    setIds(ids) {
+        this.ids = ids;
+    }
+
+    removeIds() {
+        this.ids = [];
+    }
+
     getUnusedId() {
         let id = 0;
         while (id !== Config.MAX_ID_SIZE) {

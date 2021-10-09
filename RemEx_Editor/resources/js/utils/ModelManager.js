@@ -26,6 +26,9 @@ class ModelManager {
         let experiment,
         properties = {};
 
+        // TODO Remove this
+        Storage.clear();
+
         experiment = Storage.load();
         if (experiment === undefined) {
             properties.id = IdManager.getUnusedId();
@@ -38,6 +41,10 @@ class ModelManager {
         }
 
         return experiment;
+    }
+
+    saveExperiment(experiment) {
+        Storage.save(experiment);
     }
 
     removeExperiment() {
@@ -134,6 +141,31 @@ class ModelManager {
             }
         }
         Storage.save(experiment);
+    }
+
+    getIds(experiment) {
+        let ids = [];
+
+        for (let group of experiment.groups) {
+            ids.push(group.id);
+            for (let survey of group.surveys) {
+                ids.push(survey.id);
+                for (let step of survey.steps) {
+                    ids.push(step.id);
+                    if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                        for (let question of step.questions) {
+                            ids.push(question.id);
+                            if (question.type === Config.QUESTION_TYPE_CHOICE) {
+                                for (let answer of question.answers) {
+                                    ids.push(answer.id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ids;
     }
 
     getDataFromNodeId(id, experiment) {
