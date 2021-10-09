@@ -1,15 +1,16 @@
+import ModelManager from "../utils/ModelManager.js";
 import TreeView from "../views/TreeView.js";
 import WhereAmIView from "../views/WhereAmIView.js";
 import InputView from "../views/InputView.js";
-import ModelManager from "./ModelManager.js";
-import SvgFactory from "../utils/SvgFactory.js";
-import Config from "../utils/Config.js";
 import RootNode from "../views/nodeView/RootNode.js";
 import TimelineNode from "../views/nodeView/TimelineNode.js";
 import DeflateableNode from "../views/nodeView/DeflateableNode.js";
 import StandardNode from "../views/nodeView/StandardNode.js";
-import Storage from "../utils/Storage.js";
 import MoveableNode from "../views/nodeView/MoveableNode.js";
+import InputValidator from "../utils/InputValidator.js";
+import SvgFactory from "../utils/SvgFactory.js";
+import Config from "../utils/Config.js";
+import Storage from "../utils/Storage.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
@@ -24,7 +25,8 @@ import MoveableNode from "../views/nodeView/MoveableNode.js";
 
 // ENHANCEMENT:
 // - Copy paste option
-// - Calculate the optimal duration for a survey depending on its
+// - Optimize key movement (Shortcuts (e.g. Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
+// - Calculate the optimal duration for a survey depending on its content
 // - Fullscreen Buttons
 // - Survey time randomization
 // - Show survey time windows (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
@@ -96,6 +98,9 @@ class Controller {
         this.currentSelection = [];
         treeViewContainer.appendChild(treeViewElement);
         TreeView.init(treeViewContainer);
+        TreeView.addEventListener(Config.EVENT_SAVE_EXPERIMENT, onSaveExperiment.bind(this));
+        TreeView.addEventListener(Config.EVENT_LOAD_EXPERIMENT, onLoadExperiment.bind(this));
+        TreeView.addEventListener(Config.EVENT_NEW_EXPERIMENT, onNewExperiment.bind(this));
 
         // TODO: Remove this
         ModelManager.removeExperiment();
@@ -115,6 +120,61 @@ class Controller {
         InputView.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNode.bind(this));
         // InfoViewManager.initInfoView();
         document.addEventListener("keyup", onKeyUp.bind(this));
+    }
+}
+
+function onSaveExperiment() {
+    let downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID),
+    experiment = ModelManager.getExperiment(),
+    encodedResources = ModelManager.getAllResources(),
+    experimentJSON,
+    jsonFile,
+    nameCodeTable,
+    textFile;
+
+    experiment.encodedResources = encodedResources;
+    experimentJSON = JSON.stringify(experiment);
+    // Declare type property as an enum for the android json library "com.fasterxml.jackson"
+    experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
+    jsonFile = generateFile(experimentJSON, "application/json");
+    nameCodeTable = ModelManager.getNameCodeTable(experiment);
+    if (nameCodeTable.length !== 0) {
+        textFile = generateFile(nameCodeTable, "text/plain");
+        downloadLinkElement.setAttribute("href", textFile);
+        downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
+        downloadLinkElement.click();
+    }
+    downloadLinkElement.setAttribute("href", jsonFile);
+    downloadLinkElement.setAttribute("download", experiment.name + ".json");
+    downloadLinkElement.click();
+}
+
+function generateFile(input, mimeType){
+    let textFile = null,
+    data = new Blob([input], {type: mimeType}); 
+
+    if (textFile !== null) {  
+      window.URL.revokeObjectURL(textFile);  
+    }  
+
+    textFile = window.URL.createObjectURL(data);  
+
+    return textFile; 
+  }
+
+function onLoadExperiment() {
+    if (confirm(Config.LOAD_EXPERIMENT_ALERT)) { // eslint-disable-line no-alert
+        //TODO load experimentJSON
+        //TODO reset IdManager
+        //TODO save experiment and resources
+        //TreeView init and createNodes
+    }
+}
+
+function onNewExperiment() {
+    if (confirm(Config.NEW_EXPERIMENT_ALERT)) { // eslint-disable-line no-alert
+        //TODO reset IdManager
+        //TODO TreeView init and create new experiment
     }
 }
 
@@ -901,27 +961,43 @@ function removeChildResources(node, experiment) {
 
 function onInputChanged(event) {
     let correspondingNode = event.data.correspondingNode,
-    experiment = Storage.load(),
-    currentModelProperties = ModelManager.getDataFromNodeId(correspondingNode.id, experiment),
-    newModelProperties = event.data.newModelProperties,
+    experiment = ModelManager.getExperiment(),
+    currentDataModel = ModelManager.getDataFromNodeId(correspondingNode.id, experiment),
+    newDataModel = event.data.newModelProperties,
+    parentDataModel,
+    nextNodeDataModel,
     timeInMin,
     timeSortedChildNodes,
-    fileName;
+    fileName,
+    rootNode = getRootNode(correspondingNode),
+    validationResult;
 
-    if (inputIsValid(this, correspondingNode, correspondingNode.parentNode, newModelProperties, experiment)) {
-        newModelProperties.id = correspondingNode.id;
-        if (newModelProperties.name !== undefined) {
-            correspondingNode.updateDescription(newModelProperties.name);
+    if (correspondingNode.parentNode !== undefined) {
+        parentDataModel = ModelManager.getDataFromNodeId(correspondingNode.parentNode.id, experiment);
+    }
+    if (correspondingNode.nextNode !== undefined) {
+        nextNodeDataModel = ModelManager.getDataFromNodeId(correspondingNode.nextNode.id, experiment);
+    }
+    validationResult = InputValidator.inputIsValid(newDataModel, correspondingNode, currentDataModel, parentDataModel, nextNodeDataModel);
+    if (validationResult === true) {
+        InputView.hideAlert();
+        InputView.enableInputs();
+        enableNodeActions(this, rootNode);
+        TreeView.showImportExportButtons();
+
+        newDataModel.id = correspondingNode.id;
+        if (newDataModel.name !== undefined) {
+            correspondingNode.updateDescription(newDataModel.name);
         }
-        if (newModelProperties.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
-            correspondingNode.updateDescription(newModelProperties.text);
+        if (newDataModel.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
+            correspondingNode.updateDescription(newDataModel.text);
         }
-        if (newModelProperties.absoluteStartDaysOffset !== undefined || newModelProperties.absoluteStartAtHour !== undefined) {
-            if (newModelProperties.absoluteStartDaysOffset === undefined) {
-                timeInMin = currentModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newModelProperties.absoluteStartAtMinute * 1;
+        if (newDataModel.absoluteStartDaysOffset !== undefined || newDataModel.absoluteStartAtHour !== undefined) {
+            if (newDataModel.absoluteStartDaysOffset === undefined) {
+                timeInMin = currentDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newDataModel.absoluteStartAtMinute * 1;
             }
             else {
-                timeInMin = newModelProperties.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentModelProperties.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentModelProperties.absoluteStartAtMinute * 1;
+                timeInMin = newDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentDataModel.absoluteStartAtMinute * 1;
             }
             correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
             timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
@@ -930,11 +1006,11 @@ function onInputChanged(event) {
         }
     
         if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
-            if (newModelProperties.imageFileName !== undefined) {
-                fileName = newModelProperties.imageFileName;
+            if (newDataModel.imageFileName !== undefined) {
+                fileName = newDataModel.imageFileName;
             }
-            if (newModelProperties.videoFileName !== undefined){
-                fileName = newModelProperties.videoFileName;
+            if (newDataModel.videoFileName !== undefined){
+                fileName = newDataModel.videoFileName;
             }
             if (fileName !== undefined && fileName !== null) {
                 if (!ModelManager.addResource(fileName, event.data.base64String)) {
@@ -942,245 +1018,29 @@ function onInputChanged(event) {
                     // InputView: Set file inputs values to null and display them
                 }
                 else {
-                    ModelManager.updateExperiment(newModelProperties);
+                    ModelManager.updateExperiment(newDataModel);
                 }
             }
             else {
-                ModelManager.updateExperiment(newModelProperties);
+                ModelManager.updateExperiment(newDataModel);
             }
             if (fileName === null) {
                 ModelManager.removeResource(event.data.previousFileName);
             }
         }
         else {
-            ModelManager.updateExperiment(newModelProperties);
+            ModelManager.updateExperiment(newDataModel);
         }
     
         WhereAmIView.update(this.currentSelection);
     }
-}
-
-function inputIsValid(that, node, parentNode, newInput, experiment) {
-    let nodeData = ModelManager.getDataFromNodeId(node.id, experiment),
-    nextNodeData,
-    parentData,
-    newTimeInMin,
-    timeInMin,
-    timeWindow = {},
-    rootNode = getRootNode(node),
-    alert,
-    invalidInput,
-    isValid = true;
-
-    if (parentNode !== undefined) {
-        parentData = ModelManager.getDataFromNodeId(parentNode.id, experiment);
-    }
-    if (node.nextNode !== undefined) {
-        nextNodeData = ModelManager.getDataFromNodeId(node.nextNode.id, experiment);
-    }
-    if (node.type === Config.TYPE_EXPERIMENT_GROUP) {
-        if (newInput.name !== undefined) {
-            for (let group of parentData.groups) {
-                if (group.name === newInput.name && group !== nodeData) {
-                    invalidInput = "name";
-                    alert = Config.EXPERIMENT_GROUP_NAME_NOT_UNIQUE;
-                    isValid = false;
-                    break;
-                }
-            }
-        }
-    }
-    else if (node.type === Config.TYPE_SURVEY) {
-        if (newInput.name !== undefined) {
-            for (let survey of parentData.surveys) {
-                if (survey.name === newInput.name && survey !== nodeData) {
-                    invalidInput = "name";
-                    alert = Config.SURVEY_NAME_NOT_UNIQUE;
-                    isValid = false;
-                    break;
-                }
-            }
-        }
-        // TODO: Alert also shows when only hours got typed or when minutes with a 0 value as first character got typed
-        if (newInput.absoluteStartDaysOffset !== undefined
-            || newInput.absoluteStartAtHour !== undefined
-            || newInput.absoluteStartAtMinute !== undefined) {
-
-            if (newInput.absoluteStartDaysOffset !== undefined) {
-                newTimeInMin = newInput.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
-            }
-            if (newInput.absoluteStartAtHour !== undefined) {
-                newTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newInput.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
-            }
-            if (newInput.absoluteStartAtMinute !== undefined) {
-                newTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newInput.absoluteStartAtMinute;
-            }
-            for (let survey of parentData.surveys) {
-                if (survey !== nodeData) {
-                    timeInMin = survey.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + survey.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + survey.absoluteStartAtMinute;
-                    timeWindow.start = timeInMin - nodeData.maxDurationInMin - nodeData.notificationDurationInMin;
-                    timeWindow.end = timeInMin + survey.maxDurationInMin + survey.notificationDurationInMin;
-                    if (newTimeInMin >= timeWindow.start && newTimeInMin <= timeWindow.end) {
-                        alert = Config.SURVEY_OVERLAPS;
-                        if (newInput.absoluteStartDaysOffset !== undefined) {
-                            invalidInput = "absolutesStartDaysOffset";
-                        }
-                        else {
-                            invalidInput = "absoluteStartAtHour";
-                        }
-                        isValid = false;
-                    }
-                }
-            }
-        }
-        if (nextNodeData !== undefined) {
-            if (newInput.maxDurationInMin !== undefined || newInput.notificationDurationInMin !== undefined) {
-                timeInMin = nextNodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nextNodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nextNodeData.absoluteStartAtMinute;
-                newTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
-    
-                if (newInput.maxDurationInMin !== undefined) {
-                    if (newTimeInMin + nodeData.notificationDurationInMin + newInput.maxDurationInMin >= timeInMin) {
-                        invalidInput = "maxDurationInMin";
-                        alert = Config.SURVEY_OVERLAPS;
-                        isValid = false;
-                    }
-                }
-                else {
-                    if (newTimeInMin + newInput.notificationDurationInMin + nodeData.maxDurationInMin >= timeInMin) {
-                        invalidInput = "notificationDurationInMin";
-                        alert = Config.SURVEY_OVERLAPS;
-                        isValid = false;
-                    }
-                }
-            }
-        }
-    }
-    else if (node.type === Config.STEP_TYPE_INSTRUCTION) {
-        if (newInput.header !== undefined) {
-            if (newInput.header.length > Config.INSTRUCTION_HEADER_MAX_LENGTH) {
-                invalidInput = "header";
-                alert = Config.INPUT_TOO_LONG;
-                isValid = false;
-            }
-        }
-        if (newInput.text !== undefined) {
-            if (nodeData.imageFileName !== null || nodeData.videoFileName !== null) {
-                if (newInput.text.length > Config.INSTRUCTION_TEXT_WITH_RESOURCE_MAX_LENGTH) {
-                    invalidInput = "text";
-                    alert = Config.INPUT_TOO_LONG;
-                    isValid = false;
-                }
-            }
-            else {
-                if (newInput.text.length > Config.INSTRUCTION_TEXT_MAX_LENGTH) {
-                    invalidInput = "text";
-                    alert = Config.INPUT_TOO_LONG;
-                    isValid = false;
-                }
-            }
-        }
-        if ((newInput.imageFileName !== undefined && newInput.imageFileName !== null)
-            || (newInput.videoFileName !== undefined && newInput.videoFileName !== null)) {
-                if (nodeData.text.length > Config.INSTRUCTION_TEXT_WITH_RESOURCE_MAX_LENGTH) {
-                    invalidInput = "text";
-                    alert = Config.INPUT_TOO_LONG_WITH_RESOURCE;
-                    isValid = false;
-                }
-        }
-        if (newInput.waitingText !== undefined) {
-            if (newInput.waitingText.length > Config.INSTRUCTION_WAITING_TEXT_MAX_LENGTH) {
-                invalidInput = "waitingText";
-                alert = Config.INPUT_TOO_LONG;
-                isValid = false;
-            }
-        }
-    }
-    else if (node.type === Config.STEP_TYPE_BREATHING_EXERCISE) {
-        if (newInput.durationInMin !== undefined) {
-            if (newInput.durationInMin > Config.BREATHING_EXERCISE_MAX_DURATION) {
-                invalidInput = "durationInMin";
-                alert = Config.BREATHING_EXERCISE_DURATION_TOO_LONG;
-                isValid = false;
-            }
-        }
-    }
-    else if (node.parentNode !== undefined && node.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        if (newInput.name !== undefined) {
-            for (let question of parentData.questions) {
-                if (question.name === newInput.name && question !== nodeData) {
-                    invalidInput = "name";
-                    alert = Config.QUESTION_NAME_NOT_UNIQUE;
-                    isValid = false;
-                    break;
-                }
-            }
-        }
-        if (node.type === Config.QUESTION_TYPE_LIKERT) {
-            if (newInput.scaleMinimumLabel !== undefined || newInput.scaleMaximumLabel !== undefined) {
-                for (let key in newInput) {
-                    if (Object.prototype.hasOwnProperty.call(newInput, key)) {
-                        if (newInput[key].length > Config.LIKERT_QUESTION_SCALE_LABEL_TEXT_MAX_LENGTH) {
-                            invalidInput = key;
-                            alert = Config.INPUT_TOO_LONG;
-                            isValid = false;
-                        }
-                    }
-                }
-            }
-            if (newInput.initialValue !== undefined) {
-                if (newInput.initialValue > nodeData.itemCount) {
-                    invalidInput = "initialValue";
-                    alert = Config.LIKERT_SCALE_INITIAL_VALUE_NOT_IN_RANGE;
-                    isValid = false;
-                }
-            }
-        }
-        if (node.type === Config.QUESTION_TYPE_POINT_OF_TIME) {
-            if (newInput.pointOfTimeTypes !== undefined) {
-                if (newInput.pointOfTimeTypes.length === 0) {
-                    invalidInput = Config.TYPE_QUESTION;
-                    alert = Config.POINT_OF_TIME_QUESTION_SELECT_AT_LEAST_ONE_TYPE;
-                    isValid = false;
-                }
-            }
-        }
-        if (node.type === Config.QUESTION_TYPE_TIME_INTERVAL) {
-            if (newInput.timeIntervalTypes !== undefined) {
-                if (newInput.timeIntervalTypes.length === 0) {
-                    invalidInput = Config.TYPE_QUESTION;
-                    alert = Config.TIME_INTERVAL_QUESTION_SELECT_AT_LEAST_ONE_TYPE;
-                    isValid = false;
-                }
-            }
-        }
-    }
-    else if (node.type === Config.TYPE_ANSWER) {
-        if (newInput.code !== undefined) {
-            for (let answer of parentData.answers && answer !== nodeData) {
-                if (answer.code === newInput.code) {
-                    invalidInput = "code";
-                    alert = Config.ANSWER_CODE_NOT_UNIQUE;
-                    isValid = false;
-                    break;
-                }
-            }
-        }
-    }
-    if (!isValid) {
-        InputView.showAlert(alert);
-        InputView.disableInputsExcept(invalidInput);
-        disableNodeActions(that, rootNode);
-        // TODO
-        //TreeView.hideSaveLoadButtons();
-    }
     else {
-        InputView.hideAlert();
-        InputView.enableInputs();
-        enableNodeActions(that, rootNode);
-        // TODO
-        //TreeView.showSaveLoadButtons();
+        validationResult.correspondingNode.click();
+        InputView.showAlert(validationResult.alert);
+        InputView.disableInputsExcept(validationResult.invalidInput);
+        disableNodeActions(this, rootNode);
+        TreeView.hideImportExportButtons();
     }
-    return isValid;
 }
 
 function disableNodeActions(that, node) {

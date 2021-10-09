@@ -10,6 +10,8 @@ const Config = {
     LINE_SPACING_SMALL: 10,
     MAX_ID_SIZE: 65535,
     MAX_ID_ALERT: "Du kannst maximal 10.000 Schritte auf einer Ebene erstellen. Kontaktiere den Support falls du die Grenze erweitern möchtest.",
+    LOAD_EXPERIMENT_ALERT: "Wenn du ein neues Experiment lädtst, musst du das aktuelle Experiment speichern und herunterladen, damit es nicht verloren geht. Möchtest du ein neues Experiment laden?",
+    NEW_EXPERIMENT_ALERT: "Wenn du ein neues Experiment erstellst, musst du das aktuelle Experiment speichern und herunterladen, damit es nicht verloren geht. Möchtest du ein neues Experiment erstellen?",
     STEP_CONSTRUCTOR_ERROR: "Cannot construct Step instances directly. Please construct subclasses of Step.",
     QUESTION_CONSTRUCTOR_ERROR: "Cannot construct Question instances directly. Please construct subclasses of Question.",
     NODE_VIEW_CONSTRUCTOR_ERROR: "Cannot construct NodeView instances directly. Please construct subclasses of NodeView.",
@@ -29,6 +31,9 @@ const Config = {
 
     // View events:
 
+    EVENT_SAVE_EXPERIMENT: "saveExperiment",
+    EVENT_LOAD_EXPERIMENT: "loadExperiment",
+    EVENT_NEW_EXPERIMENT: "newExperiment",
     EVENT_NODE_CLICKED: "nodeclicked",
     EVENT_NODE_MOUSE_ENTER: "nodeMouseEnter",
     EVENT_NODE_MOUSE_LEAVE: "nodeMouseLeave",
@@ -45,7 +50,12 @@ const Config = {
 
     // DOM Element ids:
 
+    DOWNLOAD_LINK_ID: "downloadLink",
     TREE_VIEW_CONTAINER_ID: "treeContainer",
+    IMPORT_EXPORT_CONTAINER_ID: "importExportContainer",
+    SAVE_EXPERIMENT_BUTTON_ID: "saveExperimentButton",
+    LOAD_EXPERIMENT_BUTTON_ID: "loadExperimentButton",
+    NEW_EXPERIMENT_BUTTON_ID: "newExperimentButton",
     WHERE_AM_I_VIEW_CONTAINER_ID: "whereAmIContainer",
     NODE_TEMPLATE_ID: "nodeTemplate",
     INPUT_VIEW_CONTAINER_ID: "inputContainer",
@@ -53,7 +63,6 @@ const Config = {
     INPUT_VIEW_ALERT_ID: "inputAlert",
     INPUT_VIEW_HEADER_ID: "inputHeader",
     INPUT_VIEW_DELETE_BUTTON_ID: "inputDeleteButton",
-    INPUT_VIEW_SAVE_BUTTON_ID: "inputSaveButton",
     INPUT_FIELD_TEMPLATE_ID: "inputField",
 
     // CSS Class names:

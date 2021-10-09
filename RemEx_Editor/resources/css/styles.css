@@ -24,6 +24,15 @@ body {
     display: none !important;
 }
 
+.save-experiment-button {
+    position: absolute;
+    width: 10%;
+    height: 10%;
+    background-color: darkred;
+    right: 0;
+    top: 0;
+}
+
 .tree-container {
     position: absolute;
     width: 90%;

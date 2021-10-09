@@ -1,4 +1,4 @@
-import Config from "../utils/Config.js";
+import Config from "./Config.js";
 
 // Class to find unique ids for surveys, steps, questions...
 

@@ -1,5 +1,5 @@
 import Config from "../utils/Config.js";
-import {Observable, Event} from "../utils/Observable.js";
+import {Observable, Event as ControllerEvent} from "../utils/Observable.js";
 import RootNode from "./nodeView/RootNode.js";
 
 const INPUT_FIELD_TEMPLATE_STRING = document.querySelector("#" + Config.INPUT_FIELD_TEMPLATE_ID).innerHTML.trim();
@@ -114,11 +114,12 @@ class InputView extends Observable {
     }
 
     selectFirstInput() {
-        let inputFields = this.inputFieldsContainer.querySelectorAll("input");
+        let inputElements = this.inputFieldsContainer.querySelectorAll("input");
 
-        for (let inputField of inputFields) {
-            if (inputField.getAttribute("type") === "text") {
-                inputField.select();
+        for (let inputElement of inputElements) {
+            if (inputElement.getAttribute("type") === "text") {
+                inputElement.dispatchEvent(new Event("keyup"));
+                inputElement.select();
                 return;
             }
         }
@@ -411,17 +412,17 @@ function onInputChanged(event) {
             data.questionType = questionType;
             if (this.correspondingNode.previousNode !== undefined) {
                 data.target = this.correspondingNode.previousNode;
-                addNodeEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
+                addNodeEvent = new ControllerEvent(Config.EVENT_ADD_NEXT_NODE, data);
             }
             else if (this.correspondingNode.nextNode !== undefined) {
                 data.target = this.correspondingNode.nextNode;
-                addNodeEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+                addNodeEvent = new ControllerEvent(Config.EVENT_ADD_PREV_NODE, data);
             }
             else {
                 data.target = this.correspondingNode.parentNode;
-                addNodeEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
+                addNodeEvent = new ControllerEvent(Config.EVENT_ADD_CHILD_NODE, data);
             }
-            removeNodeEvent = new Event(Config.EVENT_REMOVE_NODE, data);
+            removeNodeEvent = new ControllerEvent(Config.EVENT_REMOVE_NODE, data);
             this.notifyAll(removeNodeEvent);
             this.notifyAll(addNodeEvent);
         }
@@ -460,12 +461,12 @@ function onInputChanged(event) {
                     }
                     event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                     data.base64String = result;
-                    inputChangeEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
+                    inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
                     this.notifyAll(inputChangeEvent);
                 }.bind(this));
             }
             else {
-                inputChangeEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
+                inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
                 this.notifyAll(inputChangeEvent);
             }
         }
@@ -507,7 +508,7 @@ function onRemoveNodeButtonClicked() {
     data = {
         correspondingNode: this.correspondingNode,
     };
-    controllerEvent = new Event(Config.EVENT_REMOVE_NODE, data);
+    controllerEvent = new ControllerEvent(Config.EVENT_REMOVE_NODE, data);
     this.notifyAll(controllerEvent);
 }
 
@@ -540,7 +541,7 @@ function onClearInput(event) {
         videoElement.remove();
     }
 
-    inputChangeEvent = new Event(Config.EVENT_INPUT_CHANGED, data);
+    inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
     this.notifyAll(inputChangeEvent);
 }
 

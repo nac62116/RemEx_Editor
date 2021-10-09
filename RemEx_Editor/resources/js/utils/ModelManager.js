@@ -1,6 +1,6 @@
-import Config from "../utils/Config.js";
-import Storage from "../utils/Storage.js";
-import IndexedDB from "../utils/IndexedDB.js";
+import Config from "./Config.js";
+import Storage from "./Storage.js";
+import IndexedDB from "./IndexedDB.js";
 import EncodedResource from "../model/EncodedResource.js";
 import Experiment from "../model/Experiment.js";
 import ExperimentGroup from "../model/ExperimentGroup.js";
@@ -21,15 +21,7 @@ class ModelManager {
     constructor() {
         this.usedResourceFileNames = [];
     }
-
-    removeExperiment() {
-        Storage.clear();
-        for (let fileName of this.usedResourceFileNames) {
-            IndexedDB.deleteResource(fileName);
-        }
-        this.usedResourceFileNames = [];
-    }
-
+    
     initExperiment() {
         let experiment,
         properties = {};
@@ -46,6 +38,18 @@ class ModelManager {
         }
 
         return experiment;
+    }
+
+    removeExperiment() {
+        Storage.clear();
+        for (let fileName of this.usedResourceFileNames) {
+            IndexedDB.deleteResource(fileName);
+        }
+        this.usedResourceFileNames = [];
+    }
+
+    getExperiment() {
+        return Storage.load();
     }
 
     extendExperiment(parentNode, initialProperties, stepType, questionType) {
@@ -217,6 +221,43 @@ class ModelManager {
 
     getResource(fileName) {
         return IndexedDB.getResource(fileName);
+    }
+
+    getAllResources() {
+        let encodedResources = [];
+        for (let fileName of this.usedResourceFileNames) {
+            encodedResources.push(IndexedDB.getResource(fileName));
+        }
+        return encodedResources;
+    }
+
+    getNameCodeTable(experiment) {
+        let nameCodeTable = "";
+
+        for (let group of experiment.groups) {
+            for (let survey of group.surveys) {
+                for (let step of survey.steps) {
+                    if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                        for (let question of step.questions) {
+                            if (question.type === Config.QUESTION_TYPE_LIKERT) {
+
+                                nameCodeTable += question.name + ":\n";
+                                nameCodeTable += "  " + question.scaleMinimumLabel + ": 1\n";
+                                nameCodeTable += "  " + question.scaleMaximumLabel + ": " + question.itemCount + "\n\n";
+                            }
+                            if (question.type === Config.QUESTION_TYPE_CHOICE) {
+                                nameCodeTable += question.name + ":\n";
+                                for (let answer of question.answers) {
+                                    nameCodeTable += "  " + answer.text + ": " + answer.code + "\n";
+                                }
+                                nameCodeTable += "\n";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return nameCodeTable;
     }
 }
 
