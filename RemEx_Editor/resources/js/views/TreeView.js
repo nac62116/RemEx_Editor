@@ -74,6 +74,16 @@ class TreeView {
         removeChildNodes(node);
     }
 
+    getNodeById(id) {
+        let node = getNode(this.rootNode, id);
+        if (node === undefined) {
+            throw "Couldnt find node with id " + id + " inside the TreeView.";
+        }
+        else {
+            return node;
+        }
+    }
+
 }
 
 function removeChildNodes(node) {
@@ -105,6 +115,26 @@ function removeChildNodes(node) {
         }
         removeChildNodes(childNode);
     }
+}
+
+function getNode(node, id) {
+    let target;
+    if (node === undefined) {
+        return undefined;
+    }
+    if (node.id === id) {
+        return node;
+    }
+    for (let childNode of node.childNodes) {
+        target = getNode(childNode, id);
+        if (target === undefined) {
+            continue;
+        }
+        else {
+            break;
+        }
+    }
+    return target;
 }
 
 export default new TreeView();

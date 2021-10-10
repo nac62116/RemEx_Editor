@@ -2,6 +2,64 @@ import Config from "./Config.js";
 
 class InputValidator {
 
+    experimentIsValid(experiment) {
+        let result = true;
+
+        // -> experiment has at least one group
+        if (experiment.groups.length === 0) {
+            result = {
+                correspondingNodeId: experiment.id,
+                alert: Config.EXPERIMENT_AT_LEAST_ONE_GROUP,
+            };
+            return result;
+        }
+        // -> groups have at least one survey
+        for (let group of experiment.groups) {
+            if (group.surveys.length === 0) {
+                result = {
+                    correspondingNodeId: group.id,
+                    alert: Config.EXPERIMENT_GROUP_AT_LEAST_ONE_SURVEY,
+                };
+                return result;
+            }
+            // -> surveys have at least one step
+            for (let survey of group.surveys) {
+                if (survey.steps.length === 0) {
+                    result = {
+                        correspondingNodeId: survey.id,
+                        alert: Config.SURVEY_AT_LEAST_ONE_STEP,
+                    };
+                    return result;
+                }
+                // -> questionnaires have at least one question
+                for (let step of survey.steps) {
+                    if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                        if (step.questions.length === 0) {
+                            result = {
+                                correspondingNodeId: step.id,
+                                alert: Config.QUESTIONNAIRE_AT_LEAST_ONE_QUESTION,
+                            };
+                            return result;
+                        }
+                        // -> choice questions have at least two answers
+                        for (let question of step.questions) {
+                            if (question.type === Config.QUESTION_TYPE_CHOICE) {
+                                if (question.answers.length <= 1) {
+                                    result = {
+                                        correspondingNodeId: question.id,
+                                        alert: Config.CHOICE_QUESTION_AT_LEAST_ONE_ANSWER,
+                                    };
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
     inputIsValid(node, nodeData, parentData) {
         let alert,
         invalidInput,
@@ -184,7 +242,7 @@ class InputValidator {
                 if (nodeData.initialValue !== undefined) {
                     if (nodeData.initialValue > nodeData.itemCount) {
                         invalidInput = "initialValue";
-                        alert = Config.LIKERT_SCALE_INITIAL_VALUE_NOT_IN_RANGE;
+                        alert = Config.LIKERT_QUESTION_SCALE_INITIAL_VALUE_NOT_IN_RANGE;
                         result = {
                             correspondingNode: node,
                             invalidInput: invalidInput,

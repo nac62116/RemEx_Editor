@@ -17,20 +17,22 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Up and download experiment.json buttons, Export button answer.name <-> answer.code table 
-// -> Node icons
-// -> Code cleaning
+// -> Check supported video and image formats in the android apps VideoView
+// -> Remove relative survey code in the android app.
+// -> Load button and Code cleaning
+// -> Copy paste option?
 // -> Create .exe file for install
+// -> Node icons
 // -> InfoView
 // (-> Colors and style)
 
 // ENHANCEMENT:
-// - Copy paste option
 // - Optimize key movement (Shortcuts (e.g. Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
-// - Calculate the optimal duration for a survey depending on its content
-// - Fullscreen Buttons
-// - Survey time randomization
 // - Show survey time windows (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
+// - Calculate the optimal duration for a survey depending on its content
+// - Survey time randomization
+// - Add new survey steps like distraction games, etc...
+// - Add new question types
 
 class Controller {
 
@@ -128,7 +130,7 @@ class Controller {
         InputView.addEventListener(Config.EVENT_ADD_PREV_NODE, onAddPreviousNode.bind(this));
         InputView.addEventListener(Config.EVENT_ADD_CHILD_NODE, onAddChildNode.bind(this));
         InputView.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNode.bind(this));
-        // InfoViewManager.initInfoView();
+        
         document.addEventListener("keyup", onKeyUp.bind(this));
     }
 }
@@ -137,26 +139,37 @@ function onSaveExperimentButtonClicked() {
     let downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID),
     experiment = ModelManager.getExperiment(),
     encodedResources = ModelManager.getAllResources(),
+    result,
+    correspondingNode,
     experimentJSON,
     jsonFile,
     nameCodeTable,
     textFile;
 
-    experiment.encodedResources = encodedResources;
-    experimentJSON = JSON.stringify(experiment);
-    // Declare type property as an enum for the android json library "com.fasterxml.jackson"
-    experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
-    jsonFile = generateFile(experimentJSON, "application/json");
-    nameCodeTable = ModelManager.getNameCodeTable(experiment);
-    if (nameCodeTable.length !== 0) {
-        textFile = generateFile(nameCodeTable, "text/plain");
-        downloadLinkElement.setAttribute("href", textFile);
-        downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
+    result = InputValidator.experimentIsValid(experiment);
+    if (result !== true) {
+        correspondingNode = TreeView.getNodeById(result.correspondingNodeId);
+        correspondingNode.parentNode.click();
+        correspondingNode.click();
+        InputView.showAlert(result.alert);
+    }
+    else {
+        experiment.encodedResources = encodedResources;
+        experimentJSON = JSON.stringify(experiment);
+        // Declare type property as an enum for the android json library "com.fasterxml.jackson"
+        experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
+        jsonFile = generateFile(experimentJSON, "application/json");
+        nameCodeTable = ModelManager.getNameCodeTable(experiment);
+        if (nameCodeTable.length !== 0) {
+            textFile = generateFile(nameCodeTable, "text/plain");
+            downloadLinkElement.setAttribute("href", textFile);
+            downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
+            downloadLinkElement.click();
+        }
+        downloadLinkElement.setAttribute("href", jsonFile);
+        downloadLinkElement.setAttribute("download", experiment.name + ".json");
         downloadLinkElement.click();
     }
-    downloadLinkElement.setAttribute("href", jsonFile);
-    downloadLinkElement.setAttribute("download", experiment.name + ".json");
-    downloadLinkElement.click();
 }
 
 function generateFile(input, mimeType){
@@ -327,7 +340,7 @@ function onNodeClicked(event) {
 
         clickedNode.emphasize(this.currentSelection);
         clickedNode.focus();
-        //clickedNode.show();
+        clickedNode.show();
         for (let childNode of clickedNode.childNodes) {
             childNode.show();
             hideChildrenBeginningFromNode(childNode);
@@ -409,14 +422,6 @@ function onNodeClicked(event) {
             InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
         }
         InputView.selectFirstInput();
-        if (clickedNode.type === Config.TYPE_ANSWER) {
-            if (clickedNode.parentNode.childNodes.length === 1) {
-                InputView.hideDeleteButton();
-            }
-            else {
-                InputView.showDeleteButton();
-            }
-        }
 
         if (clickedNode.parentNode !== undefined) {
             parentNodeDataModel = ModelManager.getDataFromNodeId(clickedNode.parentNode.id, experiment);
@@ -427,11 +432,6 @@ function onNodeClicked(event) {
             InputView.enableInputs();
             enableNodeActions(this, TreeView.rootNode);
             this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            if (clickedNode.type === Config.QUESTION_TYPE_CHOICE) {
-                if (clickedNode.childNodes.length === 0) {
-                    clickedNode.addChildNode();
-                }
-            }
         }
         else {
             validationResult.correspondingNode.click();
@@ -1157,11 +1157,6 @@ function onInputChanged(event) {
         InputView.enableInputs();
         enableNodeActions(this, TreeView.rootNode);
         this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-        if (correspondingNode.type === Config.QUESTION_TYPE_CHOICE) {
-            if (correspondingNode.childNodes.length === 0) {
-                correspondingNode.addChildNode();
-            }
-        }
     }
     else {
         validationResult.correspondingNode.click();

@@ -52,6 +52,7 @@ class NodeView extends Observable {
     }
 
     click() {
+        this.nodeElements.nodeBody.dispatchEvent(new Event("mouseenter"));
         this.nodeElements.nodeBody.dispatchEvent(new Event("click"));
     }
 

@@ -497,8 +497,10 @@ const Config = {
     // Input invalid messages:
     
     EXPERIMENT_NAME_EMPTY: "Bitte wähle einen geeigneten Namen für dein Experiment um fortzufahren.",
+    EXPERIMENT_AT_LEAST_ONE_GROUP: "Das Experiment hat keine Gruppen. Bitte füge mindestens eine Gruppe hinzu um dein Experiment zu speichern.",
     EXPERIMENT_GROUP_NAME_EMPTY: "Bitte wähle einen geeigneten Namen für deine Experiment Gruppe um fortzufahren.",
     EXPERIMENT_GROUP_NAME_NOT_UNIQUE: "Der gewählte Name deiner Experiment Gruppe existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
+    EXPERIMENT_GROUP_AT_LEAST_ONE_SURVEY: "Die Experiment Gruppe hat keine Befragungen. Bitte füge mindestens eine Befragung hinzu indem du auf die Zeitachse klickst.",
     SURVEY_NAME_EMPTY: "Um deine Befragung erfolgreich zu erstellen musst du ihr einen Namen geben.",
     SURVEY_DURATION_INVALID: "Die Dauer deiner Befragung wurde noch nicht angegeben oder beinhaltet einen Wert unter 0. Bitte gebe die Dauer deiner Befragung in Minuten an.",
     SURVEY_TIME_NOT_SET: "Es wurde noch keine Erinnerungszeit für deine Befragung angegeben. Bitte wähle eine absolute Uhrzeit (z.B. 15:30 Uhr am ersten Befragungstag, 8:45 Uhr am dritten Befragungstag, ...) oder eine relative Erinnerungszeit, im Verhältnis zur letzten Befragung (z.B. +30 Min, +2 Std, +2 Tage, ...)",
@@ -507,14 +509,17 @@ const Config = {
     SURVEY_NOTIFICATION_DURATION_INVALID: "Du hast noch keine Erinnerungsdauer angegeben. Bitte wähle eine Dauer die größer als 0 ist.",
     SURVEY_NAME_NOT_UNIQUE: "Der gewählte Name deiner Befragung existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
     SURVEY_OVERLAPS: "Die gewählte Startzeit und Dauer der Befragung überlappt mit dem Zeitfenster einer anderen Befragungen. Das Zeitfenster einer Befragung berechnet sich aus der Benachrichtigungsdauer und der Befragungsdauer. In diesem Zeitfenster sollten keine weiteren Befragungen geplant werden.",
+    SURVEY_AT_LEAST_ONE_STEP: "Die Befragung hat keine Schritte. Bitte füge mindestens einen Schritt hinzu. Zum Beispiel eine Instruktion als Begrüßung.",
+    QUESTIONNAIRE_AT_LEAST_ONE_QUESTION: "Der Fragebogen enthält keine Fragen. Bitte füge mindestens eine Frage hinzu.",
     QUESTION_NAME_NOT_UNIQUE: "Der gewählte Name deiner Frage existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
+    BREATHING_EXERCISE_DURATION_TOO_LONG: "Die längste Atemübung die in dieser Anwendung unterstützt wird dauert 60 Minuten. Bitte reduziere die Dauer der Atemübung.",
+    CHOICE_QUESTION_AT_LEAST_ONE_ANSWER: "Eine Auswahlfrage muss mindestens zwei Antwortmöglichkeiten haben. Wo bleibt sonst die Wahl?",
+    LIKERT_QUESTION_SCALE_INITIAL_VALUE_NOT_IN_RANGE: "Der Anfangswert liegt nicht im Bereich der Skala. Bitte wähle einen Anfangswert der kleiner oder gleich der Skalenlänge ist.",
+    POINT_OF_TIME_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitpunkttyp muss gewählt werden.",
+    TIME_INTERVAL_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitraumtyp muss gewählt werden.",
     ANSWER_CODE_NOT_UNIQUE: "Der gewählte Code deiner Antwort existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
     INPUT_TOO_LONG: "Die Eingabe überschreitet die maximal zulassige Länge. Bitte kürze deine Eingabe.",
     INPUT_TOO_LONG_WITH_RESOURCE: "Die Eingabe überschreitet die maximal zulassige Länge für Instruktionen mit Bildern oder Videos. Bitte kürze deine Eingabe.",
-    BREATHING_EXERCISE_DURATION_TOO_LONG: "Die längste Atemübung die in dieser Anwendung unterstützt wird dauert 60 Minuten. Bitte reduziere die Dauer der Atemübung.",
-    LIKERT_SCALE_INITIAL_VALUE_NOT_IN_RANGE: "Der Anfangswert liegt nicht im Bereich der Skala. Bitte wähle einen Anfangswert der kleiner oder gleich der Skalenlänge ist.",
-    POINT_OF_TIME_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitpunkttyp muss gewählt werden.",
-    TIME_INTERVAL_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitraumtyp muss gewählt werden.",
     
     // Model related:
     

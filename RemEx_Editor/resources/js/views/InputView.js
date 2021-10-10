@@ -102,14 +102,6 @@ class InputView extends Observable {
         this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
-    showDeleteButton() {
-        this.deleteButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-    }
-
-    hideDeleteButton() {
-        this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-    }
-
     showAlert(alert) {
         this.inputViewContainer.scrollTop = 0;
         this.alertElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);

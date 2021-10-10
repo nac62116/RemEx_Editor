@@ -24,10 +24,6 @@ class StandardNode extends NodeView {
         }
     }
 
-    addChildNode() {
-        this.nodeElements.addChildButton.dispatchEvent(new Event("click"));
-    }
-
     show() {
         super.show();
         this.nodeElements.inputPath.removeAttribute("display");

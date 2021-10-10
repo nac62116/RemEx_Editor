@@ -9,7 +9,9 @@ class DeflateableNode extends StandardNode {
 
     show() {
         super.show();
-        this.nodeElements.nodeDescription.setAttribute("display", "none");
+        if (!this.isFocused) {
+            this.nodeElements.nodeDescription.setAttribute("display", "none");
+        }
     }
 
     emphasize() {

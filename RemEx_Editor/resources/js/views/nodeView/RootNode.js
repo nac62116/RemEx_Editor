@@ -12,10 +12,6 @@ class RootNode extends NodeView {
         this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
     }
 
-    addChildNode() {
-        this.nodeElements.addChildButton.dispatchEvent(new Event("click"));
-    }
-
     focus() {
         super.focus();
         if (this.childNodes.length === 0) {
