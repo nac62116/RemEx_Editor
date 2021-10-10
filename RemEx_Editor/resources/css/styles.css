@@ -118,10 +118,8 @@ body {
     left: 10%;
     width: 80%;
     height: auto;
-    margin-bottom: 5px;
+    margin-top: 5px;
     background-color: rgb(100, 0, 0);
-    scrollbar-color: rgb(75, 0, 0) rgb(0, 0, 0);
-    scrollbar-width: thin;
 }
 
 .input-header {

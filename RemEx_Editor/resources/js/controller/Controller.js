@@ -43,7 +43,6 @@ class Controller {
         inputViewContainer = document.querySelector("#" + Config.INPUT_VIEW_CONTAINER_ID),
         experiment,
         newNode,
-        saveButton,
         uploadButton,
         newButton;
 
@@ -198,6 +197,7 @@ function onUploadExperimentButtonClicked() {
                 IdManager.setIds(ids);
                 WhereAmIView.update([]);
                 InputView.hide();
+                InputView.hideAlert();
                 // TODO
                 //TreeView init and createNodes
             }.bind(this));
@@ -216,6 +216,7 @@ function onNewExperimentButtonClicked() {
         TreeView.removeNode(TreeView.rootNode);
         WhereAmIView.update([]);
         InputView.hide();
+        InputView.hideAlert();
         experiment = ModelManager.initExperiment();
         newNode = createNode(this, undefined, experiment, undefined, undefined);
         newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
@@ -307,7 +308,8 @@ function onNodeClicked(event) {
     previousFocusedNode = TreeView.currentFocusedNode,
     parentNode = clickedNode.parentNode,
     experiment = Storage.load(),
-    inputData = ModelManager.getDataFromNodeId(clickedNode.id, experiment),
+    nodeDataModel = ModelManager.getDataFromNodeId(clickedNode.id, experiment),
+    parentNodeDataModel,
     movingVector = {
         x: undefined,
         y: undefined,
@@ -315,7 +317,8 @@ function onNodeClicked(event) {
     ongoingInstructionsForInputView = [],
     firstNodeOfRow,
     questionsForInputView = [],
-    promise;
+    promise,
+    validationResult;
 
     if (clickedNode !== previousFocusedNode) {
         this.currentSelection = [];
@@ -382,11 +385,11 @@ function onNodeClicked(event) {
             }
         }
         if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
-            if (inputData.imageFileName !== null) {
-                promise = ModelManager.getResource(inputData.imageFileName);
+            if (nodeDataModel.imageFileName !== null) {
+                promise = ModelManager.getResource(nodeDataModel.imageFileName);
             }
-            if (inputData.videoFileName !== null) {
-                promise = ModelManager.getResource(inputData.videoFileName);
+            if (nodeDataModel.videoFileName !== null) {
+                promise = ModelManager.getResource(nodeDataModel.videoFileName);
             }
             if (promise !== undefined) {
                 promise.then(function(result) {
@@ -394,18 +397,37 @@ function onNodeClicked(event) {
                         console.log(result);
                     }
                     else {
-                        InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView, result);
+                        InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, result);
                     }
                 });
             }
             else {
-                InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView, undefined);
+                InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
             }
         }
         else {
-            InputView.show(clickedNode, inputData, ongoingInstructionsForInputView, questionsForInputView, undefined);
+            InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
         }
         InputView.selectFirstInput();
+
+        if (clickedNode.parentNode !== undefined) {
+            parentNodeDataModel = ModelManager.getDataFromNodeId(clickedNode.parentNode.id, experiment);
+        }
+        validationResult = InputValidator.inputIsValid(clickedNode, nodeDataModel, parentNodeDataModel);
+        if (validationResult === true) {
+            InputView.hideAlert();
+            InputView.enableInputs();
+            enableNodeActions(this, TreeView.rootNode);
+            this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        else {
+            validationResult.correspondingNode.click();
+            InputView.showAlert(validationResult.alert);
+            InputView.enableInputs();
+            InputView.disableInputsExcept(validationResult.invalidInput);
+            disableNodeActions(this, TreeView.rootNode);
+            this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }
     }
 }
 
@@ -872,13 +894,13 @@ function onTimelineClicked(event) {
         timeInMin = event.data.timeInMin;
         correspondingNode.updateNodeTimeMap(newNode, timeInMin);
         timeSortedChildNodes = correspondingNode.getTimeSortedChildNodes();
+        updateSurveyLinks(timeSortedChildNodes);
         correspondingNode.updateTimelineLength();
         newNode.click();
-        updateNextSurveyIds(timeSortedChildNodes);
     }
 }
 
-function updateNextSurveyIds(timeSortedChildNodes) {
+function updateSurveyLinks(timeSortedChildNodes) {
     let properties = {};
     for (let i = 0; i < timeSortedChildNodes.length; i++) {
         properties.id = timeSortedChildNodes[i].id;
@@ -889,17 +911,21 @@ function updateNextSurveyIds(timeSortedChildNodes) {
             properties.nextSurveyId = undefined;
         }
         ModelManager.updateExperiment(properties);
-        if (i === 0) {
-            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
+        if (timeSortedChildNodes.length === 1) {
             timeSortedChildNodes[i].previousNode = undefined;
+            timeSortedChildNodes[i].nextNode = undefined;
+        }
+        else if (i === 0) {
+            timeSortedChildNodes[i].previousNode = undefined;
+            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
         }
         else if (i === timeSortedChildNodes.length - 1) {
             timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
             timeSortedChildNodes[i].nextNode = undefined;
         }
         else {
-            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
             timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
+            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
         }
     }
 }
@@ -929,7 +955,7 @@ function onRemoveNode(event) {
     if (nodeToRemove.parentNode instanceof TimelineNode) {
         nodeToRemove.parentNode.shortenNodeTimeMap(nodeToRemove);
         timeSortedChildNodes = nodeToRemove.parentNode.getTimeSortedChildNodes();
-        updateNextSurveyIds(timeSortedChildNodes);
+        updateSurveyLinks(timeSortedChildNodes);
         nodeToRemove.parentNode.updateTimelineLength();
         if (nodeToRemove.nextNode !== undefined) {
             nextFocusedNode = nodeToRemove.nextNode;
@@ -1009,83 +1035,83 @@ function onInputChanged(event) {
     experiment = ModelManager.getExperiment(),
     currentDataModel = ModelManager.getDataFromNodeId(correspondingNode.id, experiment),
     newDataModel = event.data.newModelProperties,
-    parentDataModel,
-    nextNodeDataModel,
+    nodeUpdatedDataModel,
+    parentNodeDataModel,
     timeInMin,
     timeSortedChildNodes,
     fileName,
-    rootNode = getRootNode(correspondingNode),
     validationResult;
 
-    if (correspondingNode.parentNode !== undefined) {
-        parentDataModel = ModelManager.getDataFromNodeId(correspondingNode.parentNode.id, experiment);
+    newDataModel.id = correspondingNode.id;
+    if (newDataModel.name !== undefined) {
+        correspondingNode.updateDescription(newDataModel.name);
     }
-    if (correspondingNode.nextNode !== undefined) {
-        nextNodeDataModel = ModelManager.getDataFromNodeId(correspondingNode.nextNode.id, experiment);
+    if (newDataModel.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
+        correspondingNode.updateDescription(newDataModel.text);
     }
-    validationResult = InputValidator.inputIsValid(newDataModel, correspondingNode, currentDataModel, parentDataModel, nextNodeDataModel);
-    if (validationResult === true) {
-        InputView.hideAlert();
-        InputView.enableInputs();
-        enableNodeActions(this, rootNode);
-        this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+    if (newDataModel.absoluteStartDaysOffset !== undefined || newDataModel.absoluteStartAtHour !== undefined) {
+        if (newDataModel.absoluteStartDaysOffset === undefined) {
+            timeInMin = currentDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newDataModel.absoluteStartAtMinute * 1;
+        }
+        else {
+            timeInMin = newDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentDataModel.absoluteStartAtMinute * 1;
+        }
+        correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
+        timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
+        updateSurveyLinks(timeSortedChildNodes);
+        correspondingNode.parentNode.updateTimelineLength();
+    }
 
-        newDataModel.id = correspondingNode.id;
-        if (newDataModel.name !== undefined) {
-            correspondingNode.updateDescription(newDataModel.name);
+    if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
+        if (newDataModel.imageFileName !== undefined) {
+            fileName = newDataModel.imageFileName;
         }
-        if (newDataModel.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
-            correspondingNode.updateDescription(newDataModel.text);
+        if (newDataModel.videoFileName !== undefined){
+            fileName = newDataModel.videoFileName;
         }
-        if (newDataModel.absoluteStartDaysOffset !== undefined || newDataModel.absoluteStartAtHour !== undefined) {
-            if (newDataModel.absoluteStartDaysOffset === undefined) {
-                timeInMin = currentDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newDataModel.absoluteStartAtMinute * 1;
-            }
-            else {
-                timeInMin = newDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentDataModel.absoluteStartAtMinute * 1;
-            }
-            correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
-            timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
-            updateNextSurveyIds(timeSortedChildNodes);
-            correspondingNode.parentNode.updateTimelineLength();
-        }
-    
-        if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
-            if (newDataModel.imageFileName !== undefined) {
-                fileName = newDataModel.imageFileName;
-            }
-            if (newDataModel.videoFileName !== undefined){
-                fileName = newDataModel.videoFileName;
-            }
-            if (fileName !== undefined && fileName !== null) {
-                if (!ModelManager.addResource(fileName, event.data.base64String)) {
-                    // TODO: Alert, that another file with the same file name already exists
-                    // InputView: Set file inputs values to null and display them
-                }
-                else {
-                    ModelManager.updateExperiment(newDataModel);
-                }
+        if (fileName !== undefined && fileName !== null) {
+            if (!ModelManager.addResource(fileName, event.data.base64String)) {
+                // TODO: Alert, that another file with the same file name already exists
+                // InputView: Set file inputs values to null and display them
             }
             else {
                 ModelManager.updateExperiment(newDataModel);
-            }
-            if (fileName === null) {
-                ModelManager.removeResource(event.data.previousFileName);
             }
         }
         else {
             ModelManager.updateExperiment(newDataModel);
         }
+        if (fileName === null) {
+            ModelManager.removeResource(event.data.previousFileName);
+        }
+    }
+    else {
+        ModelManager.updateExperiment(newDataModel);
+    }
+
+    WhereAmIView.update(this.currentSelection);
     
-        WhereAmIView.update(this.currentSelection);
+    experiment = ModelManager.getExperiment();
+    if (correspondingNode.parentNode !== undefined) {
+        parentNodeDataModel = ModelManager.getDataFromNodeId(correspondingNode.parentNode.id, experiment);
+    }
+    nodeUpdatedDataModel = ModelManager.getDataFromNodeId(correspondingNode.id, experiment);
+    validationResult = InputValidator.inputIsValid(correspondingNode, nodeUpdatedDataModel, parentNodeDataModel);
+    if (validationResult === true) {
+        InputView.hideAlert();
+        InputView.enableInputs();
+        enableNodeActions(this, TreeView.rootNode);
+        this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
     }
     else {
         validationResult.correspondingNode.click();
         InputView.showAlert(validationResult.alert);
+        InputView.enableInputs();
         InputView.disableInputsExcept(validationResult.invalidInput);
-        disableNodeActions(this, rootNode);
+        disableNodeActions(this, TreeView.rootNode);
         this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
+
 }
 
 function disableNodeActions(that, node) {

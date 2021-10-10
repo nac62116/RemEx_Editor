@@ -82,7 +82,7 @@ class TimelineNode extends StandardNode {
                 timeSortedChildNodes.push(node);
             }
             else if (timeSortedChildNodes.length === 1) {
-                if (timeSortedChildNodes[0] >= time) {
+                if (this.nodeTimeMap.get(timeSortedChildNodes[0]) >= time) {
                     timeSortedChildNodes.unshift(node);
                 }
                 else {

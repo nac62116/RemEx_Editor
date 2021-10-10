@@ -26,7 +26,7 @@ class InputView extends Observable {
         this.inputFieldsContainer = document.createElement("div");
         this.inputFieldsContainer.setAttribute("id", Config.INPUT_VIEW_FIELDS_CONTAINER_ID);
         this.inputFieldsContainer.setAttribute("class", Config.INPUT_FIELD_CONTAINER_CSS_CLASS_NAME);
-        this.inputViewContainer.firstElementChild.insertAdjacentElement("afterend", this.inputFieldsContainer);
+        this.inputViewContainer.appendChild(this.inputFieldsContainer);
 
         if (correspondingNode.parentNode !== undefined) {
             if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
@@ -104,6 +104,7 @@ class InputView extends Observable {
     }
 
     showAlert(alert) {
+        this.inputViewContainer.scrollTop = 0;
         this.alertElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         this.alertElement.innerHTML = alert;
     }
@@ -118,7 +119,6 @@ class InputView extends Observable {
 
         for (let inputElement of inputElements) {
             if (inputElement.getAttribute("type") === "text") {
-                inputElement.dispatchEvent(new Event("keyup"));
                 inputElement.select();
                 return;
             }
@@ -126,9 +126,13 @@ class InputView extends Observable {
     }
 
     disableInputsExcept(modelProperty) {
-        let inputElements = this.inputFieldsContainer.querySelectorAll("input:not([name=" + modelProperty + "]"),
+        let inputElements,
         imageElement = this.inputFieldsContainer.querySelector("img"),
         videoElement = this.inputFieldsContainer.querySelector("video");
+
+        if (typeof(modelProperty) === "string") {
+            inputElements = this.inputFieldsContainer.querySelectorAll("input:not([name=" + modelProperty + "]");
+        }
 
         if (this.inputFieldsContainer.firstElementChild.firstElementChild.innerHTML === "Typ:") {
             this.inputFieldsContainer.firstElementChild.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
@@ -142,6 +146,11 @@ class InputView extends Observable {
         }
         if (videoElement !== null) {
             videoElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+        if (modelProperty === "absoluteStartDaysOffset") {
+            this.inputFieldsContainer.querySelector("input[name=absoluteStartAtHour]").parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+            this.inputFieldsContainer.querySelector("input[name=maxDurationInMin]").parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+            this.inputFieldsContainer.querySelector("input[name=notificationDurationInMin]").parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         }
     }
 
