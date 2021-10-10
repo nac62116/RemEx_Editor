@@ -1,5 +1,5 @@
 import NodeView from "./NodeView.js";
-import {Event} from "../../utils/Observable.js";
+import {Event as ControllerEvent} from "../../utils/Observable.js";
 import Config from "../../utils/Config.js";
 
 class RootNode extends NodeView {
@@ -10,6 +10,10 @@ class RootNode extends NodeView {
         this.nodeElements.addChildButton.addEventListener("click", onAddChildNodeClicked.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+    }
+
+    addChildNode() {
+        this.nodeElements.addChildButton.dispatchEvent(new Event("click"));
     }
 
     focus() {
@@ -51,7 +55,7 @@ function onAddChildNodeClicked() {
         data = {
             target: this,
         };
-        controllerEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
+        controllerEvent = new ControllerEvent(Config.EVENT_ADD_CHILD_NODE, data);
         this.notifyAll(controllerEvent);
     }
 }

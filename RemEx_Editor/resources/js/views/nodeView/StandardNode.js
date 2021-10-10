@@ -1,5 +1,5 @@
 import NodeView from "./NodeView.js";
-import {Event} from "../../utils/Observable.js";
+import {Event as ControllerEvent} from "../../utils/Observable.js";
 import Config from "../../utils/Config.js";
 
 class StandardNode extends NodeView {
@@ -22,6 +22,10 @@ class StandardNode extends NodeView {
             this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
             this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
         }
+    }
+
+    addChildNode() {
+        this.nodeElements.addChildButton.dispatchEvent(new Event("click"));
     }
 
     show() {
@@ -124,7 +128,7 @@ function onAddNextNodeClicked() {
         data = {
             target: this,
         };
-        controllerEvent = new Event(Config.EVENT_ADD_NEXT_NODE, data);
+        controllerEvent = new ControllerEvent(Config.EVENT_ADD_NEXT_NODE, data);
         this.notifyAll(controllerEvent);
     }
 }
@@ -136,7 +140,7 @@ function onAddPreviousNodeClicked() {
         data = {
             target: this,
         };
-        controllerEvent = new Event(Config.EVENT_ADD_PREV_NODE, data);
+        controllerEvent = new ControllerEvent(Config.EVENT_ADD_PREV_NODE, data);
         this.notifyAll(controllerEvent);
     }
 }
@@ -148,7 +152,7 @@ function onAddChildNodeClicked() {
         data = {
             target: this,
         };
-        controllerEvent = new Event(Config.EVENT_ADD_CHILD_NODE, data);
+        controllerEvent = new ControllerEvent(Config.EVENT_ADD_CHILD_NODE, data);
         this.notifyAll(controllerEvent);
     }
 }

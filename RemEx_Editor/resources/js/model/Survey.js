@@ -9,6 +9,7 @@ class Survey {
         this.absoluteStartDaysOffset = null;
         this.notificationDurationInMin = 1;
         this.nextSurveyId = null;
+        this.previousSurveyId = null;
         this.steps = [];
     }
 }

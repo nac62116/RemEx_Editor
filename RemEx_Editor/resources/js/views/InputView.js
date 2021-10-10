@@ -60,8 +60,7 @@ class InputView extends Observable {
                         else if (modelPropertyKey === "nextQuestionId") {
                             if (correspondingNode.type === Config.TYPE_ANSWER) {
                                 if (questions.length !== 0) {
-                                    createInputField(this, inputFieldData.label, inputFieldData.inputType,
-                                        questions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, false);
+                                    createInputField(this, inputFieldData.label, inputFieldData.inputType, questions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, true);
                                 }
                             }
                         }
@@ -100,6 +99,14 @@ class InputView extends Observable {
     hide() {
         this.header.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         this.inputFieldsContainer.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+    }
+
+    showDeleteButton() {
+        this.deleteButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+    }
+
+    hideDeleteButton() {
         this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
@@ -193,17 +200,21 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     if (type === "radio" || type === "checkbox") {
         if (addNoSelection) {
             labelElement = document.createElement("label");
-            labelElement.innerHTML = "Keine Auswahl";
-            labelElement.classList.add("radio-label");
             inputElement = document.createElement("input");
+            if (modelProperty === "nextQuestionId") {
+                labelElement.innerHTML = "Fragebogen beenden";
+                inputElement.setAttribute("value", null);
+            }
+            else {
+                labelElement.innerHTML = "Keine Auswahl";
+                inputElement.setAttribute("value", 0);
+            }
+            labelElement.classList.add("radio-label");
             inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
             inputElement.setAttribute("type", type);
             inputElement.setAttribute("name", modelProperty);
-            inputElement.setAttribute("value", 0);
-            if (currentModelValue !== null) {
-                if (currentModelValue === 0) {
-                    inputElement.setAttribute("checked", "true");
-                }
+            if (currentModelValue === 0 || currentModelValue === null) {
+                inputElement.setAttribute("checked", "true");
             }
             inputElement.addEventListener("click", onInputChanged.bind(that));
             
@@ -226,6 +237,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
                     inputElement.setAttribute("checked", "true");
                 }
             }
+
             inputElement.addEventListener("click", onInputChanged.bind(that));
             
             labelElement.insertAdjacentElement("afterbegin", inputElement);

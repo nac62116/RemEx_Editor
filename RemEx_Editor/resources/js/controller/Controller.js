@@ -381,7 +381,7 @@ function onNodeClicked(event) {
             }
             if (clickedNode.parentNode.type === Config.QUESTION_TYPE_CHOICE) {
                 firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
-                questionsForInputView = getQuestionsForInputView(firstNodeOfRow, questionsForInputView);
+                questionsForInputView = getQuestionsForInputView(firstNodeOfRow, clickedNode.parentNode, questionsForInputView);
             }
         }
         if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
@@ -409,6 +409,14 @@ function onNodeClicked(event) {
             InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
         }
         InputView.selectFirstInput();
+        if (clickedNode.type === Config.TYPE_ANSWER) {
+            if (clickedNode.parentNode.childNodes.length === 1) {
+                InputView.hideDeleteButton();
+            }
+            else {
+                InputView.showDeleteButton();
+            }
+        }
 
         if (clickedNode.parentNode !== undefined) {
             parentNodeDataModel = ModelManager.getDataFromNodeId(clickedNode.parentNode.id, experiment);
@@ -419,6 +427,11 @@ function onNodeClicked(event) {
             InputView.enableInputs();
             enableNodeActions(this, TreeView.rootNode);
             this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+            if (clickedNode.type === Config.QUESTION_TYPE_CHOICE) {
+                if (clickedNode.childNodes.length === 0) {
+                    clickedNode.addChildNode();
+                }
+            }
         }
         else {
             validationResult.correspondingNode.click();
@@ -568,7 +581,7 @@ function getOngoingInstructionsForInputView(node, ongoingInstructionsForInputVie
     return getOngoingInstructionsForInputView(node.previousNode, ongoingInstructionsForInputView);
 }
 
-function getQuestionsForInputView(node, questionsForInputView) {
+function getQuestionsForInputView(node, exceptionNode, questionsForInputView) {
     let question,
     modelData,
     experiment = Storage.load();
@@ -576,13 +589,15 @@ function getQuestionsForInputView(node, questionsForInputView) {
     if (node === undefined) {
         return questionsForInputView;
     }
-    modelData = ModelManager.getDataFromNodeId(node.id, experiment);
-    question = {
-        label: modelData.name,
-        value: modelData.id,
-    };
-    questionsForInputView.push(question);
-    return getQuestionsForInputView(node.nextNode, questionsForInputView);
+    if (node !== exceptionNode) {
+        modelData = ModelManager.getDataFromNodeId(node.id, experiment);
+        question = {
+            label: modelData.name,
+            value: modelData.id,
+        };
+        questionsForInputView.push(question);
+    }
+    return getQuestionsForInputView(node.nextNode, exceptionNode, questionsForInputView);
 }
 
 function onAddNextNode(event) {
@@ -678,10 +693,25 @@ function onAddPreviousNode(event) {
 function updateStepLinks(node) {
     let properties = {};
     if (node.nextNode === undefined) {
+        properties.id = node.id;
+        properties.nextStepId = null;
+        if (node.previousNode !== undefined) {
+            properties.previousStepId = node.previousNode.id;
+        }
+        else {
+            properties.previousStepId = null;
+        }
+        ModelManager.updateExperiment(properties);
         return;
     }
     properties.id = node.id;
     properties.nextStepId = node.nextNode.id;
+    if (node.previousNode !== undefined) {
+        properties.previousStepId = node.previousNode.id;
+    }
+    else {
+        properties.previousStepId = null;
+    }
     ModelManager.updateExperiment(properties);
     updateStepLinks(node.nextNode);
 }
@@ -689,13 +719,30 @@ function updateStepLinks(node) {
 function updateQuestionLinks(node) {
     let properties = {};
     if (node.nextNode === undefined) {
+        properties.id = node.id;
+        if (node.type !== Config.QUESTION_TYPE_CHOICE) {
+            properties.nextQuestionId = null;
+        }
+        if (node.previousNode !== undefined) {
+            properties.previousQuestionId = node.previousNode.id;
+        }
+        else {
+            properties.previousQuestionId = null;
+        }
+        ModelManager.updateExperiment(properties);
         return;
     }
+    properties.id = node.id;
     if (node.type !== Config.QUESTION_TYPE_CHOICE) {
-        properties.id = node.id;
         properties.nextQuestionId = node.nextNode.id;
-        ModelManager.updateExperiment(properties);
     }
+    if (node.previousNode !== undefined) {
+        properties.previousQuestionId = node.previousNode.id;
+    }
+    else {
+        properties.previousQuestionId = null;
+    }
+    ModelManager.updateExperiment(properties);
     updateQuestionLinks(node.nextNode);
 }
 
@@ -908,25 +955,33 @@ function updateSurveyLinks(timeSortedChildNodes) {
             properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
         }
         else {
-            properties.nextSurveyId = undefined;
+            properties.nextSurveyId = null;
         }
-        ModelManager.updateExperiment(properties);
         if (timeSortedChildNodes.length === 1) {
             timeSortedChildNodes[i].previousNode = undefined;
+            properties.previousSurveyId = null;
             timeSortedChildNodes[i].nextNode = undefined;
+            properties.nextSurveyId = null;
         }
         else if (i === 0) {
             timeSortedChildNodes[i].previousNode = undefined;
+            properties.previousSurveyId = null;
             timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
+            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
         }
         else if (i === timeSortedChildNodes.length - 1) {
             timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
+            properties.previousSurveyId = timeSortedChildNodes[i - 1].id;
             timeSortedChildNodes[i].nextNode = undefined;
+            properties.nextSurveyId = null;
         }
         else {
             timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
+            properties.previousSurveyId = timeSortedChildNodes[i - 1].id;
             timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
+            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
         }
+        ModelManager.updateExperiment(properties);
     }
 }
 
@@ -1102,6 +1157,11 @@ function onInputChanged(event) {
         InputView.enableInputs();
         enableNodeActions(this, TreeView.rootNode);
         this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        if (correspondingNode.type === Config.QUESTION_TYPE_CHOICE) {
+            if (correspondingNode.childNodes.length === 0) {
+                correspondingNode.addChildNode();
+            }
+        }
     }
     else {
         validationResult.correspondingNode.click();

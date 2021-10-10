@@ -13,6 +13,7 @@ class Step {
         this.type = type;
         this.waitForStep = 0;
         this.nextStepId = null;
+        this.previousStepId = null;
     }
 }
 
