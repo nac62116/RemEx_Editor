@@ -398,7 +398,24 @@ const Config = {
     NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED: "0.3",
     NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED: "1",
 
-    // NodeView body (Sizes are relative to the tree node)
+    // NodeView icon
+    NODE_ICON_ID: "nodeIcon",
+    NODE_ICON_WIDTH: "40",
+    NODE_ICON_HEIGHT: "40",
+    NODE_ICON_CENTER_OFFSET_X: 20,
+    NODE_ICON_CENTER_OFFSET_Y: 45,
+    NODE_ICON_OPACITY_DEEMPHASIZED: "0.3",
+    NODE_ICON_OPACITY_EMPHASIZED: "1",
+    EXPERIMENT_ICON_SRC: "images/experiment_icon.png",
+    EXPERIMENT_GROUP_ICON_SRC: "images/experiment_group_icon.png",
+    SURVEY_ICON_SRC: "images/survey_icon.png",
+    INSTRUCTION_ICON_SRC: "images/instruction_icon.png",
+    BREATHING_EXERCISE_ICON_SRC: "images/breathing_exercise_icon.png",
+    QUESTIONNAIRE_ICON_SRC: "images/questionnaire_icon.png",
+    QUESTION_ICON_SRC: "images/question_icon.png",
+    ANSWER_ICON_SRC: "images/answer_icon.png",
+
+    // NodeView body
     NODE_BODY_ID: "nodeBody",
     NODE_BODY_WIDTH: "100",
     NODE_BODY_WIDTH_DEFLATED: "10",

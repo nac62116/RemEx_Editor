@@ -14,16 +14,16 @@ class SvgFactory {
         return treeViewElement;
     }
 
-    createRootNodeElements(/* TODO: nodeIcon */) {
-        let rootNodeElements = createMinimumNode(false);
+    createRootNodeElements(iconSrc) {
+        let rootNodeElements = createMinimumNode(false, iconSrc);
         
         rootNodeElements.addChildButton = createAddOrMoveNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
 
         return rootNodeElements;
     }
 
-    createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton) {
-        let standardNodeElements = createMinimumNode(false);
+    createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
+        let standardNodeElements = createMinimumNode(false, iconSrc);
 
         standardNodeElements.inputPath = createNodeInputPath();
         if (hasAddNeighbourButtons) {
@@ -37,16 +37,16 @@ class SvgFactory {
         return standardNodeElements;
     }
 
-    createTimelineNodeElements() {
-        let timelineNodeElements = this.createStandardNodeElements(true, false);
+    createTimelineNodeElements(iconSrc) {
+        let timelineNodeElements = this.createStandardNodeElements(true, false, iconSrc);
 
         timelineNodeElements.timelineElements = createTimelineElements();
 
         return timelineNodeElements;
     }
 
-    createDeflateableNodeElements(hasAddNeighbourButtons, hasAddChildButton) {
-        let deflateableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton);
+    createDeflateableNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
+        let deflateableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc);
 
         deflateableNodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
         deflateableNodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
@@ -55,8 +55,8 @@ class SvgFactory {
         return deflateableNodeElements;
     }
 
-    createMoveableNodeElements(hasAddNeighbourButtons, hasAddChildButton) {
-        let moveableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton);
+    createMoveableNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
+        let moveableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc);
 
         moveableNodeElements.moveRightButton = createAddOrMoveNodeButton(Config.NODE_MOVE_RIGHT_BUTTON_ID);
         moveableNodeElements.moveLeftButton = createAddOrMoveNodeButton(Config.NODE_MOVE_LEFT_BUTTON_ID);
@@ -93,24 +93,14 @@ class SvgFactory {
         whereAmIViewElement.appendChild(background);
         return whereAmIViewElement;
     }
-
-    createInputViewElement() {
-        let element;
-        return element;
-    }
-
-    createInfoViewElement() {
-        let element;
-        return element;
-    }
 }
 
-function createMinimumNode(isDeflateable) {
+function createMinimumNode(isDeflateable, iconSrc) {
     let minimumNode = {
         nodeBody: createNodeBody(isDeflateable),
         nodeDescription: createNodeDescription(isDeflateable),
+        nodeIcon: createNodeIcon(iconSrc),
     };
-    //TODO: insert node icon
 
     return minimumNode;
 }
@@ -133,7 +123,6 @@ function createNodeBody(isDeflateable) {
     nodeBody.setAttribute("stroke", Config.NODE_BODY_STROKE_COLOR);
     nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
     nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
-    // nodeBody.setAttribute("focusable", false);
 
     return nodeBody;
 }
@@ -151,9 +140,19 @@ function createNodeDescription(isDeflateable) {
     if (isDeflateable) {
         nodeDescription.setAttribute("display", "none");
     }
-    //nodeDescription.setAttribute("focusable", false);
 
     return nodeDescription;
+}
+
+function createNodeIcon(iconSrc) {
+    let nodeIcon = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    nodeIcon.setAttribute("id", Config.NODE_ICON_ID);
+    nodeIcon.setAttribute("width", Config.NODE_ICON_WIDTH);
+    nodeIcon.setAttribute("height", Config.NODE_ICON_HEIGHT);
+    nodeIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
+    nodeIcon.setAttribute("href", iconSrc);
+
+    return nodeIcon;
 }
 
 function createNodeInputPath() {

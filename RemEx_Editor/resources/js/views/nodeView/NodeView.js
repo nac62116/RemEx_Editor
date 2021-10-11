@@ -48,6 +48,9 @@ class NodeView extends Observable {
         this.nodeElements.nodeDescription.addEventListener("click", onClick.bind(this));
         this.nodeElements.nodeDescription.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.nodeElements.nodeDescription.addEventListener("mouseleave", onMouseLeave.bind(this));
+        this.nodeElements.nodeIcon.addEventListener("click", onClick.bind(this));
+        this.nodeElements.nodeIcon.addEventListener("mouseenter", onMouseEnter.bind(this));
+        this.nodeElements.nodeIcon.addEventListener("mouseleave", onMouseLeave.bind(this));
         this.updateDescription(description);
     }
 
@@ -57,13 +60,15 @@ class NodeView extends Observable {
     }
 
     show() {
-        this.nodeElements.nodeBody.removeAttribute("display");
-        this.nodeElements.nodeDescription.removeAttribute("display");
+        this.nodeElements.nodeBody.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        this.nodeElements.nodeDescription.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        this.nodeElements.nodeIcon.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
     hide() {
-        this.nodeElements.nodeBody.setAttribute("display", "none");
-        this.nodeElements.nodeDescription.setAttribute("display", "none");
+        this.nodeElements.nodeBody.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        this.nodeElements.nodeDescription.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        this.nodeElements.nodeIcon.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
     focus() {
@@ -92,6 +97,7 @@ class NodeView extends Observable {
         }
         this.nodeElements.nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_EMPHASIZED);
         this.nodeElements.nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZED);
+        this.nodeElements.nodeIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_EMPHASIZED);
     }
 
     deemphasize() {
@@ -100,6 +106,7 @@ class NodeView extends Observable {
             this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
             this.nodeElements.nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
             this.nodeElements.nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
+            this.nodeElements.nodeIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
         }
     }
 
@@ -137,6 +144,9 @@ class NodeView extends Observable {
         this.nodeElements.nodeBody.setAttribute("x", this.topLeft.x);
         this.nodeElements.nodeBody.setAttribute("y", this.topLeft.y);
         this.nodeElements.nodeDescription.setAttribute("x", this.center.x);
+        this.nodeElements.nodeDescription.setAttribute("y", this.center.y + Config.NODE_DESCRIPTION_CENTER_OFFSET_Y);
+        this.nodeElements.nodeIcon.setAttribute("x", this.center.x - Config.NODE_ICON_CENTER_OFFSET_X);
+        this.nodeElements.nodeIcon.setAttribute("y", this.center.y - Config.NODE_ICON_CENTER_OFFSET_Y);
         this.nodeElements.nodeDescription.setAttribute("y", this.center.y + Config.NODE_DESCRIPTION_CENTER_OFFSET_Y);
         for (let newLine of this.nodeElements.nodeDescription.children) {
             newLine.setAttribute("x", this.center.x);

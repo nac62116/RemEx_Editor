@@ -17,12 +17,11 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Check supported video and image formats in the android apps VideoView
 // -> Remove relative survey code in the android app.
 // -> Load button and Code cleaning
 // -> Copy paste option?
 // -> Create .exe file for install
-// -> Node icons
+// -> change file .prefix to the type inside the base64 (InstructionActivity.java l. 110)
 // -> InfoView
 // (-> Colors and style)
 
@@ -244,24 +243,28 @@ function createNode(that, parentNode, data, stepType, questionType) {
     node;
 
     if (parentNode === undefined) {
-        elements = SvgFactory.createRootNodeElements();
+        elements = SvgFactory.createRootNodeElements(Config.EXPERIMENT_ICON_SRC);
         node = new RootNode(elements, id, Config.TYPE_EXPERIMENT, description);
     }
     else if (parentNode.type === Config.TYPE_EXPERIMENT) {
-        elements = SvgFactory.createTimelineNodeElements();
+        elements = SvgFactory.createTimelineNodeElements(Config.EXPERIMENT_GROUP_ICON_SRC);
         node = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, parentNode, that.timelineEventListener, TreeView.getWidth());
     }
     else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-        elements = SvgFactory.createDeflateableNodeElements(false, true);
+        elements = SvgFactory.createDeflateableNodeElements(false, true, Config.SURVEY_ICON_SRC);
         node = new DeflateableNode(elements, id, Config.TYPE_SURVEY, description, parentNode);
     }
     else if (parentNode.type === Config.TYPE_SURVEY) {
-        if (stepType === Config.STEP_TYPE_INSTRUCTION || stepType === Config.STEP_TYPE_BREATHING_EXERCISE) {
-            elements = SvgFactory.createMoveableNodeElements(true, false);
+        if (stepType === Config.STEP_TYPE_INSTRUCTION) {
+            elements = SvgFactory.createMoveableNodeElements(true, false, Config.INSTRUCTION_ICON_SRC);
+            node = new MoveableNode(elements, id, stepType, description, parentNode);
+        }
+        else if (stepType === Config.STEP_TYPE_BREATHING_EXERCISE) {
+            elements = SvgFactory.createMoveableNodeElements(true, false, Config.BREATHING_EXERCISE_ICON_SRC);
             node = new MoveableNode(elements, id, stepType, description, parentNode);
         }
         else if (stepType === Config.STEP_TYPE_QUESTIONNAIRE) {
-            elements = SvgFactory.createMoveableNodeElements(true, true);
+            elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTIONNAIRE_ICON_SRC);
             node = new MoveableNode(elements, id, Config.STEP_TYPE_QUESTIONNAIRE, description, parentNode);
         }
         else {
@@ -270,11 +273,11 @@ function createNode(that, parentNode, data, stepType, questionType) {
     }
     else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         if (questionType === Config.QUESTION_TYPE_CHOICE) {
-            elements = SvgFactory.createMoveableNodeElements(true, true);
+            elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTION_ICON_SRC);
             node = new MoveableNode(elements, id, Config.QUESTION_TYPE_CHOICE, description, parentNode);
         }
         else if (questionType !== Config.QUESTION_TYPE_CHOICE && questionType !== undefined) {
-            elements = SvgFactory.createMoveableNodeElements(true, false);
+            elements = SvgFactory.createMoveableNodeElements(true, false, Config.QUESTION_ICON_SRC);
             node = new MoveableNode(elements, id, questionType, description, parentNode);
         }
         else {
@@ -283,7 +286,7 @@ function createNode(that, parentNode, data, stepType, questionType) {
     }
     else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
         description = data.text;
-        elements = SvgFactory.createStandardNodeElements(true, false);
+        elements = SvgFactory.createStandardNodeElements(true, false, Config.ANSWER_ICON_SRC);
         node = new StandardNode(elements, id, Config.TYPE_ANSWER, description, parentNode);
     }
     else {

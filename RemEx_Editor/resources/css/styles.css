@@ -83,6 +83,10 @@ body {
     cursor: pointer;
 }
 
+.tree-container image {
+    cursor: pointer;
+}
+
 .where-am-i-container {
     position: absolute;
     top: 0;
