@@ -36,6 +36,10 @@ class WhereAmIView {
             representingNode.addEventListener(Config.EVENT_NODE_MOUSE_ENTER, onRepresentingNodeMouseEnter.bind(this));
             representingNode.addEventListener(Config.EVENT_NODE_MOUSE_LEAVE, onRepresentingNodeMouseLeave.bind(this));
             representingNode.addEventListener(Config.EVENT_NODE_CLICKED, onRepresentingNodeClicked.bind(this));
+            if (i === 0) {
+                representingNode.emphasize();
+                representingNode.focus();
+            }
 
             this.representationMap.set(representingNode, currentSelection[i]);
             this.whereAmIViewElement.appendChild(representingNodeElements.nodeBody);
