@@ -127,7 +127,6 @@ body {
     width: 60%;
     height: 30%;
     background-color: black;
-    text-align: center;
     color: cornsilk;
     overflow: auto;
     scrollbar-color: rgb(155, 155, 155) rgb(53, 53, 53);
@@ -147,28 +146,33 @@ body {
 .input-header {
     position: relative;
     width: 100%;
+    text-align: center;
 }
 
-.input-fields-container {
+.input-field-container {
     position: relative;
     width: 100%;
     height: auto;
     text-align: start;
+    padding: 4%;
 }
 
 .input-field {
     display: flex;
     flex-direction: column;
-    margin: 2%;
+    margin-bottom: 4%;
+}
+
+.input-field label {
+    font-size: large;
 }
 
 .input-field input {
     padding: 5px;
-    margin-top: 2px;
+    margin-top: 8px;
     border: 2px solid rgb(50, 50, 50);
     border-radius: 5px;
     background-color: darkgray;
-    text-align: center;
 }
 
 .clear-input-button {
@@ -177,7 +181,7 @@ body {
     width: 15px;
     height: 15px;
     padding-bottom: 15px;
-    right: 2%;
+    right: 80%;
     background-color: gray;
 }
 
@@ -187,7 +191,6 @@ body {
 
 .input-field label input {
     margin-right: 5px;
-    margin-left: 49%;
 }
 
 .input-controls-container {

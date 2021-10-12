@@ -65,7 +65,7 @@ class InputView extends Observable {
                             }
                         }
                         else {
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], false);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, false);
                             break;
                         }
                     }
@@ -82,15 +82,19 @@ class InputView extends Observable {
             this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
         this.inputViewContainer.scrollTop = 0;
-        for (let inputElement of this.inputFieldsContainer.querySelectorAll("input")) {
+        for (let inputElement of this.inputFieldsContainer.querySelectorAll("input[type=file]")) {
             if (inputElement.name === "imageFileName") {
                 if (this.inputFieldsContainer.querySelector("video") !== null) {
-                    inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    for (let child of inputElement.parentElement.children) {
+                        child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    }
                 }
             }
             if (inputElement.name === "videoFileName") {
                 if (this.inputFieldsContainer.querySelector("img") !== null) {
-                    inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    for (let child of inputElement.parentElement.children) {
+                        child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    }
                 }
             }
         }
@@ -342,8 +346,8 @@ function onInputChanged(event) {
     questionType,
     addNodeEvent,
     removeNodeEvent,
-    imageElement,
-    videoElement,
+    imageInputElement,
+    videoInputElement,
     sourceElement;
 
     if (event.target.value !== "") {
@@ -443,33 +447,45 @@ function onInputChanged(event) {
             if (data.base64String !== undefined) {
                 data.base64String.then(function(result) {
                     if (properties.imageFileName !== undefined) {
-                        imageElement = this.inputFieldsContainer.querySelector("img");
-                        if (imageElement === null) {
-                            imageElement = document.createElement("img");
-                            imageElement.setAttribute("width", "auto");
-                            imageElement.setAttribute("height", this.inputViewContainer.clientHeight);
-                            imageElement.setAttribute("src", result);
-                            event.target.parentElement.insertAdjacentElement("afterend", imageElement);
+                        imageInputElement = this.inputFieldsContainer.querySelector("img");
+                        videoInputElement = this.inputFieldsContainer.querySelector("input[name=videoFileName]");
+                        if (imageInputElement === null) {
+                            imageInputElement = document.createElement("img");
+                            imageInputElement.setAttribute("width", "auto");
+                            imageInputElement.setAttribute("height", this.inputViewContainer.clientHeight);
+                            imageInputElement.setAttribute("src", result);
+                            event.target.parentElement.insertAdjacentElement("afterend", imageInputElement);
                         }
                         else {
-                            imageElement.setAttribute("src", result);
+                            imageInputElement.setAttribute("src", result);
+                        }
+                        if (videoInputElement !== null) {
+                            for (let child of videoInputElement.parentElement.children) {
+                                child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                            }
                         }
                     }
                     else {
                         sourceElement = this.inputFieldsContainer.querySelector("source");
+                        imageInputElement = this.inputFieldsContainer.querySelector("input[name=imageFileName]");
                         if (sourceElement === null) {
-                            videoElement = document.createElement("video");
-                            videoElement.setAttribute("width", "auto");
-                            videoElement.setAttribute("height", this.inputViewContainer.clientHeight);
-                            videoElement.setAttribute("controls", "");
+                            videoInputElement = document.createElement("video");
+                            videoInputElement.setAttribute("width", "auto");
+                            videoInputElement.setAttribute("height", this.inputViewContainer.clientHeight);
+                            videoInputElement.setAttribute("controls", "");
                             sourceElement = document.createElement("source");
                             sourceElement.setAttribute("type", event.target.files[0].type);
                             sourceElement.setAttribute("src", result);
-                            videoElement.appendChild(sourceElement);
-                            event.target.parentElement.insertAdjacentElement("afterend", videoElement);
+                            videoInputElement.appendChild(sourceElement);
+                            event.target.parentElement.insertAdjacentElement("afterend", videoInputElement);
                         }
                         else {
                             sourceElement.setAttribute("src", result);
+                        }
+                        if (imageInputElement !== null) {
+                            for (let child of imageInputElement.parentElement.children) {
+                                child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                            }
                         }
                     }
                     event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
@@ -532,7 +548,7 @@ function onClearInput(event) {
         previousFileName: this.currentFileName,
     },
     correspondingInputElement = event.target.parentElement.querySelector("input"),
-    inputElements = this.inputFieldsContainer.querySelectorAll("input"),
+    inputElements = this.inputFieldsContainer.querySelectorAll("input[type=file]"),
     imageElement = this.inputFieldsContainer.querySelector("img"),
     videoElement = this.inputFieldsContainer.querySelector("video"),
     inputChangeEvent;
@@ -542,9 +558,8 @@ function onClearInput(event) {
     data.newModelProperties[correspondingInputElement.getAttribute("name")] = null;
 
     for (let inputElement of inputElements) {
-        if (inputElement.type === "file") {
-            inputElement.parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            inputElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        for (let child of inputElement.parentElement.children) {
+            child.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         }
     }
     if (imageElement !== null) {

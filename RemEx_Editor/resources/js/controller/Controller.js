@@ -17,15 +17,17 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
+// -> IndexedDB allow transaction only if onupgrade is finished
+// -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
+// -> Code cleaning
 // -> Remove relative survey code in the android app.
-// -> Load button and Code cleaning
 // -> Copy paste option?
 // -> Create .exe file for install
 // -> change file .prefix to the type inside the base64 (InstructionActivity.java l. 110)
 // -> InfoView
-// (-> Colors and style)
 
 // ENHANCEMENT:
+// - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
 // - Optimize key movement (Shortcuts (e.g. Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
 // - Show survey time windows (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
 // - Calculate the optimal duration for a survey depending on its content
