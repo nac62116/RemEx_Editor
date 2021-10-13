@@ -126,6 +126,7 @@ body {
     top: 70%;
     width: 60%;
     height: 30%;
+    font-family: Helvetica;
     background-color: black;
     color: cornsilk;
     overflow: auto;
@@ -147,6 +148,7 @@ body {
     position: relative;
     width: 100%;
     text-align: center;
+    margin-top: 2%;
 }
 
 .input-field-container {

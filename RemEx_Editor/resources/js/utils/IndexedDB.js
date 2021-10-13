@@ -91,8 +91,13 @@ function openDatabase() {
             resolve(request.result);
         };
         request.onupgradeneeded = function(event) {
-            event.target.result.createObjectStore("resources", { keyPath: "fileName" });
-            resolve(event.target.result);
+            let db = event.target.result,
+            store = db.createObjectStore("resources", {keyPath:"fileName"}),
+            transaction = event.target.transaction;
+
+            transaction.oncomplete = function(event) {    
+                    resolve(event.target.result);
+            };
         };
     });
 }
