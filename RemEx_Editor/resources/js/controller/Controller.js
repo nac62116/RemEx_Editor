@@ -17,13 +17,14 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> IndexedDB allow transaction only if onupgrade is finished
+// -> validate waitForStep property if moving Node which is waiting on a instruction
+// -> Insert upper survey day, maxDuration, notificationDuration, likert scale, breathingFreq limit
 // -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
+// -> Test fully grown experiment on RemExApp
+// -> change file .prefix to the type inside the base64 (InstructionActivity.java l. 110)
 // -> Code cleaning
-// -> Remove relative survey code in the android app.
 // -> Copy paste option?
 // -> Create .exe file for install
-// -> change file .prefix to the type inside the base64 (InstructionActivity.java l. 110)
 // -> InfoView
 
 // ENHANCEMENT:
@@ -159,7 +160,7 @@ function onSaveExperimentButtonClicked() {
         experimentJSON = JSON.stringify(experiment);
         // Declare type property as an enum for the android json library "com.fasterxml.jackson"
         experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
-        jsonFile = generateFile(experimentJSON, "application/json");
+        jsonFile = generateFile(experimentJSON, "text/plain");
         nameCodeTable = ModelManager.getNameCodeTable(experiment);
         if (nameCodeTable.length !== 0) {
             textFile = generateFile(nameCodeTable, "text/plain");
@@ -168,7 +169,7 @@ function onSaveExperimentButtonClicked() {
             downloadLinkElement.click();
         }
         downloadLinkElement.setAttribute("href", jsonFile);
-        downloadLinkElement.setAttribute("download", experiment.name + ".json");
+        downloadLinkElement.setAttribute("download", experiment.name + ".txt");
         downloadLinkElement.click();
     }
 }
@@ -396,6 +397,10 @@ function onNodeClicked(event) {
         if (clickedNode.parentNode !== undefined) {
             if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
                 ongoingInstructionsForInputView = getOngoingInstructionsForInputView(clickedNode, ongoingInstructionsForInputView);
+                if (ongoingInstructionsForInputView.length === 0) {
+                    nodeDataModel.waitForStep = 0;
+                    ModelManager.updateExperiment(nodeDataModel);
+                }
             }
             if (clickedNode.parentNode.type === Config.QUESTION_TYPE_CHOICE) {
                 firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
