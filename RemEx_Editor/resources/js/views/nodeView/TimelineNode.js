@@ -239,9 +239,19 @@ class TimelineView extends Observable {
             this.timelineLengthInMin = Config.TWO_WEEKS_IN_MIN;
             labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
         }
-        else {
+        else if (timelineLengthInMin <= Config.ONE_MONTH_IN_MIN) {
             labelSteps = Config.ONE_WEEK_IN_MIN;
-            this.timelineLengthInMin = Math.ceil(timelineLengthInMin / Config.ONE_WEEK_IN_MIN) * Config.ONE_WEEK_IN_MIN;
+            this.timelineLengthInMin = Config.ONE_MONTH_IN_MIN;
+            labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
+        }
+        else if (timelineLengthInMin <= Config.ONE_YEAR_IN_MIN) {
+            labelSteps = Config.ONE_MONTH_IN_MIN;
+            this.timelineLengthInMin = Config.ONE_YEAR_IN_MIN;
+            labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
+        }
+        else {
+            labelSteps = Config.ONE_YEAR_IN_MIN;
+            this.timelineLengthInMin = Math.ceil(timelineLengthInMin / Config.ONE_YEAR_IN_MIN) * Config.ONE_YEAR_IN_MIN;
             labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
         }
         for (let currentLabel of this.timelineElements.labels) {
@@ -253,7 +263,13 @@ class TimelineView extends Observable {
             if (descriptionCount === labelDescriptions.length) {
                 descriptionCount = 0;
                 if (labelSteps === Config.ONE_WEEK_IN_MIN) {
-                    dayCount += 7; // eslint-disable-line no-magic-numbers
+                    dayCount += Config.ONE_WEEK_IN_DAYS;
+                }
+                else if (labelSteps == Config.ONE_MONTH_IN_MIN) {
+                    dayCount += Config.ONE_MONTH_IN_DAYS;
+                }
+                else if (labelSteps == Config.ONE_YEAR_IN_MIN) {
+                    dayCount += Config.ONE_YEAR_IN_DAYS;
                 }
                 else {
                     dayCount += 1;

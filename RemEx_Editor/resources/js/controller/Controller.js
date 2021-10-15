@@ -17,8 +17,6 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> validate waitForStep property if moving Node which is waiting on a instruction
-// -> Insert upper survey day, maxDuration, notificationDuration, likert scale, breathingFreq limit
 // -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
 // -> Test fully grown experiment on RemExApp
 // -> change file .prefix to the type inside the base64 (InstructionActivity.java l. 110)

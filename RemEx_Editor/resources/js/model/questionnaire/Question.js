@@ -5,11 +5,10 @@ class Question {
             throw new TypeError("Cannot construct Abstract instances directly");
         }
         this.id = null;
-        // TODO: JSON value should be named "@type"
         this.type = type;
         this.name = name;
         this.text = "Text";
-        this.hint = "Tipp";
+        this.hint = "Hinweis";
         this.nextQuestionId = null;
     }
 }

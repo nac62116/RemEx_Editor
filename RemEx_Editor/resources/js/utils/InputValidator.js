@@ -68,6 +68,7 @@ class InputValidator {
         timeWindow = {},
         result = true;
     
+        // -> Insert upper survey day, maxDuration, notificationDuration, likert scale, breathingFreq limit
         if (node.type === Config.TYPE_EXPERIMENT_GROUP) {
             if (nodeData.name !== undefined) {
                 for (let group of parentData.groups) {
@@ -125,6 +126,30 @@ class InputValidator {
                             return result;
                         }
                     }
+                }
+            }
+            if (nodeData.maxDurationInMin !== undefined) {
+                if (nodeData.maxDurationInMin >= Config.SURVEY_MAX_DURATION_IN_MIN) {
+                    invalidInput = "maxDurationInMin";
+                    alert = Config.SURVEY_MAX_DURATION_IN_MIN_ALERT;
+                    result = {
+                        correspondingNode: node,
+                        invalidInput: invalidInput,
+                        alert: alert,
+                    };
+                    return result;
+                }
+            }
+            if (nodeData.notificationDurationInMin !== undefined) {
+                if (nodeData.notificationDurationInMin >= Config.SURVEY_MAX_NOTIFICATION_DURATION_IN_MIN) {
+                    invalidInput = "notificationDurationInMin";
+                    alert = Config.SURVEY_MAX_NOTIFICATION_DURATION_IN_MIN_ALERT;
+                    result = {
+                        correspondingNode: node,
+                        invalidInput: invalidInput,
+                        alert: alert,
+                    };
+                    return result;
                 }
             }
         }
@@ -195,9 +220,21 @@ class InputValidator {
         }
         else if (node.type === Config.STEP_TYPE_BREATHING_EXERCISE) {
             if (nodeData.durationInMin !== undefined) {
-                if (nodeData.durationInMin > Config.BREATHING_EXERCISE_MAX_DURATION) {
+                if (nodeData.durationInMin > Config.BREATHING_EXERCISE_MAX_DURATION_IN_MIN) {
                     invalidInput = "durationInMin";
                     alert = Config.BREATHING_EXERCISE_DURATION_TOO_LONG;
+                    result = {
+                        correspondingNode: node,
+                        invalidInput: invalidInput,
+                        alert: alert,
+                    };
+                    return result;
+                }
+            }
+            if (nodeData.breathingFrequencyInSec !== undefined) {
+                if (nodeData.breathingFrequencyInSec >= Config.BREATHING_EXERCISE_MAX_FREQUENCY_IN_SEC) {
+                    invalidInput = "breathingFrequencyInSec";
+                    alert = Config.BREATHING_EXERCISE_MAX_FREQUENCY_ALERT;
                     result = {
                         correspondingNode: node,
                         invalidInput: invalidInput,
@@ -221,6 +258,26 @@ class InputValidator {
                         return result;
                     }
                 }
+            }
+            if (nodeData.text.length > Config.QUESTION_TEXT_MAX_LENGTH) {
+                invalidInput = "text";
+                alert = Config.INPUT_TOO_LONG;
+                result = {
+                    correspondingNode: node,
+                    invalidInput: invalidInput,
+                    alert: alert,
+                };
+                return result;
+            }
+            if (nodeData.hint.length > Config.QUESTION_HINT_MAX_LENGTH) {
+                invalidInput = "hint";
+                alert = Config.INPUT_TOO_LONG;
+                result = {
+                    correspondingNode: node,
+                    invalidInput: invalidInput,
+                    alert: alert,
+                };
+                return result;
             }
             if (node.type === Config.QUESTION_TYPE_LIKERT) {
                 if (nodeData.scaleMinimumLabel !== undefined || nodeData.scaleMaximumLabel !== undefined) {

@@ -363,6 +363,9 @@ function onInputChanged(event) {
             if (event.target.value !== "") {
                 event.target.value = escapeNegativeValues(event.target.value);
                 event.target.value = escapeZeroValues(event.target.value);
+                if ((event.target.value.length >= Config.SURVEY_UPPER_DAY_LIMIT_MAX_DIGITS)) {
+                    event.target.value = event.target.value.substring(0, Config.SURVEY_UPPER_DAY_LIMIT_MAX_DIGITS - 1);
+                }
                 properties.absoluteStartDaysOffset = event.target.value - 1;
             }
             else {
@@ -519,6 +522,10 @@ function escapeNegativeValues(unescaped) {
 
 function escapeZeroValues(unescaped) {
     return unescaped.replace(/\b0/g, "1");
+}
+
+function escapeGreaterThenFiveDigits(unescaped) {
+    return unescaped.replace(/\b[0-9]/g, "1");
 }
 
 function getBase64String(file) {
