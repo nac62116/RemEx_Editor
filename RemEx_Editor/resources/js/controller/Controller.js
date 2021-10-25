@@ -998,20 +998,24 @@ function updateSurveyLinks(timeSortedChildNodes) {
 function onRemoveNode(event) {
     let nodeToRemove = event.data.correspondingNode,
     experiment = Storage.load(),
-    inputData = ModelManager.getDataFromNodeId(nodeToRemove.id, experiment),
+    dataModel = ModelManager.getDataFromNodeId(nodeToRemove.id, experiment),
     firstNodeOfRow,
     timeSortedChildNodes,
     nextFocusedNode,
     childIds = [];
 
+    if (dataModel.durationInMin !== 0) {
+        firstNodeOfRow = getFirstNodeOfRow(nodeToRemove);
+        updateWaitForStepLinks(firstNodeOfRow, nodeToRemove, experiment);
+    }
     getChildIds(nodeToRemove, childIds);
     ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id, childIds);
     if (nodeToRemove.type === Config.STEP_TYPE_INSTRUCTION) {
-        if (inputData.imageFileName !== null && inputData.imageFileName !== undefined) {
-            ModelManager.removeResource(inputData.imageFileName);
+        if (dataModel.imageFileName !== null && dataModel.imageFileName !== undefined) {
+            ModelManager.removeResource(dataModel.imageFileName);
         }
-        if (inputData.videoFileName !== null && inputData.videoFileName !== undefined) {
-            ModelManager.removeResource(inputData.videoFileName);
+        if (dataModel.videoFileName !== null && dataModel.videoFileName !== undefined) {
+            ModelManager.removeResource(dataModel.videoFileName);
         }
     }
     removeChildResources(nodeToRemove, experiment);
@@ -1063,6 +1067,19 @@ function onRemoveNode(event) {
     nextFocusedNode.click();
 }
 
+function updateWaitForStepLinks(node, nodeToWaitFor, experiment) {
+    let dataModel;
+    if (node === undefined) {
+        return;
+    }
+    dataModel = ModelManager.getDataFromNodeId(node.id, experiment);
+    if (dataModel.waitForStep === nodeToWaitFor.id) {
+        dataModel.waitForStep = 0;
+        ModelManager.updateExperiment(dataModel);
+    }
+    updateWaitForStepLinks(node.nextNode, nodeToWaitFor, experiment);
+}
+
 function getChildIds(node, childIds) {
     if (node.childNodes.length === 0 || node.childNodes === undefined) {
         return;
@@ -1100,6 +1117,7 @@ function onInputChanged(event) {
     newDataModel = event.data.newModelProperties,
     nodeUpdatedDataModel,
     parentNodeDataModel,
+    firstNodeOfRow,
     timeInMin,
     timeSortedChildNodes,
     fileName,
@@ -1129,6 +1147,10 @@ function onInputChanged(event) {
     }
 
     if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
+        if (newDataModel.durationInMin === 0) {
+            firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
+            updateWaitForStepLinks(firstNodeOfRow, correspondingNode, experiment);
+        }
         if (newDataModel.imageFileName !== undefined) {
             fileName = newDataModel.imageFileName;
         }
