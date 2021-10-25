@@ -647,7 +647,7 @@ function onAddNextNode(event) {
     }
     if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        updateQuestionLinks(firstNodeOfRow);
+        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
     moveNextNodes(newNode, false);
     newNode.click();
@@ -692,7 +692,7 @@ function onAddPreviousNode(event) {
     }
     if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        updateQuestionLinks(firstNodeOfRow);
+        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
     movePreviousNodes(newNode, false);
     newNode.click();
@@ -724,12 +724,25 @@ function updateStepLinks(node) {
     updateStepLinks(node.nextNode);
 }
 
-function updateQuestionLinks(node) {
-    let properties = {};
+function updateQuestionLinks(node, firstNodeOfRow) {
+    let properties = {},
+    experiment = ModelManager.getExperiment(),
+    dataModel = ModelManager.getDataFromNodeId(node.id, experiment),
+    nodeIds = [];
+
+    properties.id = node.id;
+    nodeIds = getNodeIds(firstNodeOfRow, nodeIds);
     if (node.nextNode === undefined) {
-        properties.id = node.id;
         if (node.type !== Config.QUESTION_TYPE_CHOICE) {
             properties.nextQuestionId = null;
+        }
+        else {
+            for (let answer of dataModel.answers) {
+                if (!(nodeIds.includes(answer.nextQuestionId))) {
+                    answer.nextQuestionId = null;
+                    ModelManager.updateExperiment(answer);
+                }
+            }
         }
         if (node.previousNode !== undefined) {
             properties.previousQuestionId = node.previousNode.id;
@@ -740,9 +753,16 @@ function updateQuestionLinks(node) {
         ModelManager.updateExperiment(properties);
         return;
     }
-    properties.id = node.id;
     if (node.type !== Config.QUESTION_TYPE_CHOICE) {
         properties.nextQuestionId = node.nextNode.id;
+    }
+    else {
+        for (let answer of dataModel.answers) {
+            if (!(nodeIds.includes(answer.nextQuestionId))) {
+                answer.nextQuestionId = node.nextNode.id;
+                ModelManager.updateExperiment(answer);
+            }
+        }
     }
     if (node.previousNode !== undefined) {
         properties.previousQuestionId = node.previousNode.id;
@@ -751,7 +771,15 @@ function updateQuestionLinks(node) {
         properties.previousQuestionId = null;
     }
     ModelManager.updateExperiment(properties);
-    updateQuestionLinks(node.nextNode);
+    updateQuestionLinks(node.nextNode, firstNodeOfRow);
+}
+
+function getNodeIds(node, nodeIds) {
+    if (node === undefined) {
+        return nodeIds;
+    }
+    nodeIds.push(node.id);
+    return getNodeIds(node.nextNode, nodeIds);
 }
 
 function getFirstNodeOfRow(node) {
@@ -874,7 +902,7 @@ function onMoveNodeLeft(event) {
         updateStepLinks(firstNodeOfRow);
     }
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        updateQuestionLinks(firstNodeOfRow);
+        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
     correspondingNode.nextNode.click();
     correspondingNode.click();
@@ -918,7 +946,7 @@ function onMoveNodeRight(event) {
         updateStepLinks(firstNodeOfRow);
     }
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        updateQuestionLinks(firstNodeOfRow);
+        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
     correspondingNode.previousNode.click();
     correspondingNode.click();
@@ -1058,7 +1086,7 @@ function onRemoveNode(event) {
                 updateStepLinks(firstNodeOfRow);
             }
             if (nodeToRemove.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                updateQuestionLinks(firstNodeOfRow);
+                updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
             }
         }
     }
