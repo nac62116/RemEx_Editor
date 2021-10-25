@@ -299,54 +299,11 @@ function getNewModelProperties(parentNode, stepType, questionType) {
         parentNode: parentNode,
     };
     
-    if (parentNode.type === Config.TYPE_EXPERIMENT) {
-        modelProperties.name = Config.NEW_EXPERIMENT_GROUP_NAME;
-    }
-    else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-        modelProperties.name = Config.NEW_SURVEY_NAME;
-    }
-    else if (parentNode.type === Config.TYPE_SURVEY) {
-        if (stepType === Config.STEP_TYPE_INSTRUCTION) {
-            modelProperties.name = Config.NEW_INSTRUCTION_NAME;
-        }
-        else if (stepType === Config.STEP_TYPE_BREATHING_EXERCISE) {
-            modelProperties.name = Config.NEW_BREATHING_EXERCISE_NAME;
-        }
-        else if (stepType === Config.STEP_TYPE_QUESTIONNAIRE) {
-            modelProperties.name = Config.NEW_QUESTIONNAIRE_NAME;
-        }
-        else {
-            throw "The step type \"" + stepType + "\" is not defined.";
-        }
+    if (parentNode.type === Config.TYPE_SURVEY) {
         modelProperties.type = stepType;
     }
-    else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        if (questionType === Config.QUESTION_TYPE_CHOICE) {
-            modelProperties.name = Config.NEW_CHOICE_QUESTION_NAME;
-        }
-        else if (questionType === Config.QUESTION_TYPE_LIKERT) {
-            modelProperties.name = Config.NEW_LIKERT_QUESTION_NAME;
-        }
-        else if (questionType === Config.QUESTION_TYPE_POINT_OF_TIME) {
-            modelProperties.name = Config.NEW_POINT_OF_TIME_QUESTION_NAME;
-        }
-        else if (questionType === Config.QUESTION_TYPE_TEXT) {
-            modelProperties.name = Config.NEW_TEXT_QUESTION_NAME;
-        }
-        else if (questionType === Config.QUESTION_TYPE_TIME_INTERVAL) {
-            modelProperties.name = Config.NEW_TIME_INTERVAL_QUESTION_NAME;
-        }
-        else {
-            throw "The question type \"" + questionType + "\" is not defined.";
-        }
+    if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         modelProperties.type = questionType;
-    }
-    else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
-        modelProperties.name = Config.NEW_ANSWER_TEXT;
-    }
-    // TODO
-    else {
-        throw "The node type \"" + parentNode.type + "\" is not defined.";
     }
     return modelProperties;
 }
@@ -356,7 +313,6 @@ function createNewExperiment(properties) {
 
     Storage.clear();
     experiment.id = properties.id;
-    experiment.name = properties.name;
 
     return experiment;
 }
@@ -366,7 +322,6 @@ function createNewExperimentGroup(properties) {
     group = new ExperimentGroup();
     
     group.id = properties.id;
-    group.name = properties.name;
     experiment.groups.push(group);
     Storage.save(experiment);
 
@@ -378,7 +333,6 @@ function createNewSurvey(properties) {
     survey = new Survey();
     
     survey.id = properties.id;
-    survey.name = properties.name;
     survey.absoluteStartAtMinute = properties.absoluteStartAtMinute;
     survey.absoluteStartAtHour = properties.absoluteStartAtHour;
     survey.absoluteStartDaysOffset = properties.absoluteStartDaysOffset;
@@ -411,7 +365,6 @@ function createNewStep(properties) {
         throw "The step type " + properties.type + " is not defined.";
     }
     step.id = properties.id;
-    step.name = properties.name;
     for (let group of experiment.groups) {
         if (group.id === properties.parentNode.parentNode.id) {
             for (let survey of group.surveys) {
@@ -450,7 +403,6 @@ function createNewQuestion(properties) {
         throw "The question type " + properties.type + " is not defined.";
     }
     question.id = properties.id;
-    question.name = properties.name;
     for (let group of experiment.groups) {
         if (group.id === properties.parentNode.parentNode.parentNode.id) {
             for (let survey of group.surveys) {
@@ -475,7 +427,6 @@ function createNewAnswer(properties) {
     answer = new Answer();
     
     answer.id = properties.id;
-    answer.text = properties.name;
     for (let group of experiment.groups) {
         if (group.id === properties.parentNode.parentNode.parentNode.parentNode.id) {
             for (let survey of group.surveys) {

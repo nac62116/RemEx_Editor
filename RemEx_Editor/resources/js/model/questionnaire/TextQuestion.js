@@ -4,7 +4,8 @@ import Question from "./Question.js";
 class TextQuestion extends Question {
 
     constructor() {
-        super(Config.QUESTION_TYPE_TEXT, "Neue Textfrage");
+        TextQuestion.instanceCount = (TextQuestion.instanceCount || 0) + 1;
+        super(Config.QUESTION_TYPE_TEXT, "Neue Textfrage " + TextQuestion.instanceCount);
     }
 }
 

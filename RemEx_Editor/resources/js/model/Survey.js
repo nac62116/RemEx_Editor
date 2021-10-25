@@ -1,8 +1,9 @@
 class Survey {
 
     constructor() {
+        Survey.instanceCount = (Survey.instanceCount || 0) + 1;
         this.id = null;
-        this.name = "Neue Befragung";
+        this.name = "Neue Befragung " + Survey.instanceCount;
         this.maxDurationInMin = 1;
         this.absoluteStartAtMinute = null;
         this.absoluteStartAtHour = null;

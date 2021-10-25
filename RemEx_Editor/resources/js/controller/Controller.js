@@ -1105,6 +1105,9 @@ function onInputChanged(event) {
     fileName,
     validationResult;
 
+    // TODO
+    console.log(newDataModel.surveyFrequency);
+
     newDataModel.id = correspondingNode.id;
     if (newDataModel.name !== undefined) {
         correspondingNode.updateDescription(newDataModel.name);

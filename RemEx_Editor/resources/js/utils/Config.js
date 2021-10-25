@@ -81,7 +81,30 @@ const Config = {
     INPUT_EXPERIMENT_NAME_LABEL: "Name des Experiments:",
     INPUT_EXPERIMENT_GROUP_NAME_ID: "experimentGroupNameInput",
     INPUT_EXPERIMENT_GROUP_NAME_LABEL: "Name der Experimentgruppe:",
+    INPUT_SURVEY_FREQUENCY: "surveyFrequency",
+    INPUT_SURVEY_FREQUENCY_HOURLY_REPETITION: "Stündlich",
+    INPUT_SURVEY_FREQUENCY_DAILY_REPETITION: "Täglich",
+    INPUT_SURVEY_FREQUENCY_MONTHLY_REPETITION: "Monatlich",
+    INPUT_SURVEY_FREQUENCY_YEARLY_REPETITION: "Jährlich",
 
+    INPUT_FIELD_SURVEY_FREQUENCY_DATA: {
+        label: "Wiederholungsfrequenz:",
+        inputType: "button",
+        values: [
+            {
+                value: "Stündlich",
+            },
+            {
+                value: "Täglich",
+            },
+            {
+                value: "Monatlich",
+            },
+            {
+                value: "Jährlich",
+            },
+        ],
+    },
     INPUT_FIELD_STEP_TYPE_DATA: {
         label: "Typ:",
         inputType: "radio",

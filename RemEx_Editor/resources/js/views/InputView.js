@@ -29,6 +29,9 @@ class InputView extends Observable {
         this.inputViewContainer.appendChild(this.inputFieldsContainer);
 
         if (correspondingNode.parentNode !== undefined) {
+            if (correspondingNode.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+                createInputField(this, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.label, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.inputType, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.values, Config.INPUT_SURVEY_FREQUENCY, correspondingNode.type, encodedResource, true);
+            }
             if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
                 createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, correspondingNode.type, encodedResource, false);
             }
@@ -239,6 +242,22 @@ function createInputField(that, label, type, values, modelProperty, currentModel
             labelElement.insertAdjacentElement("afterbegin", inputElement);
             inputField.appendChild(labelElement);
         }
+    }
+    else if (type === "button") {
+        labelElement = document.createElement("label");
+        labelElement.classList.add("radio-label");
+        for (let value of values) {
+            inputElement = document.createElement("input");
+            inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+            inputElement.setAttribute("type", type);
+            inputElement.setAttribute("name", modelProperty);
+            inputElement.setAttribute("value", value.value);
+
+            inputElement.addEventListener("click", onInputChanged.bind(that));
+            
+            labelElement.insertAdjacentElement("beforeend", inputElement);
+        }
+        inputField.appendChild(labelElement);
     }
     else if (type === "image" || type === "video") {
         clearInputButton = document.createElement("button");

@@ -4,7 +4,8 @@ import Step from "./Step.js";
 class Questionnaire extends Step {
 
     constructor() {
-        super(Config.STEP_TYPE_QUESTIONNAIRE, "Neuer Fragebogen");
+        Questionnaire.instanceCount = (Questionnaire.instanceCount || 0) + 1;
+        super(Config.STEP_TYPE_QUESTIONNAIRE, "Neuer Fragebogen " + Questionnaire.instanceCount);
         this.questions = [];
     }
 }
