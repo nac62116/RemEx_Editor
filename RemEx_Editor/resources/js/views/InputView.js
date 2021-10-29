@@ -20,6 +20,7 @@ class InputView extends Observable {
     show(correspondingNode, correspondingModelObject, ongoingInstructions, questions, encodedResource) {
         let correspondingModelValues = {};
 
+        // Hide loading Screen
         this.correspondingNode = correspondingNode;
         this.header.innerHTML = correspondingNode.description;
         this.inputFieldsContainer.remove();
@@ -179,6 +180,27 @@ class InputView extends Observable {
             videoElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         }
     }
+
+    clearFileInputs() {
+        let imageElement = this.inputFieldsContainer.querySelector("img"),
+        videoElement = this.inputFieldsContainer.querySelector("video"),
+        inputElements = this.inputFieldsContainer.querySelectorAll("input[type=file]");
+
+        this.currentFileName = null;
+        
+        for (let inputElement of inputElements) {
+            inputElement.value = null;
+            for (let child of inputElement.parentElement.children) {
+                child.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+            }
+        }
+        if (imageElement !== null) {
+            imageElement.remove();
+        }
+        if (videoElement !== null) {
+            videoElement.remove();
+        }
+    }
 }
 
 function createInputField(that, label, type, values, modelProperty, currentModelValue, encodedResource, addNoSelection) {
@@ -263,7 +285,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         clearInputButton = document.createElement("button");
         clearInputButton.classList.add("clear-input-button");
         clearInputButton.innerHTML = "X";
-        clearInputButton.addEventListener("click", onClearInput.bind(that));
+        clearInputButton.addEventListener("click", onClearFileInputs.bind(that));
         inputElement = document.createElement("input");
         inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", "file");
@@ -543,10 +565,6 @@ function escapeZeroValues(unescaped) {
     return unescaped.replace(/\b0/g, "1");
 }
 
-function escapeGreaterThenFiveDigits(unescaped) {
-    return unescaped.replace(/\b[0-9]/g, "1");
-}
-
 function getBase64String(file) {
     return new Promise(function(resolve, reject) {
         var reader = new FileReader();
@@ -567,7 +585,7 @@ function onRemoveNodeButtonClicked() {
     this.notifyAll(controllerEvent);
 }
 
-function onClearInput(event) {
+function onClearFileInputs(event) {
     let data = {
         correspondingNode: this.correspondingNode,
         newModelProperties: {},

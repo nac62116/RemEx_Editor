@@ -280,18 +280,20 @@ class InputValidator {
                 return result;
             }
             if (node.type === Config.QUESTION_TYPE_LIKERT) {
-                if (nodeData.scaleMinimumLabel !== undefined || nodeData.scaleMaximumLabel !== undefined) {
+                if (nodeData !== null && (nodeData.scaleMinimumLabel !== undefined || nodeData.scaleMaximumLabel !== undefined)) {
                     for (let key in nodeData) {
                         if (Object.prototype.hasOwnProperty.call(nodeData, key)) {
-                            if (nodeData[key].length > Config.LIKERT_QUESTION_SCALE_LABEL_TEXT_MAX_LENGTH) {
-                                invalidInput = key;
-                                alert = Config.INPUT_TOO_LONG;
-                                result = {
-                                    correspondingNode: node,
-                                    invalidInput: invalidInput,
-                                    alert: alert,
-                                };
-                                return result;
+                            if (nodeData[key] !== null) {
+                                if (nodeData[key].length > Config.LIKERT_QUESTION_SCALE_LABEL_TEXT_MAX_LENGTH) {
+                                    invalidInput = key;
+                                    alert = Config.INPUT_TOO_LONG;
+                                    result = {
+                                        correspondingNode: node,
+                                        invalidInput: invalidInput,
+                                        alert: alert,
+                                    };
+                                    return result;
+                                }
                             }
                         }
                     }
@@ -300,6 +302,18 @@ class InputValidator {
                     if (nodeData.initialValue > nodeData.itemCount) {
                         invalidInput = "initialValue";
                         alert = Config.LIKERT_QUESTION_SCALE_INITIAL_VALUE_NOT_IN_RANGE;
+                        result = {
+                            correspondingNode: node,
+                            invalidInput: invalidInput,
+                            alert: alert,
+                        };
+                        return result;
+                    }
+                }
+                if (nodeData.itemCount !== undefined) {
+                    if (nodeData.itemCount > Config.LIKERT_QUESTION_MAX_ITEM_COUNT) {
+                        invalidInput = "itemCount";
+                        alert = Config.LIKERT_QUESTION_MAX_ITEM_COUNT_ALERT;
                         result = {
                             correspondingNode: node,
                             invalidInput: invalidInput,

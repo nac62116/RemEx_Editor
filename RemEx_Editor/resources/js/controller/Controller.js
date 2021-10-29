@@ -18,14 +18,24 @@ import IdManager from "../utils/IdManager.js";
 
 // TODO:
 // -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
-// -> Test fully grown experiment on RemExApp
-// -> change file .prefix to the type inside the base64 (InstructionActivity.java l. 110)
+// -> Optimize movement -> onNodeClick move all child nodes so that the first is centered
+// -> Initial value of an answer for property nextQuestionId has to be the next question id (not null)
+// -> Hide next question choice for muliple choice answers
+// -> onShowInputView -> Scroll to first text input
+// -> InputView image load: check if filename already exists -> if (filename not exists) {if (same file content already exists under different file name) {change filename to the already existing dont add resource} else { everything okay add resource}}
+// -> InputView: Show loading Screen onNodeClicked, Disable all inputs, Hide loading Screen in InputView.show(), enable all inputs
+// -> InputView: Show loading screen when adding a resource, disable all inputs, Hide after resource is added, enable all inputs
+// -> Loading Screen when saving experiment; 
+// -> Disable key movement if current document focus = input element
 // -> Code cleaning
+// -> Survey frequency buttons
 // -> Copy paste option?
+// -> Test phase: Test fully grown experiment on RemExApp, Test the RemExEditor functionality
 // -> Create .exe file for install
 // -> InfoView
 
 // ENHANCEMENT:
+// EDITOR:
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
 // - Optimize key movement (Shortcuts (e.g. Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
 // - Show survey time windows (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
@@ -33,6 +43,9 @@ import IdManager from "../utils/IdManager.js";
 // - Survey time randomization
 // - Add new survey steps like distraction games, etc...
 // - Add new question types
+// APP:
+// - Show a loading Screen when experiment gets loaded and when it gets started
+// - Show a loading screen when clicking the next button in each acitivity, hide it onCreate (the intent to an instruction with a video takes some seconds. With the loading screen the user sees that something is happening)
 
 class Controller {
 
@@ -104,7 +117,8 @@ class Controller {
         ];
         this.currentSelection = [];
 
-        // Save/Load Buttons
+        // Save/Load Functionality
+        this.encodedResources = [];
         this.saveButton = importExportContainer.querySelector("#" + Config.SAVE_EXPERIMENT_BUTTON_ID);
         uploadButton = importExportContainer.querySelector("#" + Config.UPLOAD_EXPERIMENT_BUTTON_ID);
         newButton = importExportContainer.querySelector("#" + Config.NEW_EXPERIMENT_BUTTON_ID);
@@ -154,21 +168,62 @@ function onSaveExperimentButtonClicked() {
         InputView.showAlert(result.alert);
     }
     else {
-        experiment.encodedResources = encodedResources;
-        experimentJSON = JSON.stringify(experiment);
-        // Declare type property as an enum for the android json library "com.fasterxml.jackson"
-        experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
-        jsonFile = generateFile(experimentJSON, "text/plain");
-        nameCodeTable = ModelManager.getNameCodeTable(experiment);
-        if (nameCodeTable.length !== 0) {
-            textFile = generateFile(nameCodeTable, "text/plain");
-            downloadLinkElement.setAttribute("href", textFile);
-            downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
+        if (encodedResources.length !== 0) {
+            for (let encodedResource of encodedResources) {
+                if (encodedResources.indexOf(encodedResource) === encodedResources.length - 1) {
+                    encodedResource.then(function(result) {
+                        let experiment = ModelManager.getExperiment(),
+                        experimentJSON,
+                        jsonFile,
+                        nameCodeTable,
+                        textFile,
+                        downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID);
+        
+                        for (let resource of this.encodedResources) {
+                            experiment.encodedResources.push(resource);
+                        }
+                        experiment.encodedResources.push(result);
+                        experimentJSON = JSON.stringify(experiment);
+                        // Declare type property as an enum for the android json library "com.fasterxml.jackson"
+                        experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
+                        jsonFile = generateFile(experimentJSON, "text/plain");
+                        nameCodeTable = ModelManager.getNameCodeTable(experiment);
+                        if (nameCodeTable.length !== 0) {
+                            textFile = generateFile(nameCodeTable, "text/plain");
+                            downloadLinkElement.setAttribute("href", textFile);
+                            downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
+                            downloadLinkElement.click();
+                        }
+                        downloadLinkElement.setAttribute("href", jsonFile);
+                        downloadLinkElement.setAttribute("download", experiment.name + ".txt");
+                        downloadLinkElement.click();
+                        this.encodedResources = [];
+                        return;
+                    }.bind(this));
+                }
+                else {
+                    encodedResource.then(function(result) {
+                        this.encodedResources.push(result);
+                    }.bind(this));
+                }
+            }
+        }
+        else {
+            experimentJSON = JSON.stringify(experiment);
+            // Declare type property as an enum for the android json library "com.fasterxml.jackson"
+            experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
+            jsonFile = generateFile(experimentJSON, "text/plain");
+            nameCodeTable = ModelManager.getNameCodeTable(experiment);
+            if (nameCodeTable.length !== 0) {
+                textFile = generateFile(nameCodeTable, "text/plain");
+                downloadLinkElement.setAttribute("href", textFile);
+                downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
+                downloadLinkElement.click();
+            }
+            downloadLinkElement.setAttribute("href", jsonFile);
+            downloadLinkElement.setAttribute("download", experiment.name + ".txt");
             downloadLinkElement.click();
         }
-        downloadLinkElement.setAttribute("href", jsonFile);
-        downloadLinkElement.setAttribute("download", experiment.name + ".txt");
-        downloadLinkElement.click();
     }
 }
 
@@ -211,10 +266,10 @@ function onUploadExperimentButtonClicked() {
                 WhereAmIView.update([]);
                 InputView.hide();
                 InputView.hideAlert();
-                // TODO
+                // TODOthen
                 //TreeView init and createNodes
-            }.bind(this));
-        }.bind(this));
+            });
+        });
         uploadElement.click();
     }
 }
@@ -338,6 +393,7 @@ function onNodeClicked(event) {
     validationResult;
 
     if (clickedNode !== previousFocusedNode) {
+        // TODO: InputView.showLoadingScreen()
         this.currentSelection = [];
         updateCurrentSelection(this, clickedNode);
         TreeView.currentFocusedNode = clickedNode;
@@ -1149,10 +1205,11 @@ function onInputChanged(event) {
     timeInMin,
     timeSortedChildNodes,
     fileName,
-    validationResult;
+    validationResult,
+    addResourceResult;
 
-    // TODO
-    console.log(newDataModel.surveyFrequency);
+    // TODO survey frequency buttons; Label is not hidden when an alert in InputView is triggered
+    // console.log(newDataModel.surveyFrequency);
 
     newDataModel.id = correspondingNode.id;
     if (newDataModel.name !== undefined) {
@@ -1186,13 +1243,24 @@ function onInputChanged(event) {
             fileName = newDataModel.videoFileName;
         }
         if (fileName !== undefined && fileName !== null) {
-            if (!ModelManager.addResource(fileName, event.data.base64String)) {
-                // TODO: Alert, that another file with the same file name already exists
-                // InputView: Set file inputs values to null and display them
-            }
-            else {
-                ModelManager.updateExperiment(newDataModel);
-            }
+            addResourceResult = ModelManager.addResource(fileName, event.data.base64String);
+            addResourceResult.then(
+                function() {
+                    ModelManager.updateExperiment(newDataModel);
+                },
+                function(error) {
+                    if (error.toString().includes("The serialized value is too large")) {
+                        alert(Config.FILE_TOO_LARGE + " (" + fileName + ")"); // eslint-disable-line no-alert
+                    }
+                    else if (error.toString().includes("The current transaction exceeded its quota limitations.")) {
+                        alert(Config.DATABASE_FULL + " (" + fileName + ")"); // eslint-disable-line no-alert
+                    }
+                    else {
+                        alert(error.toString() + " (" + fileName + ")"); // eslint-disable-line no-alert
+                    }
+                    InputView.clearFileInputs();
+                }
+            );
         }
         else {
             ModelManager.updateExperiment(newDataModel);

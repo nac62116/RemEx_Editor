@@ -30,6 +30,7 @@ const Config = {
     MOVING_MODE_TIMELINE: "moveNodesOnTimeline",
     MOVING_MODE_ROW: "moveNodesInsideRow",
     MOVING_MODE_TREE: "moveTree",
+    RESOURCE_ADDED: "resourceAdded",
  
     // View related:
 
@@ -603,6 +604,7 @@ const Config = {
     QUESTION_TEXT_MAX_LENGTH: 130,
     QUESTION_HINT_MAX_LENGTH: 90,
     LIKERT_QUESTION_SCALE_LABEL_TEXT_MAX_LENGTH: 30,
+    LIKERT_QUESTION_MAX_ITEM_COUNT: 100,
 
     // Input invalid messages:
     
@@ -630,11 +632,15 @@ const Config = {
     BREATHING_EXERCISE_MAX_FREQUENCY_ALERT: "Länger als 20 Sekunden einatmen ist schwierig. Falls das trotzdem erwünscht ist, bitte den Support kontaktieren.",
     CHOICE_QUESTION_AT_LEAST_ONE_ANSWER: "Eine Auswahlfrage muss mindestens zwei Antwortmöglichkeiten haben. Wo bleibt sonst die Wahl?",
     LIKERT_QUESTION_SCALE_INITIAL_VALUE_NOT_IN_RANGE: "Der Anfangswert liegt nicht im Bereich der Skala. Bitte wähle einen Anfangswert der kleiner oder gleich der Skalenlänge ist.",
+    LIKERT_QUESTION_MAX_ITEM_COUNT_ALERT: "Die maximal unterstützte Länge einer Likertskala beträgt bisher 100. Bitte den Support kontaktieren, wenn das Limit angehoben werden muss.",
     POINT_OF_TIME_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitpunkttyp muss gewählt werden.",
     TIME_INTERVAL_QUESTION_SELECT_AT_LEAST_ONE_TYPE: "Mindestens ein Zeitraumtyp muss gewählt werden.",
     ANSWER_CODE_NOT_UNIQUE: "Der gewählte Code deiner Antwort existiert bereits. Bitte wähle einen einzigartigen Namen um bei der Auswertung der späteren CSV-Daten keine Duplikate zu erzeugen.",
     INPUT_TOO_LONG: "Die Eingabe überschreitet die maximal zulassige Länge. Bitte kürze deine Eingabe.",
     INPUT_TOO_LONG_WITH_RESOURCE: "Die Eingabe überschreitet die maximal zulassige Länge für Instruktionen mit Bildern oder Videos. Bitte kürze deine Eingabe.",
+    SAME_FILE_NAME_ALERT: "Eine andere Resource in diesem Experiment hat bereits diesen Dateinamen. Bitte benenne die Resource erst um bevor du sie hochlädst.",
+    FILE_TOO_LARGE: "Die hochgeladene Resource überschreitet die maximal zuläassige Größe.",
+    DATABASE_FULL: "Die Resourcen des Experiments sind bereits zu groß um weitere hochzuladen.",
 };
 
 Object.freeze(Config);

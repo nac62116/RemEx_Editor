@@ -4,33 +4,35 @@ class IndexedDB {
 
     addResource(encodedResource) {
         let db = openDatabase(),
-        transaction,
-        objectStore,
         request;
 
-        db.then(function(result) {
-            if (typeof(result) === "string") {
-                console.log(result);
-            }
-            else {
-                transaction = result.transaction(["resources"], "readwrite");
-                transaction.oncomplete = function() {
-                    console.log("Resource added");
-                };
+        return new Promise(function(resolve, reject) {
+            db.then(function(result) {
+                if (typeof(result) === "string") {
+                    reject(result);
+                }
+                else {
+                    try {
+                        request = result.transaction(["resources"], "readwrite")
+                                .objectStore("resources")
+                                .add(encodedResource);
                 
-                transaction.onerror = function(event) {
-                    console.log("Datenbankfehler: " + event.target.errorCode);
-                };
-                
-                objectStore = transaction.objectStore("resources");
-                request = objectStore.add(encodedResource);
-                request.onsuccess = function(event) {
-                    console.log("Add request suceeded");
-                };
-            }
+                        request.onsuccess = function() {
+                            resolve(true);
+                        };
+                        request.onerror = function(event) {
+                            reject(event.target.error);
+                        };
+                    }
+                    catch (error) {
+                        //reject(error);
+                    }
+                }
+            });
         });
     }
 
+    // TODO: Handle errors like above
     deleteResource(fileName) {
         let db = openDatabase(),
         request;
@@ -51,33 +53,57 @@ class IndexedDB {
         });
     }
 
+    // TODO: Handle errors like above
     getResource(fileName) {
         let db = openDatabase(),
-        transaction,
-        objectStore,
         request,
         promise;
 
-        return db.then(function(result) {
-            if (typeof(result) === "string") {
+        if (fileName !== null) {
+            promise = db.then(function(result) {
+                if (typeof(result) === "string" || result === undefined) {
+                    console.log(result);
+                }
+                else {
+                    promise = new Promise(function(resolve, reject) {
+                        request = result.transaction(["resources"])
+                                .objectStore("resources")
+                                .get(fileName);
+                        request.onerror = function(event) {
+                            reject(event.target.errorCode);
+                        };
+                        request.onsuccess = function() {
+                            resolve(request.result);
+                            console.log("Resource fetched");
+                        };
+                    });
+                }
+                return promise;
+            });
+            return promise;
+        }
+        return null;
+    }
+
+    // TODO: Handle errors like above
+    clearDatabase() {
+        let db = openDatabase(),
+        request;
+
+        db.then(function(result) {
+            if (typeof(result) === "string" || result === undefined) {
                 console.log(result);
             }
             else {
-                transaction = result.transaction(["resources"]);
-                objectStore = transaction.objectStore("resources");
-                promise = new Promise(function(resolve, reject) {
-                    request = objectStore.get(fileName);
-                    request.onerror = function(event) {
-                        reject(event.target.errorCode);
-                    };
-                    request.onsuccess = function() {
-                        resolve(request.result);
-                    };
-                });
+                request = result.transaction(["resources"], "readwrite")
+                        .objectStore("resources")
+                        .clear();
+        
+                request.onsuccess = function() {
+                    console.log("Database cleared");
+                };
             }
-            return promise;
         });
-
     }
 }
 
@@ -92,9 +118,9 @@ function openDatabase() {
         };
         request.onupgradeneeded = function(event) {
             let db = event.target.result,
-            store = db.createObjectStore("resources", {keyPath:"fileName"}),
             transaction = event.target.transaction;
-
+            
+            db.createObjectStore("resources", {keyPath:"fileName"});
             transaction.oncomplete = function(event) {    
                     resolve(event.target.result);
             };

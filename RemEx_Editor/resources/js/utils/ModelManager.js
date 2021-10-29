@@ -31,6 +31,7 @@ class ModelManager {
 
         experiment = Storage.load();
         if (experiment === undefined) {
+            IndexedDB.clearDatabase();
             properties.id = IdManager.getUnusedId();
             properties.name = Config.NEW_EXPERIMENT_NAME;
             experiment = createNewExperiment(properties);
@@ -49,9 +50,7 @@ class ModelManager {
 
     removeExperiment() {
         Storage.clear();
-        for (let fileName of this.usedResourceFileNames) {
-            IndexedDB.deleteResource(fileName);
-        }
+        IndexedDB.clearDatabase();
         this.usedResourceFileNames = [];
     }
 
@@ -213,21 +212,29 @@ class ModelManager {
     addResource(fileName, base64String) {
         let resource = IndexedDB.getResource(fileName),
         encodedResource,
-        success;
+        promise;
 
-        return resource.then(function(result) {
-            if (result !== undefined && result.base64String !== base64String) {
-                success = false;
-            }
-            else if (result !== undefined && result.base64String === base64String) {
-                success = true;
-            }
-            else {
-                encodedResource = new EncodedResource(fileName, base64String);
-                IndexedDB.addResource(encodedResource);
-                success = true;
-            }
-            return success;
+        return new Promise(function(resolve, reject) {
+            resource.then(function(result) {
+                if (result !== undefined && result.base64String !== base64String) {
+                    reject(Config.SAME_FILE_NAME_ALERT);
+                }
+                else if (result !== undefined && result.base64String === base64String) {
+                    resolve(true);
+                }
+                else {
+                    encodedResource = new EncodedResource(fileName, base64String);
+                    promise = IndexedDB.addResource(encodedResource);
+                    promise.then(
+                        function() {
+                            resolve(true);
+                        },
+                        function(error) {
+                            reject(error);
+                        }
+                    );
+                }
+            });
         });
     }
 
@@ -256,9 +263,13 @@ class ModelManager {
     }
 
     getAllResources() {
-        let encodedResources = [];
+        let encodedResources = [],
+        resource;
         for (let fileName of this.usedResourceFileNames) {
-            encodedResources.push(IndexedDB.getResource(fileName));
+            resource = IndexedDB.getResource(fileName);
+            if (resource !== null) {
+                encodedResources.push(resource);
+            }
         }
         return encodedResources;
     }

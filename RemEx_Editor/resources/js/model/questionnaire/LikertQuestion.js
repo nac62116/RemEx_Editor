@@ -8,7 +8,7 @@ class LikertQuestion extends Question {
         super(Config.QUESTION_TYPE_LIKERT, "Neue Likertfrage " + LikertQuestion.instanceCount);
         this.scaleMinimumLabel = "Sehr schlecht";
         this.scaleMaximumLabel = "Sehr gut";
-        this.initialValue = 3;
+        this.initialValue = 1;
         this.itemCount = 5;
     }
 }
