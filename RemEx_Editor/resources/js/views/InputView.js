@@ -13,6 +13,7 @@ class InputView extends Observable {
         this.deleteButton = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_DELETE_BUTTON_ID);
         this.deleteButton.addEventListener("click", onRemoveNodeButtonClicked.bind(this));
         this.alertElement = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_ALERT_ID);
+        this.loadingScreen = document.querySelector("#" + Config.LOADING_SCREEN_ID);
         this.correspondingNode = undefined;
         this.currentFileName = undefined;
     }
@@ -20,7 +21,6 @@ class InputView extends Observable {
     show(correspondingNode, correspondingModelObject, ongoingInstructions, questions, encodedResource) {
         let correspondingModelValues = {};
 
-        // Hide loading Screen
         this.correspondingNode = correspondingNode;
         this.header.innerHTML = correspondingNode.description;
         this.inputFieldsContainer.remove();
@@ -414,6 +414,7 @@ function onInputChanged(event) {
             }
         }
         else if (correspondingModelProperty === "imageFileName") {
+            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
             inputElements = this.inputFieldsContainer.querySelectorAll("input");
             for (let inputElement of inputElements) {
                 if (inputElement.name === "videoFileName") {
@@ -426,6 +427,7 @@ function onInputChanged(event) {
             data.base64String = getBase64String(event.target.files[0]);
         }
         else if (correspondingModelProperty === "videoFileName") {
+            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
             inputElements = this.inputFieldsContainer.querySelectorAll("input");
             for (let inputElement of inputElements) {
                 if (inputElement.name === "imageFileName") {
@@ -469,6 +471,7 @@ function onInputChanged(event) {
         data.newModelProperties = properties;
     
         if (correspondingModelProperty === Config.TYPE_STEP || correspondingModelProperty === Config.TYPE_QUESTION) {
+            // TODO: Bug when changing the step type and the previous node is an instruction with a resource (Outcome the previous step node is shown in InputView and the changed step node is shown in TreeView)
             data.stepType = stepType;
             data.questionType = questionType;
             if (this.correspondingNode.previousNode !== undefined) {

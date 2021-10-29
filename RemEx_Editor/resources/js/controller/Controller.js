@@ -18,14 +18,13 @@ import IdManager from "../utils/IdManager.js";
 
 // TODO:
 // -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
+// -> onMoveNodeRight/Left TODO
+// -> Fix issue when changing step type
 // -> Optimize movement -> onNodeClick move all child nodes so that the first is centered
 // -> Initial value of an answer for property nextQuestionId has to be the next question id (not null)
 // -> Hide next question choice for muliple choice answers
-// -> onShowInputView -> Scroll to first text input
+// -> onShowInputView -> Scroll to first text input (center it if possible)
 // -> InputView image load: check if filename already exists -> if (filename not exists) {if (same file content already exists under different file name) {change filename to the already existing dont add resource} else { everything okay add resource}}
-// -> InputView: Show loading Screen onNodeClicked, Disable all inputs, Hide loading Screen in InputView.show(), enable all inputs
-// -> InputView: Show loading screen when adding a resource, disable all inputs, Hide after resource is added, enable all inputs
-// -> Loading Screen when saving experiment; 
 // -> Disable key movement if current document focus = input element
 // -> Code cleaning
 // -> Survey frequency buttons
@@ -116,6 +115,7 @@ class Controller {
             },
         ];
         this.currentSelection = [];
+        this.loadingScreen = document.querySelector("#" + Config.LOADING_SCREEN_ID);
 
         // Save/Load Functionality
         this.encodedResources = [];
@@ -169,6 +169,7 @@ function onSaveExperimentButtonClicked() {
     }
     else {
         if (encodedResources.length !== 0) {
+            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
             for (let encodedResource of encodedResources) {
                 if (encodedResources.indexOf(encodedResource) === encodedResources.length - 1) {
                     encodedResource.then(function(result) {
@@ -198,6 +199,7 @@ function onSaveExperimentButtonClicked() {
                         downloadLinkElement.setAttribute("download", experiment.name + ".txt");
                         downloadLinkElement.click();
                         this.encodedResources = [];
+                        this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                         return;
                     }.bind(this));
                 }
@@ -393,7 +395,6 @@ function onNodeClicked(event) {
     validationResult;
 
     if (clickedNode !== previousFocusedNode) {
-        // TODO: InputView.showLoadingScreen()
         this.currentSelection = [];
         updateCurrentSelection(this, clickedNode);
         TreeView.currentFocusedNode = clickedNode;
@@ -469,14 +470,16 @@ function onNodeClicked(event) {
                 promise = ModelManager.getResource(nodeDataModel.videoFileName);
             }
             if (promise !== undefined) {
+                this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
                 promise.then(function(result) {
                     if (typeof(result) === "string") {
-                        console.log(result);
+                        alert(result); // eslint-disable-line no-alert
                     }
                     else {
                         InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, result);
                     }
-                });
+                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                }.bind(this));
             }
             else {
                 InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
@@ -960,13 +963,14 @@ function onMoveNodeLeft(event) {
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
-    correspondingNode.nextNode.click();
+    correspondingNode.parentNode.click();
     correspondingNode.click();
     if (correspondingNode.childNodes.length !== 0 && correspondingNode.childNodes !== undefined) {
         moveTreeHorizontal(correspondingNode.childNodes[0], movingVectorX, Config.MOVING_MODE_ROW);
     }
 }
 
+// TODO: Update node positions without moving the correspondingNode -> update the moveNodeButtons -> remove the double click()'s
 function onMoveNodeRight(event) {
     let correspondingNode = event.data.target,
     tempPrevNode,
@@ -1004,7 +1008,7 @@ function onMoveNodeRight(event) {
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
-    correspondingNode.previousNode.click();
+    correspondingNode.parentNode.click();
     correspondingNode.click();
     if (correspondingNode.childNodes.length !== 0 && correspondingNode.childNodes !== undefined) {
         moveTreeHorizontal(correspondingNode.childNodes[0], movingVectorX, Config.MOVING_MODE_ROW);
@@ -1243,12 +1247,15 @@ function onInputChanged(event) {
             fileName = newDataModel.videoFileName;
         }
         if (fileName !== undefined && fileName !== null) {
+            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
             addResourceResult = ModelManager.addResource(fileName, event.data.base64String);
             addResourceResult.then(
                 function() {
+                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                     ModelManager.updateExperiment(newDataModel);
-                },
+                }.bind(this),
                 function(error) {
+                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                     if (error.toString().includes("The serialized value is too large")) {
                         alert(Config.FILE_TOO_LARGE + " (" + fileName + ")"); // eslint-disable-line no-alert
                     }
@@ -1259,7 +1266,7 @@ function onInputChanged(event) {
                         alert(error.toString() + " (" + fileName + ")"); // eslint-disable-line no-alert
                     }
                     InputView.clearFileInputs();
-                }
+                }.bind(this)
             );
         }
         else {
@@ -1295,7 +1302,6 @@ function onInputChanged(event) {
         disableNodeActions(this, TreeView.rootNode);
         this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
-
 }
 
 function disableNodeActions(that, node) {

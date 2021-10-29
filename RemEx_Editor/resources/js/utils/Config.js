@@ -55,6 +55,7 @@ const Config = {
 
     // DOM Element ids:
 
+    LOADING_SCREEN_ID: "loadingScreen",
     DOWNLOAD_LINK_ID: "downloadLink",
     UPLOAD_INPUT_ID: "uploadInput",
     TREE_VIEW_CONTAINER_ID: "treeContainer",

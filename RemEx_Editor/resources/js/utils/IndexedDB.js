@@ -18,14 +18,14 @@ class IndexedDB {
                                 .add(encodedResource);
                 
                         request.onsuccess = function() {
-                            resolve(true);
+                            resolve();
                         };
                         request.onerror = function(event) {
                             reject(event.target.error);
                         };
                     }
                     catch (error) {
-                        //reject(error);
+                        reject(error);
                     }
                 }
             });
