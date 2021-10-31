@@ -14,6 +14,22 @@ class MoveableNode extends StandardNode {
         this.nodeElements.moveLeftButton.addEventListener("mouseleave", onMoveButtonMouseLeave.bind(this));
     }
 
+    showMoveLeftButton() {
+        this.nodeElements.moveLeftButton.removeAttribute("display");
+    }
+
+    hideMoveLeftButton() {
+        this.nodeElements.moveLeftButton.setAttribute("display", "none");
+    }
+
+    showMoveRightButton() {
+        this.nodeElements.moveRightButton.removeAttribute("display");
+    }
+
+    hideMoveRightButton() {
+        this.nodeElements.moveRightButton.setAttribute("display", "none");
+    }
+
     focus() {
         super.focus();
         if (this.nextNode !== undefined) {

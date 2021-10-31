@@ -17,8 +17,6 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
-// -> onMoveNodeRight/Left TODO
 // -> Fix issue when changing step type
 // -> Optimize movement -> onNodeClick move all child nodes so that the first is centered
 // -> Initial value of an answer for property nextQuestionId has to be the next question id (not null)
@@ -27,10 +25,12 @@ import IdManager from "../utils/IdManager.js";
 // -> InputView image load: check if filename already exists -> if (filename not exists) {if (same file content already exists under different file name) {change filename to the already existing dont add resource} else { everything okay add resource}}
 // -> Disable key movement if current document focus = input element
 // -> Code cleaning
+// -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
 // -> Survey frequency buttons
 // -> Copy paste option?
 // -> Test phase: Test fully grown experiment on RemExApp, Test the RemExEditor functionality
 // -> Create .exe file for install
+// -> MIT Licence: Licence text on top of each file and after that the contibutors
 // -> InfoView
 
 // ENHANCEMENT:
@@ -931,14 +931,14 @@ function onMoveNodeLeft(event) {
     tempPrevNode,
     tempCorrNode,
     tempNextNode,
-    tempPosition = {},
-    firstNodeOfRow,
-    movingVectorX = Config.NODE_DISTANCE_HORIZONTAL * -1;
+    firstNodeOfRow;
 
-    tempPosition.x = correspondingNode.center.x;
-    tempPosition.y = correspondingNode.center.y;
-    correspondingNode.updatePosition(correspondingNode.previousNode.center.x, correspondingNode.previousNode.center.y, true);
-    correspondingNode.previousNode.updatePosition(tempPosition.x, tempPosition.y, true);
+    correspondingNode.previousNode.updatePosition(correspondingNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, correspondingNode.center.y, true);
+    if (correspondingNode.previousNode.childNodes !== undefined && correspondingNode.previousNode.childNodes.length !== 0) {
+        moveTreeHorizontal(correspondingNode.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * 2, Config.MOVING_MODE_ROW); // eslint-disable-line no-magic-numbers
+    }
+    moveNextNodesRight(correspondingNode);
+    movePreviousNodesRight(correspondingNode.previousNode);
 
     tempPrevPrevNode = correspondingNode.previousNode.previousNode;
     tempPrevNode = correspondingNode.previousNode;
@@ -956,6 +956,11 @@ function onMoveNodeLeft(event) {
         tempNextNode.previousNode = tempPrevNode;
     }
 
+    correspondingNode.showMoveRightButton();
+    if (correspondingNode.previousNode === undefined) {
+        correspondingNode.hideMoveLeftButton();
+    }
+
     firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
     if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
         updateStepLinks(firstNodeOfRow);
@@ -963,28 +968,44 @@ function onMoveNodeLeft(event) {
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
-    correspondingNode.parentNode.click();
-    correspondingNode.click();
-    if (correspondingNode.childNodes.length !== 0 && correspondingNode.childNodes !== undefined) {
-        moveTreeHorizontal(correspondingNode.childNodes[0], movingVectorX, Config.MOVING_MODE_ROW);
-    }
 }
 
-// TODO: Update node positions without moving the correspondingNode -> update the moveNodeButtons -> remove the double click()'s
+function movePreviousNodesRight(node) {
+    if (node.previousNode === undefined) {
+        return;
+    }
+    node.previousNode.updatePosition(node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
+    if (node.previousNode.childNodes !== undefined && node.previousNode.childNodes.length !== 0) {
+        moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
+    }
+    movePreviousNodesRight(node.previousNode);
+}
+
+function moveNextNodesRight(node) {
+    if (node.nextNode === undefined) {
+        return;
+    }
+    node.nextNode.updatePosition(node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
+    if (node.nextNode.childNodes !== undefined && node.nextNode.childNodes.length !== 0) {
+        moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
+    }
+    moveNextNodesRight(node.nextNode);
+}
+
 function onMoveNodeRight(event) {
     let correspondingNode = event.data.target,
     tempPrevNode,
     tempCorrNode,
     tempNextNode,
     tempNextNextNode,
-    tempPosition = {},
-    firstNodeOfRow,
-    movingVectorX = Config.NODE_DISTANCE_HORIZONTAL;
+    firstNodeOfRow;
 
-    tempPosition.x = correspondingNode.center.x;
-    tempPosition.y = correspondingNode.center.y;
-    correspondingNode.updatePosition(correspondingNode.nextNode.center.x, correspondingNode.nextNode.center.y, true);
-    correspondingNode.nextNode.updatePosition(tempPosition.x, tempPosition.y, true);
+    correspondingNode.nextNode.updatePosition(correspondingNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, correspondingNode.center.y, true);
+    if (correspondingNode.nextNode.childNodes !== undefined && correspondingNode.nextNode.childNodes.length !== 0) {
+        moveTreeHorizontal(correspondingNode.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -2, Config.MOVING_MODE_ROW); // eslint-disable-line no-magic-numbers
+    }
+    moveNextNodesLeft(correspondingNode.nextNode);
+    movePreviousNodesLeft(correspondingNode);
 
     tempPrevNode = correspondingNode.previousNode;
     tempCorrNode = correspondingNode;
@@ -1001,6 +1022,11 @@ function onMoveNodeRight(event) {
         tempNextNextNode.previousNode = tempCorrNode;
     }
 
+    correspondingNode.showMoveLeftButton();
+    if (correspondingNode.nextNode === undefined) {
+        correspondingNode.hideMoveRightButton();
+    }
+
     firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
     if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
         updateStepLinks(firstNodeOfRow);
@@ -1008,11 +1034,28 @@ function onMoveNodeRight(event) {
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
     }
-    correspondingNode.parentNode.click();
-    correspondingNode.click();
-    if (correspondingNode.childNodes.length !== 0 && correspondingNode.childNodes !== undefined) {
-        moveTreeHorizontal(correspondingNode.childNodes[0], movingVectorX, Config.MOVING_MODE_ROW);
+}
+
+function movePreviousNodesLeft(node) {
+    if (node.previousNode === undefined) {
+        return;
     }
+    node.previousNode.updatePosition(node.previousNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
+    if (node.previousNode.childNodes !== undefined && node.previousNode.childNodes.length !== 0) {
+        moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
+    }
+    movePreviousNodesLeft(node.previousNode);
+}
+
+function moveNextNodesLeft(node) {
+    if (node.nextNode === undefined) {
+        return;
+    }
+    node.nextNode.updatePosition(node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
+    if (node.nextNode.childNodes !== undefined && node.nextNode.childNodes.length !== 0) {
+        moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
+    }
+    moveNextNodesLeft(node.nextNode);
 }
 
 // TimelineView event callbacks
