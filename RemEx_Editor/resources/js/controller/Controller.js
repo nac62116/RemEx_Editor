@@ -17,7 +17,6 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Fix issue when changing step type
 // -> Optimize movement -> onNodeClick move all child nodes so that the first is centered
 // -> Initial value of an answer for property nextQuestionId has to be the next question id (not null)
 // -> Hide next question choice for muliple choice answers
@@ -104,8 +103,8 @@ class Controller {
                 callback: onRemoveNode.bind(this),
             },
             {
-                eventType: Config.EVENT_ADD_NEXT_NODE,
-                callback: onAddNextNode.bind(this),
+                eventType: Config.EVENT_CHANGE_NODE,
+                callback: onChangeNode.bind(this),
             },
         ];
         this.timelineEventListener = [
@@ -139,11 +138,9 @@ class Controller {
         WhereAmIView.init(whereAmIViewContainer);
 
         InputView.init(inputViewContainer);
-        InputView.addEventListener(Config.EVENT_INPUT_CHANGED, onInputChanged.bind(this));
-        InputView.addEventListener(Config.EVENT_ADD_NEXT_NODE, onAddNextNode.bind(this));
-        InputView.addEventListener(Config.EVENT_ADD_PREV_NODE, onAddPreviousNode.bind(this));
-        InputView.addEventListener(Config.EVENT_ADD_CHILD_NODE, onAddChildNode.bind(this));
-        InputView.addEventListener(Config.EVENT_REMOVE_NODE, onRemoveNode.bind(this));
+        for (let listener of this.inputViewEventListener) {
+            InputView.addEventListener(listener.eventType, listener.callback);
+        }
         
         document.addEventListener("keyup", onKeyUp.bind(this));
     }
@@ -922,6 +919,51 @@ function onAddChildNode(event) {
     position.y = clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL;
     newNode.updatePosition(position.x, position.y, true);
     clickedNode.hideAddChildButton();
+    newNode.click();
+}
+
+function onChangeNode(event) {
+    let nodeToChange = event.data.target,
+    experiment,
+    stepType = event.data.stepType,
+    questionType = event.data.questionType,
+    newDataModel,
+    newNode,
+    firstNodeOfRow,
+    childIds = [];
+
+    if (stepType !== undefined) {
+        newDataModel = ModelManager.extendExperiment(nodeToChange.parentNode, undefined, stepType, undefined);
+        newNode = createNode(this, nodeToChange.parentNode, newDataModel, stepType, undefined);
+    }
+    else {
+        newDataModel = ModelManager.extendExperiment(nodeToChange.parentNode, undefined, undefined, questionType);
+        newNode = createNode(this, nodeToChange.parentNode, newDataModel, undefined, questionType);
+    }
+    newNode.updatePosition(nodeToChange.center.x, nodeToChange.center.y, true);
+    newNode.nextNode = nodeToChange.nextNode;
+    newNode.previousNode = nodeToChange.previousNode;
+    if (nodeToChange.previousNode !== undefined) {
+        nodeToChange.previousNode.nextNode = newNode;
+    }
+    if (nodeToChange.nextNode !== undefined) {
+        nodeToChange.nextNode.previousNode = newNode;
+    }
+
+    if (stepType !== undefined) {
+        firstNodeOfRow = getFirstNodeOfRow(newNode);
+        updateStepLinks(newNode);
+        experiment = ModelManager.getExperiment();
+        updateWaitForStepLinks(firstNodeOfRow, nodeToChange, experiment);
+    }
+    else {
+        updateQuestionLinks(newNode);
+    }
+    if (nodeToChange.childNodes !== undefined && nodeToChange.childNodes.length !== 0) {
+        childIds = getNodeIds(nodeToChange.childNodes[0], childIds);
+    }
+    ModelManager.shortenExperiment(nodeToChange.id, nodeToChange.parentNode.id, childIds);
+    TreeView.removeNode(nodeToChange);
     newNode.click();
 }
 

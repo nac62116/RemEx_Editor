@@ -383,9 +383,7 @@ function onInputChanged(event) {
     correspondingModelProperty = event.target.getAttribute("name"),
     checkboxElements,
     inputElements,
-    stepType,
-    questionType,
-    addNodeEvent,
+    changeNodeEvent,
     removeNodeEvent,
     imageInputElement,
     videoInputElement,
@@ -439,12 +437,6 @@ function onInputChanged(event) {
             this.currentFileName = event.target.files[0].name;
             data.base64String = getBase64String(event.target.files[0]);
         }
-        else if (correspondingModelProperty === Config.TYPE_STEP) {
-            stepType = event.target.value;
-        }
-        else if (correspondingModelProperty === Config.TYPE_QUESTION) {
-            questionType = event.target.value;
-        }
         else if (event.target.type === "checkbox") {
             checkboxElements = event.target.parentElement.parentElement.querySelectorAll("input");
             properties[correspondingModelProperty] = [];
@@ -471,24 +463,15 @@ function onInputChanged(event) {
         data.newModelProperties = properties;
     
         if (correspondingModelProperty === Config.TYPE_STEP || correspondingModelProperty === Config.TYPE_QUESTION) {
-            // TODO: Bug when changing the step type and the previous node is an instruction with a resource (Outcome the previous step node is shown in InputView and the changed step node is shown in TreeView)
-            data.stepType = stepType;
-            data.questionType = questionType;
-            if (this.correspondingNode.previousNode !== undefined) {
-                data.target = this.correspondingNode.previousNode;
-                addNodeEvent = new ControllerEvent(Config.EVENT_ADD_NEXT_NODE, data);
-            }
-            else if (this.correspondingNode.nextNode !== undefined) {
-                data.target = this.correspondingNode.nextNode;
-                addNodeEvent = new ControllerEvent(Config.EVENT_ADD_PREV_NODE, data);
+            if (correspondingModelProperty === Config.TYPE_STEP) {
+                data.stepType = event.target.value;
             }
             else {
-                data.target = this.correspondingNode.parentNode;
-                addNodeEvent = new ControllerEvent(Config.EVENT_ADD_CHILD_NODE, data);
+                data.questionType = event.target.value;
             }
-            removeNodeEvent = new ControllerEvent(Config.EVENT_REMOVE_NODE, data);
-            this.notifyAll(removeNodeEvent);
-            this.notifyAll(addNodeEvent);
+            data.target = this.correspondingNode;
+            changeNodeEvent = new ControllerEvent(Config.EVENT_CHANGE_NODE, data);
+            this.notifyAll(changeNodeEvent);
         }
         else {
             if (data.base64String !== undefined) {

@@ -49,6 +49,7 @@ const Config = {
     EVENT_ADD_CHILD_NODE: "addChildNode",
     EVENT_INPUT_CHANGED: "inputChanged",
     EVENT_REMOVE_NODE: "removeNode",
+    EVENT_CHANGE_NODE: "changeNode",
     EVENT_TIMELINE_MOUSE_ENTER: "timelineMouseEnter",
     EVENT_TIMELINE_MOUSE_LEAVE: "timelineMouseLeave",
     EVENT_TIMELINE_CLICKED: "timelineClicked",
