@@ -17,7 +17,6 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Optimize movement -> onNodeClick move all child nodes so that the first is centered
 // -> Initial value of an answer for property nextQuestionId has to be the next question id (not null)
 // -> Hide next question choice for muliple choice answers
 // -> onShowInputView -> Scroll to first text input (center it if possible)
@@ -31,19 +30,21 @@ import IdManager from "../utils/IdManager.js";
 // -> Create .exe file for install
 // -> MIT Licence: Licence text on top of each file and after that the contibutors
 // -> InfoView
+// APP:
+// -> Show a loading Screen when experiment gets loaded and when it gets started
+// -> Show a loading screen when clicking the next button in each acitivity, hide it onCreate (the intent to an instruction with a video takes some seconds. With the loading screen the user sees that something is happening)
 
 // ENHANCEMENT:
 // EDITOR:
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
 // - Optimize key movement (Shortcuts (e.g. Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
-// - Show survey time windows (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
+// - Show survey time windows on the timeline (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
 // - Calculate the optimal duration for a survey depending on its content
 // - Survey time randomization
 // - Add new survey steps like distraction games, etc...
 // - Add new question types
 // APP:
-// - Show a loading Screen when experiment gets loaded and when it gets started
-// - Show a loading screen when clicking the next button in each acitivity, hide it onCreate (the intent to an instruction with a video takes some seconds. With the loading screen the user sees that something is happening)
+// -
 
 class Controller {
 
@@ -851,18 +852,16 @@ function movePreviousNodes(node, moveTowardsNode) {
     }
     if (moveTowardsNode) {
         node.previousNode.updatePosition(node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
-        if (node.nextNode instanceof TimelineNode) {
-            for (let childNode of node.previousNode.childNodes) {
-                childNode.updatePosition(childNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
-            }
+        if (node.previousNode.childNodes !== undefined
+            && node.previousNode.childNodes.length !== 0) {
+            moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
         }
     }
     else {
         node.previousNode.updatePosition(node.previousNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
-        if (node.nextNode instanceof TimelineNode) {
-            for (let childNode of node.previousNode.childNodes) {
-                childNode.updatePosition(childNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
-            }
+        if (node.previousNode.childNodes !== undefined
+            && node.previousNode.childNodes.length !== 0) {
+            moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
         }
     }
     movePreviousNodes(node.previousNode, moveTowardsNode);
@@ -874,18 +873,16 @@ function moveNextNodes(node, moveTowardsNode) {
     }
     if (moveTowardsNode) {
         node.nextNode.updatePosition(node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
-        if (node.nextNode instanceof TimelineNode) {
-            for (let childNode of node.nextNode.childNodes) {
-                childNode.updatePosition(childNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
-            }
+        if (node.nextNode.childNodes !== undefined
+            && node.nextNode.childNodes.length !== 0) {
+            moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
         }
     }
     else {
         node.nextNode.updatePosition(node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
-        if (node.nextNode instanceof TimelineNode) {
-            for (let childNode of node.nextNode.childNodes) {
-                childNode.updatePosition(childNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, childNode.center.y, true);
-            }
+        if (node.nextNode.childNodes !== undefined
+            && node.nextNode.childNodes.length !== 0) {
+            moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
         }
     }
     moveNextNodes(node.nextNode, moveTowardsNode);

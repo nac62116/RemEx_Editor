@@ -265,10 +265,10 @@ class TimelineView extends Observable {
                 if (labelSteps === Config.ONE_WEEK_IN_MIN) {
                     dayCount += Config.ONE_WEEK_IN_DAYS;
                 }
-                else if (labelSteps == Config.ONE_MONTH_IN_MIN) {
+                else if (labelSteps === Config.ONE_MONTH_IN_MIN) {
                     dayCount += Config.ONE_MONTH_IN_DAYS;
                 }
-                else if (labelSteps == Config.ONE_YEAR_IN_MIN) {
+                else if (labelSteps === Config.ONE_YEAR_IN_MIN) {
                     dayCount += Config.ONE_YEAR_IN_DAYS;
                 }
                 else {
@@ -288,15 +288,14 @@ class TimelineView extends Observable {
     }
 
     updateNodePositions(nodeTimeMap) {
-        let position,
-        offsetX;
+        let position;
 
         for (let [node, time] of nodeTimeMap.entries()) {
             position = getPositionFromTime(this, time);
-            offsetX = position.x - node.center.x;
             node.updatePosition(position.x, position.y, true);
             for (let childNode of node.childNodes) {
-                childNode.updatePosition(childNode.center.x + offsetX, childNode.center.y, true);
+                // Updating childNodes on their current position to redraw the correct input paths
+                childNode.updatePosition(childNode.center.x, childNode.center.y, true);
             }
         }
     }
