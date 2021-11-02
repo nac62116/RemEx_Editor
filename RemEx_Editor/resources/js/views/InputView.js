@@ -85,7 +85,6 @@ class InputView extends Observable {
         else {
             this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
-        this.inputViewContainer.scrollTop = 0;
         for (let inputElement of this.inputFieldsContainer.querySelectorAll("input[type=file]")) {
             if (inputElement.name === "imageFileName") {
                 if (this.inputFieldsContainer.querySelector("video") !== null) {
@@ -126,6 +125,7 @@ class InputView extends Observable {
 
         for (let inputElement of inputElements) {
             if (inputElement.getAttribute("type") === "text") {
+                this.inputViewContainer.scrollTop = inputElement.offsetTop + inputElement.clientHeight - inputElement.parentElement.clientHeight;
                 inputElement.select();
                 return;
             }

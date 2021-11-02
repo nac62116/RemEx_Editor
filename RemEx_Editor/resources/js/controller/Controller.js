@@ -17,7 +17,6 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> onShowInputView -> Scroll to first text input (center it if possible)
 // -> InputView image load: onNodeClick -> show input view -> if resource is loaded -> InputView.setResource(resource) --> This avoids the loading Screen onNodeClicked
 // -> InputView image load: check if filename already exists -> if (filename not exists) {if (same file content already exists under different file name) {change filename to the already existing dont add resource} else { everything okay add resource}}
 // -> Disable key movement if current document focus = input element
