@@ -18,58 +18,58 @@ class InputView extends Observable {
         this.currentFileName = undefined;
     }
 
-    show(correspondingNode, correspondingModelObject, ongoingInstructions, questions, encodedResource) {
+    show(node, dataModel, parentDataModel, ongoingInstructions, questions, encodedResource) {
         let correspondingModelValues = {};
 
-        this.correspondingNode = correspondingNode;
-        this.header.innerHTML = correspondingNode.description;
+        this.correspondingNode = node;
+        this.header.innerHTML = node.description;
         this.inputFieldsContainer.remove();
         this.inputFieldsContainer = document.createElement("div");
         this.inputFieldsContainer.setAttribute("id", Config.INPUT_VIEW_FIELDS_CONTAINER_ID);
         this.inputFieldsContainer.setAttribute("class", Config.INPUT_FIELD_CONTAINER_CSS_CLASS_NAME);
         this.inputViewContainer.appendChild(this.inputFieldsContainer);
 
-        if (correspondingNode.parentNode !== undefined) {
-            if (correspondingNode.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-                createInputField(this, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.label, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.inputType, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.values, Config.INPUT_SURVEY_FREQUENCY, correspondingNode.type, encodedResource, true);
+        if (node.parentNode !== undefined) {
+            if (node.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+                createInputField(this, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.label, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.inputType, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.values, Config.INPUT_SURVEY_FREQUENCY, node.type, encodedResource, true);
             }
-            if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
-                createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, correspondingNode.type, encodedResource, false);
+            if (node.parentNode.type === Config.TYPE_SURVEY) {
+                createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, node.type, encodedResource, false);
             }
-            if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                createInputField(this, Config.INPUT_FIELD_QUESTION_TYPE_DATA.label, Config.INPUT_FIELD_QUESTION_TYPE_DATA.inputType, Config.INPUT_FIELD_QUESTION_TYPE_DATA.values, Config.TYPE_QUESTION, correspondingNode.type, encodedResource, false);
+            if (node.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                createInputField(this, Config.INPUT_FIELD_QUESTION_TYPE_DATA.label, Config.INPUT_FIELD_QUESTION_TYPE_DATA.inputType, Config.INPUT_FIELD_QUESTION_TYPE_DATA.values, Config.TYPE_QUESTION, node.type, encodedResource, false);
             }
         }
         
         for (let inputFieldData of Config.INPUT_FIELD_DATA) {
-            for (let modelPropertyKey in correspondingModelObject) {
-                if (Object.prototype.hasOwnProperty.call(correspondingModelObject, modelPropertyKey)) {
+            for (let modelPropertyKey in dataModel) {
+                if (Object.prototype.hasOwnProperty.call(dataModel, modelPropertyKey)) {
                     if (modelPropertyKey === inputFieldData.correspondingModelProperty) {
                         if (modelPropertyKey === "absoluteStartAtHour") {
-                            correspondingModelValues[modelPropertyKey] = correspondingModelObject[modelPropertyKey];
-                            correspondingModelValues.absoluteStartAtMinute = correspondingModelObject.absoluteStartAtMinute;
+                            correspondingModelValues[modelPropertyKey] = dataModel[modelPropertyKey];
+                            correspondingModelValues.absoluteStartAtMinute = dataModel.absoluteStartAtMinute;
                             createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelValues, encodedResource, false);
                             break;
                         }
                         else if (modelPropertyKey === "absoluteStartDaysOffset") {
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey] + 1, encodedResource, false);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey] + 1, encodedResource, false);
                             break;
                         }
                         else if (modelPropertyKey === "waitForStep") {
                             if (ongoingInstructions.length !== 0) {
                                 createInputField(this, inputFieldData.label, inputFieldData.inputType,
-                                    ongoingInstructions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, true);
+                                    ongoingInstructions, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], encodedResource, true);
                             }
                         }
                         else if (modelPropertyKey === "nextQuestionId") {
-                            if (correspondingNode.type === Config.TYPE_ANSWER) {
-                                if (questions.length !== 0) {
-                                    createInputField(this, inputFieldData.label, inputFieldData.inputType, questions, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, true);
+                            if (node.type === Config.TYPE_ANSWER) {
+                                if (questions.length !== 0 && parentDataModel.choiceType === Config.CHOICE_TYPE_SINGLE_CHOICE) {
+                                    createInputField(this, inputFieldData.label, inputFieldData.inputType, questions, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], encodedResource, true);
                                 }
                             }
                         }
                         else {
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelObject[modelPropertyKey], encodedResource, false);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], encodedResource, false);
                             break;
                         }
                     }
@@ -384,7 +384,6 @@ function onInputChanged(event) {
     checkboxElements,
     inputElements,
     changeNodeEvent,
-    removeNodeEvent,
     imageInputElement,
     videoInputElement,
     sourceElement;

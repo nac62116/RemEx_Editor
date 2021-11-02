@@ -17,9 +17,8 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Initial value of an answer for property nextQuestionId has to be the next question id (not null)
-// -> Hide next question choice for muliple choice answers
 // -> onShowInputView -> Scroll to first text input (center it if possible)
+// -> InputView image load: onNodeClick -> show input view -> if resource is loaded -> InputView.setResource(resource) --> This avoids the loading Screen onNodeClicked
 // -> InputView image load: check if filename already exists -> if (filename not exists) {if (same file content already exists under different file name) {change filename to the already existing dont add resource} else { everything okay add resource}}
 // -> Disable key movement if current document focus = input element
 // -> Code cleaning
@@ -294,8 +293,8 @@ function onNewExperimentButtonClicked() {
 
 function createNode(that, parentNode, data, stepType, questionType) {
     let id = data.id,
-    elements,
     description = data.name,
+    elements,
     node;
 
     if (parentNode === undefined) {
@@ -448,6 +447,7 @@ function onNodeClicked(event) {
         WhereAmIView.update(this.currentSelection);
 
         if (clickedNode.parentNode !== undefined) {
+            parentNodeDataModel = ModelManager.getDataFromNodeId(clickedNode.parentNode.id, experiment);
             if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
                 ongoingInstructionsForInputView = getOngoingInstructionsForInputView(clickedNode, ongoingInstructionsForInputView);
                 if (ongoingInstructionsForInputView.length === 0) {
@@ -474,23 +474,20 @@ function onNodeClicked(event) {
                         alert(result); // eslint-disable-line no-alert
                     }
                     else {
-                        InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, result);
+                        InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView, result);
                     }
                     this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                 }.bind(this));
             }
             else {
-                InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
+                InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
             }
         }
         else {
-            InputView.show(clickedNode, nodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
+            InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
         }
         InputView.selectFirstInput();
 
-        if (clickedNode.parentNode !== undefined) {
-            parentNodeDataModel = ModelManager.getDataFromNodeId(clickedNode.parentNode.id, experiment);
-        }
         validationResult = InputValidator.inputIsValid(clickedNode, nodeDataModel, parentNodeDataModel);
         if (validationResult === true) {
             InputView.hideAlert();
@@ -675,7 +672,8 @@ function onAddNextNode(event) {
     newNode,
     stepType,
     questionType,
-    firstNodeOfRow;
+    firstNodeOfRow,
+    rowIds = [];
 
     if (event.data.stepType === undefined && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
         stepType = Config.STEP_TYPE_INSTRUCTION;
@@ -704,7 +702,13 @@ function onAddNextNode(event) {
     }
     if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
+    }
+    if (clickedNode.type === Config.TYPE_ANSWER) {
+        firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
     }
     moveNextNodes(newNode, false);
     newNode.click();
@@ -720,7 +724,8 @@ function onAddPreviousNode(event) {
     newNode,
     stepType,
     questionType,
-    firstNodeOfRow;
+    firstNodeOfRow,
+    rowIds = [];
 
     if (event.data.stepType === undefined && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
         stepType = Config.STEP_TYPE_INSTRUCTION;
@@ -749,7 +754,13 @@ function onAddPreviousNode(event) {
     }
     if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
+    }
+    if (clickedNode.type === Config.TYPE_ANSWER) {
+        firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
     }
     movePreviousNodes(newNode, false);
     newNode.click();
@@ -781,21 +792,19 @@ function updateStepLinks(node) {
     updateStepLinks(node.nextNode);
 }
 
-function updateQuestionLinks(node, firstNodeOfRow) {
+function updateQuestionLinks(node, rowIds) {
     let properties = {},
     experiment = ModelManager.getExperiment(),
-    dataModel = ModelManager.getDataFromNodeId(node.id, experiment),
-    nodeIds = [];
+    dataModel = ModelManager.getDataFromNodeId(node.id, experiment);
 
     properties.id = node.id;
-    nodeIds = getNodeIds(firstNodeOfRow, nodeIds);
     if (node.nextNode === undefined) {
         if (node.type !== Config.QUESTION_TYPE_CHOICE) {
             properties.nextQuestionId = null;
         }
         else {
             for (let answer of dataModel.answers) {
-                if (!(nodeIds.includes(answer.nextQuestionId))) {
+                if (!(rowIds.includes(answer.nextQuestionId))) {
                     answer.nextQuestionId = null;
                     ModelManager.updateExperiment(answer);
                 }
@@ -814,29 +823,37 @@ function updateQuestionLinks(node, firstNodeOfRow) {
         properties.nextQuestionId = node.nextNode.id;
     }
     else {
-        for (let answer of dataModel.answers) {
-            if (!(nodeIds.includes(answer.nextQuestionId))) {
+        if (dataModel.choiceType === Config.CHOICE_TYPE_SINGLE_CHOICE) {
+            for (let answer of dataModel.answers) {
+                if (!(rowIds.includes(answer.nextQuestionId))) {
+                    answer.nextQuestionId = node.nextNode.id;
+                    ModelManager.updateExperiment(answer);
+                }
+            }
+        }
+        else {
+            for (let answer of dataModel.answers) {
                 answer.nextQuestionId = node.nextNode.id;
                 ModelManager.updateExperiment(answer);
             }
         }
     }
-    if (node.previousNode !== undefined) {
-        properties.previousQuestionId = node.previousNode.id;
-    }
-    else {
+    if (node.previousNode === undefined) {
         properties.previousQuestionId = null;
     }
+    else {
+        properties.previousQuestionId = node.previousNode.id;
+    }
     ModelManager.updateExperiment(properties);
-    updateQuestionLinks(node.nextNode, firstNodeOfRow);
+    updateQuestionLinks(node.nextNode, rowIds);
 }
 
-function getNodeIds(node, nodeIds) {
+function getRowIds(node, rowIds) {
     if (node === undefined) {
-        return nodeIds;
+        return rowIds;
     }
-    nodeIds.push(node.id);
-    return getNodeIds(node.nextNode, nodeIds);
+    rowIds.push(node.id);
+    return getRowIds(node.nextNode, rowIds);
 }
 
 function getFirstNodeOfRow(node) {
@@ -894,7 +911,9 @@ function onAddChildNode(event) {
     position = {},
     newNode,
     stepType,
-    questionType;
+    questionType,
+    firstNodeOfRow,
+    rowIds = [];
 
     if (clickedNode.parentNode !== undefined) {
         if (event.data.stepType === undefined && clickedNode.type === Config.TYPE_SURVEY) {
@@ -915,6 +934,11 @@ function onAddChildNode(event) {
     position.x = clickedNode.center.x;
     position.y = clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL;
     newNode.updatePosition(position.x, position.y, true);
+    if (clickedNode.type === Config.QUESTION_TYPE_CHOICE) {
+        firstNodeOfRow = getFirstNodeOfRow(clickedNode);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
+    }
     clickedNode.hideAddChildButton();
     newNode.click();
 }
@@ -927,6 +951,7 @@ function onChangeNode(event) {
     newDataModel,
     newNode,
     firstNodeOfRow,
+    rowIds = [],
     childIds = [];
 
     if (stepType !== undefined) {
@@ -947,17 +972,18 @@ function onChangeNode(event) {
         nodeToChange.nextNode.previousNode = newNode;
     }
 
+    firstNodeOfRow = getFirstNodeOfRow(newNode);
     if (stepType !== undefined) {
-        firstNodeOfRow = getFirstNodeOfRow(newNode);
-        updateStepLinks(newNode);
+        updateStepLinks(firstNodeOfRow);
         experiment = ModelManager.getExperiment();
         updateWaitForStepLinks(firstNodeOfRow, nodeToChange, experiment);
     }
     else {
-        updateQuestionLinks(newNode);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
     }
     if (nodeToChange.childNodes !== undefined && nodeToChange.childNodes.length !== 0) {
-        childIds = getNodeIds(nodeToChange.childNodes[0], childIds);
+        childIds = getRowIds(nodeToChange.childNodes[0], childIds);
     }
     ModelManager.shortenExperiment(nodeToChange.id, nodeToChange.parentNode.id, childIds);
     TreeView.removeNode(nodeToChange);
@@ -970,7 +996,8 @@ function onMoveNodeLeft(event) {
     tempPrevNode,
     tempCorrNode,
     tempNextNode,
-    firstNodeOfRow;
+    firstNodeOfRow,
+    rowIds;
 
     correspondingNode.previousNode.updatePosition(correspondingNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, correspondingNode.center.y, true);
     if (correspondingNode.previousNode.childNodes !== undefined && correspondingNode.previousNode.childNodes.length !== 0) {
@@ -1005,7 +1032,8 @@ function onMoveNodeLeft(event) {
         updateStepLinks(firstNodeOfRow);
     }
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
     }
 }
 
@@ -1037,7 +1065,8 @@ function onMoveNodeRight(event) {
     tempCorrNode,
     tempNextNode,
     tempNextNextNode,
-    firstNodeOfRow;
+    firstNodeOfRow,
+    rowIds;
 
     correspondingNode.nextNode.updatePosition(correspondingNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, correspondingNode.center.y, true);
     if (correspondingNode.nextNode.childNodes !== undefined && correspondingNode.nextNode.childNodes.length !== 0) {
@@ -1071,7 +1100,8 @@ function onMoveNodeRight(event) {
         updateStepLinks(firstNodeOfRow);
     }
     if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
     }
 }
 
@@ -1172,6 +1202,7 @@ function onRemoveNode(event) {
     firstNodeOfRow,
     timeSortedChildNodes,
     nextFocusedNode,
+    rowIds = [],
     childIds = [];
 
     if (dataModel.durationInMin !== 0) {
@@ -1228,7 +1259,8 @@ function onRemoveNode(event) {
                 updateStepLinks(firstNodeOfRow);
             }
             if (nodeToRemove.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                updateQuestionLinks(firstNodeOfRow, firstNodeOfRow);
+                rowIds = getRowIds(firstNodeOfRow, rowIds);
+                updateQuestionLinks(firstNodeOfRow, rowIds);
             }
         }
     }
@@ -1291,6 +1323,7 @@ function onInputChanged(event) {
     timeInMin,
     timeSortedChildNodes,
     fileName,
+    rowIds = [],
     validationResult,
     addResourceResult;
 
@@ -1357,6 +1390,12 @@ function onInputChanged(event) {
         if (fileName === null) {
             ModelManager.removeResource(event.data.previousFileName);
         }
+    }
+    else if (correspondingNode.type === Config.QUESTION_TYPE_CHOICE) {
+        ModelManager.updateExperiment(newDataModel);
+        firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
+        rowIds = getRowIds(firstNodeOfRow, rowIds);
+        updateQuestionLinks(firstNodeOfRow, rowIds);
     }
     else {
         ModelManager.updateExperiment(newDataModel);
