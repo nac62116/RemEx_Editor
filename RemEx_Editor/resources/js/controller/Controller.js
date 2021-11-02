@@ -19,7 +19,6 @@ import IdManager from "../utils/IdManager.js";
 // TODO:
 // -> InputView image load: onNodeClick -> show input view -> if resource is loaded -> InputView.setResource(resource) --> This avoids the loading Screen onNodeClicked
 // -> InputView image load: check if filename already exists -> if (filename not exists) {if (same file content already exists under different file name) {change filename to the already existing dont add resource} else { everything okay add resource}}
-// -> Disable key movement if current document focus = input element
 // -> Code cleaning
 // -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
 // -> Survey frequency buttons
@@ -35,7 +34,7 @@ import IdManager from "../utils/IdManager.js";
 // ENHANCEMENT:
 // EDITOR:
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
-// - Optimize key movement (Shortcuts (e.g. Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
+// - Add key movement (Shortcuts (e.g. Arrows -> navigating through tree, Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
 // - Show survey time windows on the timeline (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
 // - Calculate the optimal duration for a survey depending on its content
 // - Survey time randomization
@@ -140,8 +139,6 @@ class Controller {
         for (let listener of this.inputViewEventListener) {
             InputView.addEventListener(listener.eventType, listener.callback);
         }
-        
-        document.addEventListener("keyup", onKeyUp.bind(this));
     }
 }
 
@@ -1442,51 +1439,6 @@ function enableNodeActions(that, node) {
     for (let childNode of node.childNodes) {
         enableNodeActions(that, childNode);
     }
-}
-
-// Whole page events
-
-function onKeyUp(event) {
-    let childNode;
-    if (TreeView.currentFocusedNode !== undefined) {
-        if (event.key === "ArrowLeft") {
-            if (TreeView.currentFocusedNode.previousNode !== undefined) {
-                TreeView.currentFocusedNode.previousNode.click();
-            }
-        }
-        else if (event.key === "ArrowRight") {
-            if (TreeView.currentFocusedNode.nextNode !== undefined) {
-                TreeView.currentFocusedNode.nextNode.click();
-            }
-        }
-        else if (event.key === "ArrowUp") {
-            if (TreeView.currentFocusedNode.parentNode !== undefined) {
-                TreeView.currentFocusedNode.parentNode.click();
-            }
-        }
-        else if (event.key === "ArrowDown") {
-            if (TreeView.currentFocusedNode.childNodes[0] !== undefined) {
-                childNode = getNearestChildNode(TreeView.currentFocusedNode);
-                childNode.click();
-            }
-        }
-        else {
-            // No event for other keys
-        }
-    }
-}
-
-function getNearestChildNode(node) {
-    let minDistance = Math.abs(node.childNodes[0].center.x - node.center.x),
-    nearestChildNode = node.childNodes[0];
-
-    for (let i = 1; i < node.childNodes.length; i++) {
-        if (Math.abs(node.childNodes[i].center.x - node.center.x) < minDistance) {
-            minDistance = Math.abs(node.childNodes[i].center.x - node.center.x);
-            nearestChildNode = node.childNodes[i];
-        }
-    }
-    return nearestChildNode;
 }
 
 export default new Controller();
