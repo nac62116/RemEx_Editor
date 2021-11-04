@@ -17,8 +17,6 @@ import IdManager from "../utils/IdManager.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> InputView image load: onNodeClick -> show input view -> if resource is loaded -> InputView.setResource(resource) --> This avoids the loading Screen onNodeClicked
-// -> InputView image load: check if filename already exists -> if (filename not exists) {if (same file content already exists under different file name) {change filename to the already existing dont add resource} else { everything okay add resource}}
 // -> Code cleaning
 // -> Finish load button (TreeView.insertSubTree(parentNode, dataModel)) -> if parentNode undefined -> root
 // -> Survey frequency buttons
@@ -38,10 +36,11 @@ import IdManager from "../utils/IdManager.js";
 // - Show survey time windows on the timeline (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
 // - Calculate the optimal duration for a survey depending on its content
 // - Survey time randomization
-// - Add new survey steps like distraction games, etc...
-// - Add new question types
 // APP:
 // -
+// BOTH:
+// - Add new survey steps like distraction games, etc...
+// - Add new question types
 
 class Controller {
 
@@ -456,32 +455,8 @@ function onNodeClicked(event) {
                 questionsForInputView = getQuestionsForInputView(firstNodeOfRow, clickedNode.parentNode, questionsForInputView);
             }
         }
-        if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
-            if (nodeDataModel.imageFileName !== null) {
-                promise = ModelManager.getResource(nodeDataModel.imageFileName);
-            }
-            if (nodeDataModel.videoFileName !== null) {
-                promise = ModelManager.getResource(nodeDataModel.videoFileName);
-            }
-            if (promise !== undefined) {
-                this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-                promise.then(function(result) {
-                    if (typeof(result) === "string") {
-                        alert(result); // eslint-disable-line no-alert
-                    }
-                    else {
-                        InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView, result);
-                    }
-                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                }.bind(this));
-            }
-            else {
-                InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
-            }
-        }
-        else {
-            InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView, undefined);
-        }
+        
+        InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView);
         InputView.selectFirstInput();
 
         validationResult = InputValidator.inputIsValid(clickedNode, nodeDataModel, parentNodeDataModel);
@@ -498,6 +473,30 @@ function onNodeClicked(event) {
             InputView.disableInputsExcept(validationResult.invalidInput);
             disableNodeActions(this, TreeView.rootNode);
             this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }
+
+        if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
+            if (nodeDataModel.imageFileName !== null) {
+                promise = ModelManager.getResource(nodeDataModel.imageFileName);
+            }
+            if (nodeDataModel.videoFileName !== null) {
+                promise = ModelManager.getResource(nodeDataModel.videoFileName);
+            }
+            if (promise !== undefined) {
+                promise.then(function(result) {
+                    if (typeof(result) === "string") {
+                        alert(result); // eslint-disable-line no-alert
+                    }
+                    else {
+                        if (nodeDataModel.imageFileName !== null) {
+                            InputView.setImageResource(result, nodeDataModel.id);
+                        }
+                        if (nodeDataModel.videoFileName !== null) {
+                            InputView.setVideoResource(result, nodeDataModel.id);
+                        }
+                    }
+                });
+            }
         }
     }
 }

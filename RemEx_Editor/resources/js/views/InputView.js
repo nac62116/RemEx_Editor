@@ -18,7 +18,7 @@ class InputView extends Observable {
         this.currentFileName = undefined;
     }
 
-    show(node, dataModel, parentDataModel, ongoingInstructions, questions, encodedResource) {
+    show(node, dataModel, parentDataModel, ongoingInstructions, questions) {
         let correspondingModelValues = {};
 
         this.correspondingNode = node;
@@ -31,13 +31,13 @@ class InputView extends Observable {
 
         if (node.parentNode !== undefined) {
             if (node.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-                createInputField(this, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.label, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.inputType, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.values, Config.INPUT_SURVEY_FREQUENCY, node.type, encodedResource, true);
+                createInputField(this, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.label, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.inputType, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.values, Config.INPUT_SURVEY_FREQUENCY, node.type, true);
             }
             if (node.parentNode.type === Config.TYPE_SURVEY) {
-                createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, node.type, encodedResource, false);
+                createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, node.type, false);
             }
             if (node.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                createInputField(this, Config.INPUT_FIELD_QUESTION_TYPE_DATA.label, Config.INPUT_FIELD_QUESTION_TYPE_DATA.inputType, Config.INPUT_FIELD_QUESTION_TYPE_DATA.values, Config.TYPE_QUESTION, node.type, encodedResource, false);
+                createInputField(this, Config.INPUT_FIELD_QUESTION_TYPE_DATA.label, Config.INPUT_FIELD_QUESTION_TYPE_DATA.inputType, Config.INPUT_FIELD_QUESTION_TYPE_DATA.values, Config.TYPE_QUESTION, node.type, false);
             }
         }
         
@@ -48,28 +48,28 @@ class InputView extends Observable {
                         if (modelPropertyKey === "absoluteStartAtHour") {
                             correspondingModelValues[modelPropertyKey] = dataModel[modelPropertyKey];
                             correspondingModelValues.absoluteStartAtMinute = dataModel.absoluteStartAtMinute;
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelValues, encodedResource, false);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, correspondingModelValues, false);
                             break;
                         }
                         else if (modelPropertyKey === "absoluteStartDaysOffset") {
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey] + 1, encodedResource, false);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey] + 1, false);
                             break;
                         }
                         else if (modelPropertyKey === "waitForStep") {
                             if (ongoingInstructions.length !== 0) {
                                 createInputField(this, inputFieldData.label, inputFieldData.inputType,
-                                    ongoingInstructions, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], encodedResource, true);
+                                ongoingInstructions, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], true);
                             }
                         }
                         else if (modelPropertyKey === "nextQuestionId") {
                             if (node.type === Config.TYPE_ANSWER) {
                                 if (questions.length !== 0 && parentDataModel.choiceType === Config.CHOICE_TYPE_SINGLE_CHOICE) {
-                                    createInputField(this, inputFieldData.label, inputFieldData.inputType, questions, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], encodedResource, true);
+                                    createInputField(this, inputFieldData.label, inputFieldData.inputType, questions, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], true);
                                 }
                             }
                         }
                         else {
-                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], encodedResource, false);
+                            createInputField(this, inputFieldData.label, inputFieldData.inputType, inputFieldData.values, inputFieldData.correspondingModelProperty, dataModel[modelPropertyKey], false);
                             break;
                         }
                     }
@@ -181,6 +181,30 @@ class InputView extends Observable {
         }
     }
 
+    setImageResource(encodedResource, correspondingNodeId) {
+        let imageElement = this.inputFieldsContainer.querySelector("img");
+
+        if (imageElement !== null && correspondingNodeId === this.correspondingNode.id) {
+            imageElement.setAttribute("src", encodedResource.base64String);
+        }
+        this.currentFileName = encodedResource.fileName;
+    }
+
+    setVideoResource(encodedResource, correspondingNodeId) {
+        let videoElement = this.inputFieldsContainer.querySelector("video"),
+        fileType,
+        sourceElement;
+
+        if (videoElement !== null && correspondingNodeId === this.correspondingNode.id) {
+            fileType = encodedResource.fileName.split(".")[1];
+            sourceElement = document.createElement("source");
+            sourceElement.setAttribute("type", "video/" + fileType);
+            sourceElement.setAttribute("src", encodedResource.base64String);
+            videoElement.appendChild(sourceElement);
+        }
+        this.currentFileName = encodedResource.fileName;
+    }
+
     clearFileInputs() {
         let imageElement = this.inputFieldsContainer.querySelector("img"),
         videoElement = this.inputFieldsContainer.querySelector("video"),
@@ -203,15 +227,13 @@ class InputView extends Observable {
     }
 }
 
-function createInputField(that, label, type, values, modelProperty, currentModelValue, encodedResource, addNoSelection) {
+function createInputField(that, label, type, values, modelProperty, currentModelValue, addNoSelection) {
     let inputField,
     inputElement,
     clearInputButton,
     labelElement,
     imageElement,
-    videoElement,
-    sourceElement,
-    fileType;
+    videoElement;
 
     inputField = document.createElement("div");
     inputField.innerHTML = INPUT_FIELD_TEMPLATE_STRING;
@@ -299,21 +321,15 @@ function createInputField(that, label, type, values, modelProperty, currentModel
                 imageElement = document.createElement("img");
                 imageElement.setAttribute("width", "auto");
                 imageElement.setAttribute("height", that.inputViewContainer.clientHeight);
-                imageElement.setAttribute("src", encodedResource.base64String);
             }
             else {
-                fileType = encodedResource.fileName.split(".")[1];
                 videoElement = document.createElement("video");
                 videoElement.setAttribute("width", "auto");
                 videoElement.setAttribute("height", that.inputViewContainer.clientHeight);
                 videoElement.setAttribute("controls", "");
-                sourceElement = document.createElement("source");
-                sourceElement.setAttribute("type", "video/" + fileType);
-                sourceElement.setAttribute("src", encodedResource.base64String);
-                videoElement.appendChild(sourceElement);
+                
             }
             inputElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-            that.currentFileName = encodedResource.fileName;
         }
     }
     else if (type === "time") {
