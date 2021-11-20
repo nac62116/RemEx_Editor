@@ -4,7 +4,6 @@ class Experiment {
         this.id = null;
         this.name = "Neues Experiment";
         this.groups = [];
-        this.encodedResources = [];
     }
 }
 

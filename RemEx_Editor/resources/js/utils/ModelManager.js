@@ -1,7 +1,6 @@
 import Config from "./Config.js";
 import Storage from "./Storage.js";
 import IndexedDB from "./IndexedDB.js";
-import EncodedResource from "../model/EncodedResource.js";
 import Experiment from "../model/Experiment.js";
 import ExperimentGroup from "../model/ExperimentGroup.js";
 import Survey from "../model/Survey.js";
@@ -209,22 +208,20 @@ class ModelManager {
         return null;
     }
 
-    addResource(fileName, base64String) {
-        let resource = IndexedDB.getResource(fileName),
-        encodedResource,
+    addResource(resourceFile) {
+        let resource = IndexedDB.getResource(resourceFile.name),
         promise;
 
         return new Promise(function(resolve, reject) {
             resource.then(function(result) {
-                if (result !== undefined && result.base64String !== base64String) {
+                if (result !== undefined && result !== resourceFile) {
                     reject(Config.SAME_FILE_NAME_ALERT);
                 }
-                else if (result !== undefined && result.base64String === base64String) {
+                else if (result !== undefined && result === resourceFile) {
                     resolve(true);
                 }
                 else {
-                    encodedResource = new EncodedResource(fileName, base64String);
-                    promise = IndexedDB.addResource(encodedResource);
+                    promise = IndexedDB.addResource(resourceFile);
                     promise.then(
                         function() {
                             resolve(true);

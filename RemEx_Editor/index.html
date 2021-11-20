@@ -15,7 +15,14 @@
     <div id="inputContainer" class="input-container">
         <h1 id="inputHeader" class="input-header hidden">Header</h1>
         <div id="inputAlert" class="input-alert hidden"></div>
-        <div id="inputFieldsContainer" class="input-fields-container hidden"></div>
+        <div id="inputFieldsContainer" class="input-fields-container hidden">
+            <template id="inputField">
+                <div class="input-field">
+                    <label for="input"><!-- Input field label --></label>
+                    <!-- input id="input" type=""></input -->
+                </div>
+            </template>
+        </div>
         <div id="inputControls" class="input-controls-container">
             <div id="inputDeleteButton" class="input-delete-button hidden">
                 <img id="deleteIcon" src="images/delete_button.png" alt="">
@@ -42,14 +49,8 @@
         <h1>Lädt...</h1>
     </div>
     
+    <script src="libraries/jszip/jszip.min.js"></script>
     <script type="module" src="resources/js/index.js"></script>
 </body>
-
-<template id="inputField">
-    <div class="input-field">
-        <label for="input"><!-- Input field label --></label>
-        <!-- input id="input" type=""></input -->
-    </div>
-</template>
 
 </html>

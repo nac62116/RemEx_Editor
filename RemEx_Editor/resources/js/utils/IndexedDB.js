@@ -2,7 +2,7 @@ const DATABASE_NAME = "ExperimentResourcesDB";
 
 class IndexedDB {
 
-    addResource(encodedResource) {
+    addResource(resource) {
         let db = openDatabase(),
         request;
 
@@ -13,15 +13,18 @@ class IndexedDB {
                 }
                 else {
                     try {
+                        console.log(resource.name, resource);
                         request = result.transaction(["resources"], "readwrite")
                                 .objectStore("resources")
-                                .add(encodedResource);
+                                .add(resource, resource.name);
                 
                         request.onsuccess = function() {
                             resolve();
+                            console.log("resource added");
                         };
                         request.onerror = function(event) {
                             reject(event.target.error);
+                            console.log("resource add error: " + event.target.error);
                         };
                     }
                     catch (error) {
@@ -109,7 +112,7 @@ class IndexedDB {
 
 function openDatabase() {
     return new Promise(function(resolve, reject) {
-        let request = indexedDB.open(DATABASE_NAME);
+        let request = indexedDB.open(DATABASE_NAME, 3);
         request.onerror = function(event) {
             reject(event.target.errorCode);
         };
@@ -120,9 +123,10 @@ function openDatabase() {
             let db = event.target.result,
             transaction = event.target.transaction;
             
-            db.createObjectStore("resources", {keyPath:"fileName"});
+            db.deleteObjectStore("resources");
+            db.createObjectStore("resources");
             transaction.oncomplete = function(event) {    
-                    resolve(event.target.result);
+                resolve(event.target.result);
             };
         };
     });

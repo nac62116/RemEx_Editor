@@ -15,6 +15,8 @@ const Config = {
     STEP_CONSTRUCTOR_ERROR: "Cannot construct Step instances directly. Please construct subclasses of Step.",
     QUESTION_CONSTRUCTOR_ERROR: "Cannot construct Question instances directly. Please construct subclasses of Question.",
     NODE_VIEW_CONSTRUCTOR_ERROR: "Cannot construct NodeView instances directly. Please construct subclasses of NodeView.",
+    SAVING_PROMPT: "Das Experiment wird komprimiert.\nFalls viele Bild/Video Resourcen verwendet wurden, kann dies einige Minuten dauern.",
+    LOADING_PROMPT: "Lädt...",
     HALF_HOUR_IN_MIN: 30,
     ONE_HOUR_IN_MIN: 60,
     SIX_HOURS_IN_MIN: 360,

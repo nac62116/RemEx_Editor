@@ -181,28 +181,36 @@ class InputView extends Observable {
         }
     }
 
-    setImageResource(encodedResource, correspondingNodeId) {
-        let imageElement = this.inputFieldsContainer.querySelector("img");
+    setImageResource(resourceFile, correspondingNodeId) {
+        let imageElement = this.inputFieldsContainer.querySelector("img"),
+        reader = new FileReader();
 
         if (imageElement !== null && correspondingNodeId === this.correspondingNode.id) {
-            imageElement.setAttribute("src", encodedResource.base64String);
+            reader.onload = function (event) {
+                imageElement.setAttribute("src", event.target.result);
+            };
+            reader.readAsDataURL(resourceFile);
         }
-        this.currentFileName = encodedResource.fileName;
+        this.currentFileName = resourceFile.name;
     }
 
-    setVideoResource(encodedResource, correspondingNodeId) {
+    setVideoResource(resourceFile, correspondingNodeId) {
         let videoElement = this.inputFieldsContainer.querySelector("video"),
         fileType,
-        sourceElement;
+        sourceElement,
+        reader = new FileReader();
 
         if (videoElement !== null && correspondingNodeId === this.correspondingNode.id) {
-            fileType = encodedResource.fileName.split(".")[1];
-            sourceElement = document.createElement("source");
-            sourceElement.setAttribute("type", "video/" + fileType);
-            sourceElement.setAttribute("src", encodedResource.base64String);
-            videoElement.appendChild(sourceElement);
+            reader.onload = function (event) {
+                fileType = resourceFile.name.split(".")[1];
+                sourceElement = document.createElement("source");
+                sourceElement.setAttribute("type", "video/" + fileType);
+                sourceElement.setAttribute("src", event.target.result);
+                videoElement.appendChild(sourceElement);
+            };
+            reader.readAsDataURL(resourceFile);
         }
-        this.currentFileName = encodedResource.fileName;
+        this.currentFileName = resourceFile.name;
     }
 
     clearFileInputs() {
@@ -392,7 +400,7 @@ function onInputChanged(event) {
     let data = {
         correspondingNode: this.correspondingNode,
         newModelProperties: undefined,
-        base64String: undefined,
+        resourceFile: undefined,
     },
     inputChangeEvent,
     properties = {},
@@ -402,7 +410,8 @@ function onInputChanged(event) {
     changeNodeEvent,
     imageInputElement,
     videoInputElement,
-    sourceElement;
+    sourceElement,
+    reader = new FileReader();
 
     if (event.target.value !== "") {
         if (event.target.type === "text") {
@@ -437,7 +446,7 @@ function onInputChanged(event) {
             }
             properties.imageFileName = event.target.files[0].name;
             this.currentFileName = event.target.files[0].name;
-            data.base64String = getBase64String(event.target.files[0]);
+            data.resourceFile = event.target.files[0];
         }
         else if (correspondingModelProperty === "videoFileName") {
             this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
@@ -450,7 +459,7 @@ function onInputChanged(event) {
             }
             properties.videoFileName = event.target.files[0].name;
             this.currentFileName = event.target.files[0].name;
-            data.base64String = getBase64String(event.target.files[0]);
+            data.resourceFile = event.target.files[0];
         }
         else if (event.target.type === "checkbox") {
             checkboxElements = event.target.parentElement.parentElement.querySelectorAll("input");
@@ -489,28 +498,32 @@ function onInputChanged(event) {
             this.notifyAll(changeNodeEvent);
         }
         else {
-            if (data.base64String !== undefined) {
-                data.base64String.then(function(result) {
-                    if (properties.imageFileName !== undefined) {
+            if (data.resourceFile !== undefined) {
+                if (properties.imageFileName !== undefined) {
+                    reader.onload = function (fileReaderEvent) {
                         imageInputElement = this.inputFieldsContainer.querySelector("img");
                         videoInputElement = this.inputFieldsContainer.querySelector("input[name=videoFileName]");
                         if (imageInputElement === null) {
                             imageInputElement = document.createElement("img");
                             imageInputElement.setAttribute("width", "auto");
                             imageInputElement.setAttribute("height", this.inputViewContainer.clientHeight);
-                            imageInputElement.setAttribute("src", result);
+                            imageInputElement.setAttribute("src", fileReaderEvent.target.result);
                             event.target.parentElement.insertAdjacentElement("afterend", imageInputElement);
                         }
                         else {
-                            imageInputElement.setAttribute("src", result);
+                            imageInputElement.setAttribute("src", fileReaderEvent.target.result);
                         }
                         if (videoInputElement !== null) {
                             for (let child of videoInputElement.parentElement.children) {
                                 child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                             }
                         }
-                    }
-                    else {
+                        this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    }.bind(this);
+                    reader.readAsDataURL(data.resourceFile);
+                }
+                else {
+                    reader.onload = function (fileReaderEvent) {
                         sourceElement = this.inputFieldsContainer.querySelector("source");
                         imageInputElement = this.inputFieldsContainer.querySelector("input[name=imageFileName]");
                         if (sourceElement === null) {
@@ -520,24 +533,25 @@ function onInputChanged(event) {
                             videoInputElement.setAttribute("controls", "");
                             sourceElement = document.createElement("source");
                             sourceElement.setAttribute("type", event.target.files[0].type);
-                            sourceElement.setAttribute("src", result);
+                            sourceElement.setAttribute("src", fileReaderEvent.target.result);
                             videoInputElement.appendChild(sourceElement);
                             event.target.parentElement.insertAdjacentElement("afterend", videoInputElement);
                         }
                         else {
-                            sourceElement.setAttribute("src", result);
+                            sourceElement.setAttribute("src", fileReaderEvent.target.result);
                         }
                         if (imageInputElement !== null) {
                             for (let child of imageInputElement.parentElement.children) {
                                 child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                             }
                         }
-                    }
-                    event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                    data.base64String = result;
-                    inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
-                    this.notifyAll(inputChangeEvent);
-                }.bind(this));
+                        this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    }.bind(this);
+                    reader.readAsDataURL(data.resourceFile);
+                }
+                event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
+                this.notifyAll(inputChangeEvent);
             }
             else {
                 inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
@@ -565,15 +579,6 @@ function escapeNegativeValues(unescaped) {
 function escapeZeroValues(unescaped) {
     return unescaped.replace(/\b0/g, "1");
 }
-
-function getBase64String(file) {
-    return new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function() { resolve(reader.result); };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
- }
 
 function onRemoveNodeButtonClicked() {
     let data,

@@ -24,10 +24,13 @@ import IdManager from "../utils/IdManager.js";
 // -> Test phase: Test fully grown experiment on RemExApp, Test the RemExEditor functionality
 // -> Create .exe file for install
 // -> MIT Licence: Licence text on top of each file and after that the contibutors
+// -> RemEx Logo in the top left corner
 // -> InfoView
 // APP:
+// -> RemEx Logo as App icon
 // -> Show a loading Screen when experiment gets loaded and when it gets started
 // -> Show a loading screen when clicking the next button in each acitivity, hide it onCreate (the intent to an instruction with a video takes some seconds. With the loading screen the user sees that something is happening)
+// -> Threading as an non ui blocking option
 
 // ENHANCEMENT:
 // EDITOR:
@@ -114,7 +117,8 @@ class Controller {
         this.loadingScreen = document.querySelector("#" + Config.LOADING_SCREEN_ID);
 
         // Save/Load Functionality
-        this.encodedResources = [];
+        this.resources = [];
+        this.zipFolder = new JSZip(); // eslint-disable-line
         this.saveButton = importExportContainer.querySelector("#" + Config.SAVE_EXPERIMENT_BUTTON_ID);
         uploadButton = importExportContainer.querySelector("#" + Config.UPLOAD_EXPERIMENT_BUTTON_ID);
         newButton = importExportContainer.querySelector("#" + Config.NEW_EXPERIMENT_BUTTON_ID);
@@ -144,60 +148,64 @@ class Controller {
 function onSaveExperimentButtonClicked() {
     let downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID),
     experiment = ModelManager.getExperiment(),
-    encodedResources = ModelManager.getAllResources(),
+    resources = ModelManager.getAllResources(),
     result,
     correspondingNode,
     experimentJSON,
-    jsonFile,
-    nameCodeTable,
-    textFile;
+    nameCodeTable;
 
     result = InputValidator.experimentIsValid(experiment);
     if (result !== true) {
         correspondingNode = TreeView.getNodeById(result.correspondingNodeId);
-        correspondingNode.parentNode.click();
+        if (correspondingNode.parentNode !== undefined) {
+            correspondingNode.parentNode.click();
+        }
         correspondingNode.click();
         InputView.showAlert(result.alert);
     }
     else {
-        if (encodedResources.length !== 0) {
+        if (resources.length !== 0) {
             this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            for (let encodedResource of encodedResources) {
-                if (encodedResources.indexOf(encodedResource) === encodedResources.length - 1) {
-                    encodedResource.then(function(result) {
+            this.loadingScreen.firstElementChild.innerHTML = Config.SAVING_PROMPT;
+            for (let resource of resources) {
+                if (resources.indexOf(resource) === resources.length - 1) {
+                    resource.then(function(result) {
                         let experiment = ModelManager.getExperiment(),
                         experimentJSON,
-                        jsonFile,
                         nameCodeTable,
-                        textFile,
                         downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID);
-        
-                        for (let resource of this.encodedResources) {
-                            experiment.encodedResources.push(resource);
+                        
+                        this.resources.push(result);
+                        for (let resource of this.resources) {
+                            console.log(resource);
+                            this.zipFolder.file(resource.name, resource);
                         }
-                        experiment.encodedResources.push(result);
+                        this.resources = null;
+                        this.resources = [];
+                        
                         experimentJSON = JSON.stringify(experiment);
                         // Declare type property as an enum for the android json library "com.fasterxml.jackson"
                         experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
-                        jsonFile = generateFile(experimentJSON, "text/plain");
+                        this.zipFolder.file(experiment.name + ".txt", experimentJSON);
+                        
                         nameCodeTable = ModelManager.getNameCodeTable(experiment);
                         if (nameCodeTable.length !== 0) {
-                            textFile = generateFile(nameCodeTable, "text/plain");
-                            downloadLinkElement.setAttribute("href", textFile);
-                            downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
-                            downloadLinkElement.click();
+                            this.zipFolder.file(experiment.name + "_Code_Tabelle.txt", nameCodeTable);
                         }
-                        downloadLinkElement.setAttribute("href", jsonFile);
-                        downloadLinkElement.setAttribute("download", experiment.name + ".txt");
-                        downloadLinkElement.click();
-                        this.encodedResources = [];
-                        this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                        this.zipFolder.generateAsync({type:"blob"})
+                        .then(function (blob) {
+                            this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                            this.loadingScreen.firstElementChild.innerHTML = Config.LOADING_PROMPT;
+                            downloadLinkElement.setAttribute("href", URL.createObjectURL(blob));
+                            downloadLinkElement.setAttribute("download", experiment.name + ".zip");
+                            downloadLinkElement.click();
+                        }.bind(this));
                         return;
                     }.bind(this));
                 }
                 else {
-                    encodedResource.then(function(result) {
-                        this.encodedResources.push(result);
+                    resource.then(function(result) {
+                        this.resources.push(result);
                     }.bind(this));
                 }
             }
@@ -206,34 +214,24 @@ function onSaveExperimentButtonClicked() {
             experimentJSON = JSON.stringify(experiment);
             // Declare type property as an enum for the android json library "com.fasterxml.jackson"
             experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
-            jsonFile = generateFile(experimentJSON, "text/plain");
+            this.zipFolder.file(experiment.name + ".txt", experimentJSON);
+            
             nameCodeTable = ModelManager.getNameCodeTable(experiment);
             if (nameCodeTable.length !== 0) {
-                textFile = generateFile(nameCodeTable, "text/plain");
-                downloadLinkElement.setAttribute("href", textFile);
-                downloadLinkElement.setAttribute("download", experiment.name + "_Code_Tabelle.txt");
-                downloadLinkElement.click();
+                this.zipFolder.file(experiment.name + "_Code_Tabelle.txt", nameCodeTable);
             }
-            downloadLinkElement.setAttribute("href", jsonFile);
-            downloadLinkElement.setAttribute("download", experiment.name + ".txt");
-            downloadLinkElement.click();
+
+            this.zipFolder.generateAsync({type:"blob"})
+            .then(function (blob) {
+                downloadLinkElement.setAttribute("href", URL.createObjectURL(blob));
+                downloadLinkElement.setAttribute("download", experiment.name + ".zip");
+                downloadLinkElement.click();
+            });
         }
     }
 }
 
-function generateFile(input, mimeType){
-    let textFile = null,
-    data = new Blob([input], {type: mimeType}); 
-
-    if (textFile !== null) {  
-      window.URL.revokeObjectURL(textFile);  
-    }  
-
-    textFile = window.URL.createObjectURL(data);  
-
-    return textFile; 
-  }
-
+// TODO
 function onUploadExperimentButtonClicked() {
     let uploadElement,
     experiment,
@@ -474,6 +472,8 @@ function onNodeClicked(event) {
             disableNodeActions(this, TreeView.rootNode);
             this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
+
+        // TODO: Move this to a seperate thread
 
         if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
             if (nodeDataModel.imageFileName !== null) {
@@ -1357,15 +1357,12 @@ function onInputChanged(event) {
             fileName = newDataModel.videoFileName;
         }
         if (fileName !== undefined && fileName !== null) {
-            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            addResourceResult = ModelManager.addResource(fileName, event.data.base64String);
+            addResourceResult = ModelManager.addResource(event.data.resourceFile);
             addResourceResult.then(
                 function() {
-                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                     ModelManager.updateExperiment(newDataModel);
-                }.bind(this),
+                },
                 function(error) {
-                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                     if (error.toString().includes("The serialized value is too large")) {
                         alert(Config.FILE_TOO_LARGE + " (" + fileName + ")"); // eslint-disable-line no-alert
                     }
@@ -1376,7 +1373,7 @@ function onInputChanged(event) {
                         alert(error.toString() + " (" + fileName + ")"); // eslint-disable-line no-alert
                     }
                     InputView.clearFileInputs();
-                }.bind(this)
+                }
             );
         }
         else {
