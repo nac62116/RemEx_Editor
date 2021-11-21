@@ -118,7 +118,7 @@ class Controller {
 
         // Save/Load Functionality
         this.resources = [];
-        this.zipFolder = new JSZip(); // eslint-disable-line
+        this.zipFolder = null;
         this.saveButton = importExportContainer.querySelector("#" + Config.SAVE_EXPERIMENT_BUTTON_ID);
         uploadButton = importExportContainer.querySelector("#" + Config.UPLOAD_EXPERIMENT_BUTTON_ID);
         newButton = importExportContainer.querySelector("#" + Config.NEW_EXPERIMENT_BUTTON_ID);
@@ -164,6 +164,7 @@ function onSaveExperimentButtonClicked() {
         InputView.showAlert(result.alert);
     }
     else {
+        this.zipFolder = new JSZip(); // eslint-disable-line
         if (resources.length !== 0) {
             this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
             this.loadingScreen.firstElementChild.innerHTML = Config.SAVING_PROMPT;
@@ -174,16 +175,14 @@ function onSaveExperimentButtonClicked() {
                         experimentJSON,
                         nameCodeTable,
                         downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID);
+
+                        downloadLinkElement.addEventListener("click", function onClick() {
+                            this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                            this.loadingScreen.firstElementChild.innerHTML = Config.LOADING_PROMPT;
+                            this.zipFolder = null;
+                        }.bind(this));
                         
-                        this.resources.push(result);
-                        for (let resource of this.resources) {
-                            console.log(resource);
-                            this.zipFolder.file(resource.name, resource);
-                        }
-                        this.resources = null;
-                        this.resources = [];
-                        
-                        experimentJSON = JSON.stringify(experiment);
+                        experimentJSON = JSON.stringify(experiment, null, 4); // eslint-disable-line
                         // Declare type property as an enum for the android json library "com.fasterxml.jackson"
                         experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
                         this.zipFolder.file(experiment.name + ".txt", experimentJSON);
@@ -192,14 +191,24 @@ function onSaveExperimentButtonClicked() {
                         if (nameCodeTable.length !== 0) {
                             this.zipFolder.file(experiment.name + "_Code_Tabelle.txt", nameCodeTable);
                         }
-                        this.zipFolder.generateAsync({type:"blob"})
+
+                        this.resources.push(result);
+                        for (let resource of this.resources) {
+                            this.zipFolder.folder("resources").file(resource.name, resource);
+                        }
+                        this.resources = null;
+                        this.resources = [];
+                        
+                        this.loadingScreen.firstElementChild.innerHTML = Config.SAVING_PROMPT + "<br>Fortschritt: 0 %";
+                        this.zipFolder.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 9}}, 
+                        function updateCallback(metaData) {
+                            this.loadingScreen.firstElementChild.innerHTML = Config.SAVING_PROMPT + "<br>Fortschritt: " + Math.round(metaData.percent) + " %";
+                        }.bind(this))
                         .then(function (blob) {
-                            this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                            this.loadingScreen.firstElementChild.innerHTML = Config.LOADING_PROMPT;
                             downloadLinkElement.setAttribute("href", URL.createObjectURL(blob));
                             downloadLinkElement.setAttribute("download", experiment.name + ".zip");
                             downloadLinkElement.click();
-                        }.bind(this));
+                        });
                         return;
                     }.bind(this));
                 }
@@ -211,7 +220,7 @@ function onSaveExperimentButtonClicked() {
             }
         }
         else {
-            experimentJSON = JSON.stringify(experiment);
+            experimentJSON = JSON.stringify(experiment, null, 4); // eslint-disable-line
             // Declare type property as an enum for the android json library "com.fasterxml.jackson"
             experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
             this.zipFolder.file(experiment.name + ".txt", experimentJSON);

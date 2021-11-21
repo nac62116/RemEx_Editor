@@ -123,7 +123,6 @@ function openDatabase() {
             let db = event.target.result,
             transaction = event.target.transaction;
             
-            db.deleteObjectStore("resources");
             db.createObjectStore("resources");
             transaction.oncomplete = function(event) {    
                 resolve(event.target.result);
