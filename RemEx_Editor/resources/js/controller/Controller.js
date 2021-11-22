@@ -28,9 +28,7 @@ import IdManager from "../utils/IdManager.js";
 // -> InfoView
 // APP:
 // -> RemEx Logo as App icon
-// -> Show a loading Screen when experiment gets loaded and when it gets started
-// -> Show a loading screen when clicking the next button in each acitivity, hide it onCreate (the intent to an instruction with a video takes some seconds. With the loading screen the user sees that something is happening)
-// -> Threading as an non ui blocking option
+// -> Show a loading Screen when experiment gets loaded
 
 // ENHANCEMENT:
 // EDITOR:
@@ -44,6 +42,7 @@ import IdManager from "../utils/IdManager.js";
 // BOTH:
 // - Add new survey steps like distraction games, etc...
 // - Add new question types
+// - Upload experiment to server (EDITOR) / Download experiment from server (APP) (Keep offline functionality (save experiment to client) -> Server communication is only needed for up/downloading experiment)
 
 class Controller {
 

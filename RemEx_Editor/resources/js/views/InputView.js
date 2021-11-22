@@ -409,7 +409,7 @@ function onInputChanged(event) {
     inputElements,
     changeNodeEvent,
     imageInputElement,
-    videoInputElement,
+    videoElement,
     sourceElement,
     reader = new FileReader();
 
@@ -498,20 +498,19 @@ function onInputChanged(event) {
             this.notifyAll(changeNodeEvent);
         }
         else {
-            if (data.resourceFile.size >= Config.MAX_RESOURCE_FILE_SIZE) {
-                alert(Config.FILE_TOO_LARGE + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
-                data.resourceFile = undefined;
-                this.currentFileName = null;
-                data.newModelProperties.imageFileName = undefined;
-                data.newModelProperties.videoFileName = undefined;
-                this.clearFileInputs();
-                this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-            }
             if (data.resourceFile !== undefined) {
+                event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                if (data.resourceFile.size >= Config.MAX_RESOURCE_FILE_SIZE) {
+                    alert(Config.FILE_TOO_LARGE + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
+                    this.currentFileName = null;
+                    this.clearFileInputs();
+                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    return;
+                }
                 if (properties.imageFileName !== undefined) {
                     reader.onload = function (fileReaderEvent) {
                         imageInputElement = this.inputFieldsContainer.querySelector("img");
-                        videoInputElement = this.inputFieldsContainer.querySelector("input[name=videoFileName]");
+                        videoElement = this.inputFieldsContainer.querySelector("input[name=videoFileName]");
                         if (imageInputElement === null) {
                             imageInputElement = document.createElement("img");
                             imageInputElement.setAttribute("width", "auto");
@@ -522,12 +521,15 @@ function onInputChanged(event) {
                         else {
                             imageInputElement.setAttribute("src", fileReaderEvent.target.result);
                         }
-                        if (videoInputElement !== null) {
-                            for (let child of videoInputElement.parentElement.children) {
+                        if (videoElement !== null) {
+                            for (let child of videoElement.parentElement.children) {
                                 child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                             }
                         }
                         this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                        event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                        inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
+                        this.notifyAll(inputChangeEvent);
                     }.bind(this);
                     reader.readAsDataURL(data.resourceFile);
                 }
@@ -536,15 +538,15 @@ function onInputChanged(event) {
                         sourceElement = this.inputFieldsContainer.querySelector("source");
                         imageInputElement = this.inputFieldsContainer.querySelector("input[name=imageFileName]");
                         if (sourceElement === null) {
-                            videoInputElement = document.createElement("video");
-                            videoInputElement.setAttribute("width", "auto");
-                            videoInputElement.setAttribute("height", this.inputViewContainer.clientHeight);
-                            videoInputElement.setAttribute("controls", "");
+                            videoElement = document.createElement("video");
+                            videoElement.setAttribute("width", "auto");
+                            videoElement.setAttribute("height", this.inputViewContainer.clientHeight);
+                            videoElement.setAttribute("controls", "");
                             sourceElement = document.createElement("source");
                             sourceElement.setAttribute("type", event.target.files[0].type);
                             sourceElement.setAttribute("src", fileReaderEvent.target.result);
-                            videoInputElement.appendChild(sourceElement);
-                            event.target.parentElement.insertAdjacentElement("afterend", videoInputElement);
+                            videoElement.appendChild(sourceElement);
+                            event.target.parentElement.insertAdjacentElement("afterend", videoElement);
                         }
                         else {
                             sourceElement.setAttribute("src", fileReaderEvent.target.result);
@@ -554,13 +556,21 @@ function onInputChanged(event) {
                                 child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                             }
                         }
-                        this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                        videoElement.addEventListener("loadedmetadata", function() {
+                            if (videoElement.videoHeight > Config.MAX_VIDEO_HEIGHT
+                                || videoElement.videoWidth > Config.MAX_VIDEO_WIDTH) {
+                                    alert(Config.VIDEO_RESOLUTION_TOO_HIGH + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
+                                    this.currentFileName = null;
+                                    this.clearFileInputs();
+                                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                                    return;
+                            }
+                            inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
+                            this.notifyAll(inputChangeEvent);
+                        }.bind(this));
                     }.bind(this);
                     reader.readAsDataURL(data.resourceFile);
                 }
-                event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
-                this.notifyAll(inputChangeEvent);
             }
             else {
                 inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
