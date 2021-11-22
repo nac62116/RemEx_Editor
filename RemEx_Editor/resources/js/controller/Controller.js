@@ -38,7 +38,9 @@ import IdManager from "../utils/IdManager.js";
 // - Calculate the optimal duration for a survey depending on its content
 // - Survey time randomization
 // APP:
-// -
+// - If the device is turned off, the current experiment is finished and can't be resumed (Issues with receiving a boot completed action from the system, to resume the experiment)
+// - Same problem when the user kills the app (swipes it away in the recent apps list) during an experiment between two surveys (not during a survey). If the user kills the app during a survey the survey gets properly finished and the next survey alarm is set
+// - Logging user interactions that are relevant for the researchers
 // BOTH:
 // - Add new survey steps like distraction games, etc...
 // - Add new question types
