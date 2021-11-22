@@ -1370,7 +1370,8 @@ function onInputChanged(event) {
             addResourceResult.then(
                 function() {
                     ModelManager.updateExperiment(newDataModel);
-                },
+                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                }.bind(this),
                 function(error) {
                     if (error.toString().includes("The serialized value is too large")) {
                         alert(Config.FILE_TOO_LARGE + " (" + fileName + ")"); // eslint-disable-line no-alert
@@ -1382,7 +1383,8 @@ function onInputChanged(event) {
                         alert(error.toString() + " (" + fileName + ")"); // eslint-disable-line no-alert
                     }
                     InputView.clearFileInputs();
-                }
+                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                }.bind(this)
             );
         }
         else {

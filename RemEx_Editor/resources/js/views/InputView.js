@@ -498,6 +498,15 @@ function onInputChanged(event) {
             this.notifyAll(changeNodeEvent);
         }
         else {
+            if (data.resourceFile.size >= Config.MAX_RESOURCE_FILE_SIZE) {
+                alert(Config.FILE_TOO_LARGE + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
+                data.resourceFile = undefined;
+                this.currentFileName = null;
+                data.newModelProperties.imageFileName = undefined;
+                data.newModelProperties.videoFileName = undefined;
+                this.clearFileInputs();
+                this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+            }
             if (data.resourceFile !== undefined) {
                 if (properties.imageFileName !== undefined) {
                     reader.onload = function (fileReaderEvent) {

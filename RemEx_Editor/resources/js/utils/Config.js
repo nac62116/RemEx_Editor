@@ -8,6 +8,7 @@ const Config = {
 
     LINE_SPACING: 15,
     LINE_SPACING_SMALL: 10,
+    MAX_RESOURCE_FILE_SIZE: 500000000,
     MAX_ID_SIZE: 65535,
     MAX_ID_ALERT: "Du kannst maximal 10.000 Schritte auf einer Ebene erstellen. Kontaktiere den Support falls du die Grenze erweitern möchtest.",
     LOAD_EXPERIMENT_ALERT: "Wenn du ein neues Experiment lädtst, musst du das aktuelle Experiment speichern und herunterladen, damit es nicht verloren geht. Möchtest du ein neues Experiment laden?",
@@ -643,7 +644,7 @@ const Config = {
     INPUT_TOO_LONG: "Die Eingabe überschreitet die maximal zulassige Länge. Bitte kürze deine Eingabe.",
     INPUT_TOO_LONG_WITH_RESOURCE: "Die Eingabe überschreitet die maximal zulassige Länge für Instruktionen mit Bildern oder Videos. Bitte kürze deine Eingabe.",
     SAME_FILE_NAME_ALERT: "Eine andere Resource in diesem Experiment hat bereits diesen Dateinamen. Bitte benenne die Resource erst um bevor du sie hochlädst.",
-    FILE_TOO_LARGE: "Die hochgeladene Resource überschreitet die maximal zuläassige Größe.",
+    FILE_TOO_LARGE: "Die hochgeladene Resource überschreitet die maximal zuläassige Größe von 500MB.",
     DATABASE_FULL: "Die Resourcen des Experiments sind bereits zu groß um weitere hochzuladen.",
 };
 
