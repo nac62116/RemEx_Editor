@@ -47,7 +47,7 @@ class ImportExportView extends Observable {
                         addNameCodeTableToZip(this, nameCodeTable, experiment);
                         addResourcesToZip(this);
                         
-                        zipFilesAndDownload(this);
+                        zipFilesAndDownload(this, experiment.name);
                     }.bind(this));
                 }
             }
@@ -57,7 +57,7 @@ class ImportExportView extends Observable {
             addExperimentToZip(this, experiment);
             addNameCodeTableToZip(this, nameCodeTable, experiment);
 
-            zipFilesAndDownload(this);
+            zipFilesAndDownload(this, experiment.name);
         }
     }
 
@@ -122,7 +122,7 @@ function addResourcesToZip(that) {
     }
 }
 
-function zipFilesAndDownload(that) {
+function zipFilesAndDownload(that, zipFileName) {
     // Zipping all files
     that.zipFolder.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 9}}, 
     function updateCallback(metaData) {
@@ -131,7 +131,7 @@ function zipFilesAndDownload(that) {
     })
     .then(function (blob) {
         that.downloadLinkElement.setAttribute("href", URL.createObjectURL(blob));
-        that.downloadLinkElement.setAttribute("download", that.experiment.name + ".zip");
+        that.downloadLinkElement.setAttribute("download", zipFileName + ".zip");
         that.downloadLinkElement.click();
     });
 }

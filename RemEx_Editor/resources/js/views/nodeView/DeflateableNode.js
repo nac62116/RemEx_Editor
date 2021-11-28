@@ -4,15 +4,22 @@ import StandardNode from "./StandardNode.js";
 class DeflateableNode extends StandardNode {
 
     constructor(nodeElements, id, type, description) {
-        super(nodeElements, id, type, description); 
+        super(nodeElements, id, type, description);
+        /*
+        this.nodeElements.nodeBody.addEventListener("mouseenter", onMouseEnter.bind(this));
+        this.nodeElements.nodeBody.addEventListener("mouseleave", onMouseLeave.bind(this));
+        this.nodeElements.nodeDescription.addEventListener("mouseenter", onMouseEnter.bind(this));
+        this.nodeElements.nodeDescription.addEventListener("mouseleave", onMouseLeave.bind(this));
+        this.nodeElements.nodeIcon.addEventListener("click", onClick.bind(this));
+        this.nodeElements.nodeIcon.addEventListener("mouseenter", onMouseEnter.bind(this));
+        this.nodeElements.nodeIcon.addEventListener("mouseleave", onMouseLeave.bind(this));
+        */
     }
 
     show() {
         super.show();
-        if (!this.isFocused) {
-            this.nodeElements.nodeDescription.setAttribute("display", "none");
-            this.nodeElements.nodeIcon.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-        }
+        this.nodeElements.nodeDescription.setAttribute("display", "none");
+        this.nodeElements.nodeIcon.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
     emphasize() {
@@ -25,19 +32,18 @@ class DeflateableNode extends StandardNode {
             x: parentOutputPoint.x,
             y: (parentOutputPoint.y + ((this.top.y + offsetVector.y - parentOutputPoint.y) / 4)), // eslint-disable-line no-magic-numbers
         };
+
         super.emphasize();
-        if (!this.isFocused) {
-            this.nodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
-            this.nodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
-            this.nodeElements.nodeBody.setAttribute("x", this.nodeElements.nodeBody.getAttribute("x") * 1 + offsetVector.x);
-            this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
-            this.nodeElements.nodeDescription.removeAttribute("display");
-            this.nodeElements.nodeIcon.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y + offsetVector.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + (this.top.y + offsetVector.y)); // eslint-disable-line no-magic-numbers
-            this.bottom.y -= offsetVector.y;
-            for (let childNode of this.childNodes) {
-                childNode.updatePosition(childNode.center.x, childNode.center.y, true);
-            }
+        this.nodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH);
+        this.nodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT);
+        this.nodeElements.nodeBody.setAttribute("x", this.nodeElements.nodeBody.getAttribute("x") * 1 + offsetVector.x);
+        this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
+        this.nodeElements.nodeDescription.removeAttribute("display");
+        this.nodeElements.nodeIcon.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y + offsetVector.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + (this.top.y + offsetVector.y)); // eslint-disable-line no-magic-numbers
+        this.bottom.y -= offsetVector.y;
+        for (let childNode of this.childNodes) {
+            childNode.updatePosition(childNode.center.x, childNode.center.y, true);
         }
     }
 
@@ -50,21 +56,18 @@ class DeflateableNode extends StandardNode {
         bezierReferencePoint = {
             x: parentOutputPoint.x,
             y: (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 4)), // eslint-disable-line no-magic-numbers
-        },
-        isEmphasized = this.isEmphasized;
+        };
         super.deemphasize();
-        if (!this.isFocused && isEmphasized) {
-            this.nodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
-            this.nodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
-            this.nodeElements.nodeBody.setAttribute("x", this.nodeElements.nodeBody.getAttribute("x") * 1 + offsetVector.x);
-            this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
-            this.nodeElements.nodeDescription.setAttribute("display", "none");
-            this.nodeElements.nodeIcon.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-            this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 2)) + " T " + (this.top.x) + " " + (this.top.y)); // eslint-disable-line no-magic-numbers
-            this.bottom.y -= offsetVector.y;
-            for (let childNode of this.childNodes) {
-                childNode.updatePosition(childNode.center.x, childNode.center.y, true);
-            }
+        this.nodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
+        this.nodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
+        this.nodeElements.nodeBody.setAttribute("x", this.nodeElements.nodeBody.getAttribute("x") * 1 + offsetVector.x);
+        this.nodeElements.nodeBody.setAttribute("y", this.nodeElements.nodeBody.getAttribute("y") * 1 + offsetVector.y);
+        this.nodeElements.nodeDescription.setAttribute("display", "none");
+        this.nodeElements.nodeIcon.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 2)) + " T " + (this.top.x) + " " + (this.top.y)); // eslint-disable-line no-magic-numbers
+        this.bottom.y -= offsetVector.y;
+        for (let childNode of this.childNodes) {
+            childNode.updatePosition(childNode.center.x, childNode.center.y, true);
         }
     }
 }

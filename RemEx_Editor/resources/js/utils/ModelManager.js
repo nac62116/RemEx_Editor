@@ -237,27 +237,27 @@ class ModelManager {
         for (let i = 0; i < times.length; i++) {
             // First iteration with length === 1
             if (i === 0 && i === times.length - 1) {
-                timeSurveyMap.get(times[i]).previousSurveyId = null;
-                timeSurveyMap.get(times[i]).nextSurveyId = null;
+                lastSurvey = timeSurveyMap.get(times[i]);
+                lastSurvey.previousSurveyId = null;
+                lastSurvey.nextSurveyId = null;
             }
             // First iteration
-            if (i === 0) {
+            else if (i === 0) {
                 timeSurveyMap.get(times[i]).previousSurveyId = null;
-                timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]);
+                timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]).id;
             }
             // Last iteration
             else if (i === times.length - 1) {
                 lastSurvey = timeSurveyMap.get(times[i]);
-                lastSurvey.previousSurveyId = timeSurveyMap.get(times[i - 1]);
+                lastSurvey.previousSurveyId = timeSurveyMap.get(times[i - 1]).id;
                 lastSurvey.nextSurveyId = null;
             }
             // All other iterations
             else {
-                timeSurveyMap.get(times[i]).previousSurveyId = timeSurveyMap.get(times[i - 1]);
-                timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]);
+                timeSurveyMap.get(times[i]).previousSurveyId = timeSurveyMap.get(times[i - 1]).id;
+                timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]).id;
             }
         }
-        console.log(timelineNodeData);
         this.updateExperiment(timelineNodeData);
         return lastSurvey;
     }

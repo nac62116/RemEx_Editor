@@ -68,11 +68,10 @@ class InputValidator {
         timeWindow = {},
         result = true;
     
-        // -> Insert upper survey day, maxDuration, notificationDuration, likert scale, breathingFreq limit
         if (node.type === Config.TYPE_EXPERIMENT_GROUP) {
             if (nodeData.name !== undefined) {
                 for (let group of parentData.groups) {
-                    if (group.name === nodeData.name && group !== nodeData) {
+                    if (group.name === nodeData.name && group.id !== nodeData.id) {
                         invalidInput = "name";
                         alert = Config.EXPERIMENT_GROUP_NAME_NOT_UNIQUE;
                         result = {
@@ -88,7 +87,7 @@ class InputValidator {
         else if (node.type === Config.TYPE_SURVEY) {
             if (nodeData.name !== undefined) {
                 for (let survey of parentData.surveys) {
-                    if (survey.name === nodeData.name && survey !== nodeData) {
+                    if (survey.name === nodeData.name && survey.id !== nodeData.id) {
                         invalidInput = "name";
                         alert = Config.SURVEY_NAME_NOT_UNIQUE;
                         result = {
@@ -106,7 +105,7 @@ class InputValidator {
     
                 nodeTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
                 for (let survey of parentData.surveys) {
-                    if (survey !== nodeData) {
+                    if (survey.id !== nodeData.id) {
                         surveyTimeInMin = survey.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + survey.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + survey.absoluteStartAtMinute;
                         timeWindow.start = surveyTimeInMin - nodeData.maxDurationInMin - nodeData.notificationDurationInMin;
                         timeWindow.end = surveyTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin;
@@ -247,7 +246,7 @@ class InputValidator {
         else if (node.parentNode !== undefined && node.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
             if (nodeData.name !== undefined) {
                 for (let question of parentData.questions) {
-                    if (question.name === nodeData.name && question !== nodeData) {
+                    if (question.name === nodeData.name && question.id !== nodeData.id) {
                         invalidInput = "name";
                         alert = Config.QUESTION_NAME_NOT_UNIQUE;
                         result = {
@@ -355,7 +354,7 @@ class InputValidator {
         else if (node.type === Config.TYPE_ANSWER) {
             if (nodeData.code !== undefined) {
                 for (let answer of parentData.answers) {
-                    if (answer.code === nodeData.code && answer !== nodeData) {
+                    if (answer.code === nodeData.code && answer.id !== nodeData.id) {
                         invalidInput = "code";
                         alert = Config.ANSWER_CODE_NOT_UNIQUE;
                         result = {

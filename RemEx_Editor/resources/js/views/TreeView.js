@@ -49,7 +49,7 @@ class TreeView {
     }
 
     updateNodeLinks(nodeData, parentNode, previousNode, nextNode) {
-        let node = getNodeById(this, nodeData.id);
+        let node = this.getNodeById(nodeData.id);
 
         node.parentNode = parentNode;
         if (parentNode !== undefined && !parentNode.childNodes.includes(node)) {
@@ -66,13 +66,17 @@ class TreeView {
         updateChildNodeLinks(this, nodeData);
     }
 
+    getNodeById(id) {
+        return this.nodeMap.get(id);
+    }
+
     clickNode(node, nodeId) {
         let nodeToClick;
         if (node !== undefined) {
             nodeToClick = node;
         }
         else {
-            nodeToClick = getNodeById(this, nodeId);
+            nodeToClick = this.getNodeById(nodeId);
         }
         nodeToClick.click();
     }
@@ -100,7 +104,9 @@ class TreeView {
         for (let i = this.currentSelection.length - 1; i >= 0; i--) {
             y = treeViewCenter.y - i * Config.NODE_DISTANCE_HORIZONTAL;
             this.currentSelection[i].show();
-            this.currentSelection[i].emphasize();
+            if (!(this.currentSelection[i] instanceof DeflateableNode)) {
+                this.currentSelection[i].emphasize();
+            }
             // Child nodes of a timeline node need to be positioned on the timeline
             if (this.currentSelection[i].parentNode !== undefined && this.currentSelection[i].parentNode instanceof TimelineNode) {
                 console.log("survey node positioned");
@@ -112,6 +118,9 @@ class TreeView {
             }
             
             if (i === 0) {
+                if (this.currentSelection[i] instanceof DeflateableNode) {
+                    this.currentSelection[i].emphasize();
+                }
                 this.currentSelection[i].focus();
             }
         }
@@ -257,10 +266,6 @@ function insertNode(that, node) {
     }
 }
 
-function getNodeById(that, id) {
-    return that.nodeMap.get(id);
-}
-
 function updateChildNodeLinks(that, nodeData) {
     let node,
     nextNode,
@@ -270,7 +275,7 @@ function updateChildNodeLinks(that, nodeData) {
     childNode,
     childrenData;
 
-    node = getNodeById(that, nodeData.id);
+    node = that.getNodeById(nodeData.id);
     node.childNodes = [];
 
     if (nodeData.type === Config.TYPE_EXPERIMENT
@@ -285,25 +290,25 @@ function updateChildNodeLinks(that, nodeData) {
             childrenData = nodeData.answers;
         }
         for (let i = 0; i < childrenData.length; i++) {
-            childNode = getNodeById(that, childrenData[i].id);
+            childNode = that.getNodeById(childrenData[i].id);
             node.childNodes.push(childNode);
             childNode.parentNode = node;
             // Previous and next links are only relevant with length > 1
             if (childrenData.length !== 1) {
                 // First iteration
                 if (i === 0) {
-                    nextNode = getNodeById(that, childrenData[i + 1].id);
+                    nextNode = that.getNodeById(childrenData[i + 1].id);
                     previousNode = undefined;
                 }
                 // Last iteration
                 else if (i === childrenData.length - 1) {
-                    nextNode = getNodeById(that, childrenData[i + 1].id);
-                    previousNode = getNodeById(that, childrenData[i - 1].id);
+                    nextNode = that.getNodeById(childrenData[i + 1].id);
+                    previousNode = that.getNodeById(childrenData[i - 1].id);
                 }
                 // All other iterations
                 else {
                     nextNode = undefined;
-                    previousNode = getNodeById(that, childrenData[i + 1].id);
+                    previousNode = that.getNodeById(childrenData[i + 1].id);
                 }
                 childNode.nextNode = nextNode;
                 childNode.previousNode = previousNode;
@@ -327,7 +332,7 @@ function updateChildNodeLinks(that, nodeData) {
             childrenData = nodeData.questions;
         }
         for (let i = 0; i < childrenData.length; i++) {
-            childNode = getNodeById(that, childrenData[i].id);
+            childNode = that.getNodeById(childrenData[i].id);
             node.childNodes.push(childNode);
             childNode.parentNode = node;
             if (nodeData.type === Config.TYPE_EXPERIMENT_GROUP) {
@@ -343,13 +348,13 @@ function updateChildNodeLinks(that, nodeData) {
                 previousId = childrenData[i].previousQuestionId;
             }
             if (nextId !== null) {
-                nextNode = getNodeById(that, nextId);
+                nextNode = that.getNodeById(nextId);
             }
             else {
                 nextNode = undefined;
             }
             if (previousId !== null) {
-                previousNode = getNodeById(that, previousId);
+                previousNode = that.getNodeById(previousId);
             }
             else {
                 previousNode = undefined;
