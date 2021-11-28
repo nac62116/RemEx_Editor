@@ -1,8 +1,11 @@
+import Config from "../utils/Config.js";
+
 class Survey {
 
     constructor() {
         Survey.instanceCount = (Survey.instanceCount || 0) + 1;
         this.id = null;
+        this.type = Config.TYPE_SURVEY;
         this.name = "Neue Befragung " + Survey.instanceCount;
         this.maxDurationInMin = 1;
         this.absoluteStartAtMinute = null;

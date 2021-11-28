@@ -42,7 +42,10 @@ const Config = {
     // View events:
 
     EVENT_SAVE_EXPERIMENT: "saveExperiment",
-    EVENT_LOAD_EXPERIMENT: "loadExperiment",
+    EVENT_SAVING_PROGRESS: "savingProgress",
+    EVENT_EXPERIMENT_SAVED: "experimentSaved",
+    EVENT_UPLOAD_EXPERIMENT: "uploadExperiment",
+    EVENT_EXPERIMENT_UPLOADED: "experimentUploaded",
     EVENT_NEW_EXPERIMENT: "newExperiment",
     EVENT_NODE_CLICKED: "nodeclicked",
     EVENT_NODE_MOUSE_ENTER: "nodeMouseEnter",
@@ -50,13 +53,11 @@ const Config = {
     EVENT_MOVE_NODE_LEFT: "moveNodeLeft",
     EVENT_MOVE_NODE_RIGHT: "moveNodeRight",
     EVENT_ADD_NEXT_NODE: "addNextNode",
-    EVENT_ADD_PREV_NODE: "addPrevNode",
+    EVENT_ADD_PREVIOUS_NODE: "addPrevNode",
     EVENT_ADD_CHILD_NODE: "addChildNode",
     EVENT_INPUT_CHANGED: "inputChanged",
     EVENT_REMOVE_NODE: "removeNode",
     EVENT_CHANGE_NODE: "changeNode",
-    EVENT_TIMELINE_MOUSE_ENTER: "timelineMouseEnter",
-    EVENT_TIMELINE_MOUSE_LEAVE: "timelineMouseLeave",
     EVENT_TIMELINE_CLICKED: "timelineClicked",
 
     // DOM Element ids:

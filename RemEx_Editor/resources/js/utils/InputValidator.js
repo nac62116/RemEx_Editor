@@ -8,7 +8,7 @@ class InputValidator {
         // -> experiment has at least one group
         if (experiment.groups.length === 0) {
             result = {
-                correspondingNodeId: experiment.id,
+                invalidNodeId: experiment.id,
                 alert: Config.EXPERIMENT_AT_LEAST_ONE_GROUP,
             };
             return result;
@@ -17,7 +17,7 @@ class InputValidator {
         for (let group of experiment.groups) {
             if (group.surveys.length === 0) {
                 result = {
-                    correspondingNodeId: group.id,
+                    invalidNodeId: group.id,
                     alert: Config.EXPERIMENT_GROUP_AT_LEAST_ONE_SURVEY,
                 };
                 return result;
@@ -26,7 +26,7 @@ class InputValidator {
             for (let survey of group.surveys) {
                 if (survey.steps.length === 0) {
                     result = {
-                        correspondingNodeId: survey.id,
+                        invalidNodeId: survey.id,
                         alert: Config.SURVEY_AT_LEAST_ONE_STEP,
                     };
                     return result;
@@ -36,7 +36,7 @@ class InputValidator {
                     if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
                         if (step.questions.length === 0) {
                             result = {
-                                correspondingNodeId: step.id,
+                                invalidNodeId: step.id,
                                 alert: Config.QUESTIONNAIRE_AT_LEAST_ONE_QUESTION,
                             };
                             return result;
@@ -46,7 +46,7 @@ class InputValidator {
                             if (question.type === Config.QUESTION_TYPE_CHOICE) {
                                 if (question.answers.length <= 1) {
                                     result = {
-                                        correspondingNodeId: question.id,
+                                        invalidNodeId: question.id,
                                         alert: Config.CHOICE_QUESTION_AT_LEAST_ONE_ANSWER,
                                     };
                                     return result;

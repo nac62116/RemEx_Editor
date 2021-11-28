@@ -5,7 +5,7 @@ import Config from "../../utils/Config.js";
 class RootNode extends NodeView {
 
     constructor(nodeElements, id, type, description) {
-        super(nodeElements, id, type, description, undefined);
+        super(nodeElements, id, type, description);
         
         this.nodeElements.addChildButton.addEventListener("click", onAddChildNodeClicked.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
@@ -18,9 +18,7 @@ class RootNode extends NodeView {
             this.showAddChildButton();
         }
         else {
-            for (let childNode of this.childNodes) {
-                childNode.show();
-            }
+            this.hideAddChildButton();
         }
     }
 
@@ -29,8 +27,8 @@ class RootNode extends NodeView {
         this.hideAddChildButton();
     }
 
-    updatePosition(centerX, centerY, makeStatic) {
-        super.updatePosition(centerX, centerY, makeStatic);
+    updatePosition(centerX, centerY) {
+        super.updatePosition(centerX, centerY);
         this.nodeElements.addChildButton.setAttribute("cx", this.center.x);
         this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y);
     }

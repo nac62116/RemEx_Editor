@@ -5,13 +5,13 @@ import SvgFactory from "../../utils/SvgFactory.js";
 class NodeView extends Observable {
 
     // TODO: Insert icon via constructor
-    constructor(nodeElements, id, type, description, parentNode) {
+    constructor(nodeElements, id, type, description) {
         super();
         this.nodeElements = nodeElements;
         this.id = id;
         this.type = type;
         this.description = description;
-        this.parentNode = parentNode;
+        this.parentNode = undefined;
         this.previousNode = undefined;
         this.nextNode = undefined;
         this.childNodes = [];
@@ -72,59 +72,30 @@ class NodeView extends Observable {
     }
 
     focus() {
-        if (!this.isFocused) {
-            this.isFocused = true;
-            this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR_FOCUSED);
-            this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_FOCUSED);
-        }
+        this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR_FOCUSED);
+        this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_FOCUSED);
     }
 
     defocus() {
-        if (this.isFocused) {
-            this.isFocused = false;
-            this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
-            this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
-        }
+        this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
+        this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
     }
 
     emphasize() {
-        this.isEmphasized = true;
-        if (this.isFocused) {
-            this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_FOCUSED);
-        }
-        else {
-            this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_EMPHASIZED);
-        }
+        this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_EMPHASIZED);
         this.nodeElements.nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_EMPHASIZED);
         this.nodeElements.nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_EMPHASIZED);
         this.nodeElements.nodeIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_EMPHASIZED);
     }
 
     deemphasize() {
-        if (!this.isFocused) {
-            this.isEmphasized = false;
-            this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
-            this.nodeElements.nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
-            this.nodeElements.nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
-            this.nodeElements.nodeIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
-        }
+        this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
+        this.nodeElements.nodeBody.setAttribute("stroke-opacity", Config.NODE_BODY_STROKE_OPACITY_DEEMPHASIZED);
+        this.nodeElements.nodeDescription.setAttribute("fill-opacity", Config.NODE_DESCRIPTION_FILL_OPACITY_DEEMPHASIZED);
+        this.nodeElements.nodeIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
     }
 
-    returnToPositionBeforeDrag() {
-        this.updatePosition(this.positionBeforeDrag.x, this.positionBeforeDrag.y, false);
-    }
-
-    updatePosition(centerX, centerY, makeStatic) {
-        // Recalculate points
-        if (makeStatic) {
-            this.positionBeforeDrag = {
-                x: centerX,
-                y: centerY,
-            };
-        }
-        else {
-            // This node is currently moving. It has not yet a new static position.
-        }
+    updatePosition(centerX, centerY) {
         this.center = {
             x: centerX,
             y: centerY,

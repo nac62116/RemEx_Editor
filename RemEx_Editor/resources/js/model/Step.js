@@ -9,7 +9,6 @@ class Step {
         }
         this.id = null;
         this.name = name;
-        // TODO: JSON value should be named "@type"
         this.type = type;
         this.waitForStep = 0;
         this.nextStepId = null;

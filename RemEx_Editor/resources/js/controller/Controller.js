@@ -1,17 +1,12 @@
 import ModelManager from "../utils/ModelManager.js";
 import TreeView from "../views/TreeView.js";
-import WhereAmIView from "../views/WhereAmIView.js";
 import InputView from "../views/InputView.js";
-import RootNode from "../views/nodeView/RootNode.js";
-import TimelineNode from "../views/nodeView/TimelineNode.js";
-import DeflateableNode from "../views/nodeView/DeflateableNode.js";
-import StandardNode from "../views/nodeView/StandardNode.js";
-import MoveableNode from "../views/nodeView/MoveableNode.js";
+import WhereAmIView from "../views/WhereAmIView.js";
+import LoadingScreenView from "../views/LoadingScreenView.js";
+import ImportExportView from "../views/ImportExportView.js";
 import InputValidator from "../utils/InputValidator.js";
 import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
-import Storage from "../utils/Storage.js";
-import IdManager from "../utils/IdManager.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
@@ -55,12 +50,16 @@ class Controller {
         whereAmIViewContainer = document.querySelector("#" + Config.WHERE_AM_I_VIEW_CONTAINER_ID),
         whereAmIViewElement = SvgFactory.createWhereAmIViewElement(),
         inputViewContainer = document.querySelector("#" + Config.INPUT_VIEW_CONTAINER_ID),
+        loadingScreenElement = document.querySelector("#" + Config.LOADING_SCREEN_ID),
         experiment,
         newNode,
-        uploadButton,
-        newButton;
-
-        this.nodeEventListener = [
+        // Event listener
+        // ***
+        // Here are all entry points into this Controller.
+        // After this init() function is executed,
+        // everything that can happen, happens in one of those callback functions.
+        // ***
+        treeViewEventListener = [
             {
                 eventType: Config.EVENT_NODE_MOUSE_ENTER,
                 callback: onNodeMouseEnter.bind(this),
@@ -75,26 +74,26 @@ class Controller {
             },
             {
                 eventType: Config.EVENT_ADD_NEXT_NODE,
-                callback: onAddNextNode.bind(this),
+                callback: onAddNode.bind(this),
             },
             {
-                eventType: Config.EVENT_ADD_PREV_NODE,
-                callback: onAddPreviousNode.bind(this),
+                eventType: Config.EVENT_ADD_PREVIOUS_NODE,
+                callback: onAddNode.bind(this),
             },
             {
                 eventType: Config.EVENT_ADD_CHILD_NODE,
-                callback: onAddChildNode.bind(this),
+                callback: onAddNode.bind(this),
             },
             {
                 eventType: Config.EVENT_MOVE_NODE_RIGHT,
-                callback: onMoveNodeRight.bind(this),
+                callback: onSwitchNodes.bind(this),
             },
             {
                 eventType: Config.EVENT_MOVE_NODE_LEFT,
-                callback: onMoveNodeLeft.bind(this),
+                callback: onSwitchNodes.bind(this),
             },
-        ];
-        this.inputViewEventListener = [
+        ],
+        inputViewEventListener = [
             {
                 eventType: Config.EVENT_INPUT_CHANGED,
                 callback: onInputChanged.bind(this),
@@ -107,384 +106,246 @@ class Controller {
                 eventType: Config.EVENT_CHANGE_NODE,
                 callback: onChangeNode.bind(this),
             },
-        ];
-        this.timelineEventListener = [
             {
                 eventType: Config.EVENT_TIMELINE_CLICKED,
                 callback: onTimelineClicked.bind(this),
             },
+        ],
+        importExportViewEventListener = [
+            {
+                eventType: Config.EVENT_SAVE_EXPERIMENT,
+                callback: onSaveExperiment.bind(this),
+            },
+            {
+                eventType: Config.EVENT_SAVING_PROGRESS,
+                callback: onSaveExperimentProgress.bind(this),
+            },
+            {
+                eventType: Config.EVENT_EXPERIMENT_SAVED,
+                callback: onExperimentSaved.bind(this),
+            },
+            {
+                eventType: Config.EVENT_UPLOAD_EXPERIMENT,
+                callback: onUploadExperiment.bind(this),
+            },
+            {
+                eventType: Config.EVENT_EXPERIMENT_UPLOADED,
+                callback: onExperimentUploaded.bind(this),
+            },
+            {
+                eventType: Config.EVENT_NEW_EXPERIMENT,
+                callback: onNewExperiment.bind(this),
+            },
         ];
-        this.currentSelection = [];
-        this.loadingScreen = document.querySelector("#" + Config.LOADING_SCREEN_ID);
 
-        // Save/Load Functionality
-        this.resources = [];
-        this.zipFolder = null;
-        this.saveButton = importExportContainer.querySelector("#" + Config.SAVE_EXPERIMENT_BUTTON_ID);
-        uploadButton = importExportContainer.querySelector("#" + Config.UPLOAD_EXPERIMENT_BUTTON_ID);
-        newButton = importExportContainer.querySelector("#" + Config.NEW_EXPERIMENT_BUTTON_ID);
-        this.saveButton.addEventListener("click", onSaveExperimentButtonClicked.bind(this));
-        uploadButton.addEventListener("click", onUploadExperimentButtonClicked.bind(this));
-        newButton.addEventListener("click", onNewExperimentButtonClicked.bind(this));
-        
-        // TreeView
-        treeViewContainer.appendChild(treeViewElement);
-        TreeView.init(treeViewContainer);
-
+        // experiment is the root of the data model:
+        // ***
+        // Experiment has
+        // ExperimentGroups have
+        // Surveys have 
+        // Steps (Instructions, BreathingExercises, Questionnaires)
+        // Questionnaires have
+        // Questions (Text-, Choice-, Likert-, PointOfTime-, TimeIntervallQuestions)
+        // ChoiceQuestions have Answers
+        // ***
         experiment = ModelManager.initExperiment();
-        newNode = createNode(this, undefined, experiment, undefined, undefined);
-        newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
-        TreeView.setRoot(newNode);
 
+        // LoadingScreenView
+        LoadingScreenView.init(loadingScreenElement);
+
+        // ImportExportView (Save/Load Functionality)
+        ImportExportView.init(importExportContainer);
+        for (let listener of importExportViewEventListener) {
+            ImportExportView.addEventListener(listener.eventType, listener.callback);
+        }
+
+        // TreeView (Handles the tree in the top left corner)
+        treeViewContainer.appendChild(treeViewElement);
+        TreeView.init(treeViewContainer, treeViewEventListener);
+        newNode = TreeView.createSubtree(experiment); 
+        TreeView.updateNodeLinks(experiment, undefined, undefined, undefined);    
+
+        // WhereAmIView (Shows the current position inside tree in the top right corner)
         whereAmIViewContainer.appendChild(whereAmIViewElement);
         WhereAmIView.init(whereAmIViewContainer);
 
+        // InputView (Handles the user input in the bottom left corner)
         InputView.init(inputViewContainer);
-        for (let listener of this.inputViewEventListener) {
+        for (let listener of inputViewEventListener) {
             InputView.addEventListener(listener.eventType, listener.callback);
         }
+
+
+//###
+        // TODO: InfoView
+//###
+
+
+        TreeView.clickNode(newNode, undefined);
     }
 }
 
-function onSaveExperimentButtonClicked() {
-    let downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID),
-    experiment = ModelManager.getExperiment(),
-    resources = ModelManager.getAllResources(),
-    result,
-    correspondingNode,
-    experimentJSON,
-    nameCodeTable;
+// *** ImportExportView callback functions:
+// **
+// *
 
-    result = InputValidator.experimentIsValid(experiment);
-    if (result !== true) {
-        correspondingNode = TreeView.getNodeById(result.correspondingNodeId);
-        if (correspondingNode.parentNode !== undefined) {
-            correspondingNode.parentNode.click();
-        }
-        correspondingNode.click();
-        InputView.showAlert(result.alert);
+function onSaveExperiment() {
+    let experiment = ModelManager.getExperiment(),
+    resourcePromises = ModelManager.getAllResources(),
+    validationResult,
+    // Writing a nameCodeTable, which provides the answer codes to the corresponding questions/answers to simplify the csv understanding after an experiment.
+    nameCodeTable = ModelManager.getNameCodeTable(experiment);
+
+    // Checking for a valid experiment
+    validationResult = InputValidator.experimentIsValid(experiment);
+    if (validationResult !== true) {
+        TreeView.clickNode(undefined, validationResult.invalidNodeId);
+        InputView.showAlert(validationResult.alert);
     }
     else {
-        this.zipFolder = new JSZip(); // eslint-disable-line
-        if (resources.length !== 0) {
-            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            this.loadingScreen.firstElementChild.innerHTML = Config.SAVING_PROMPT;
-            for (let resource of resources) {
-                if (resources.indexOf(resource) === resources.length - 1) {
-                    resource.then(function(result) {
-                        let experiment = ModelManager.getExperiment(),
-                        experimentJSON,
-                        nameCodeTable,
-                        downloadLinkElement = document.querySelector("#" + Config.DOWNLOAD_LINK_ID);
-
-                        downloadLinkElement.addEventListener("click", function onClick() {
-                            this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                            this.loadingScreen.firstElementChild.innerHTML = Config.LOADING_PROMPT;
-                            this.zipFolder = null;
-                        }.bind(this));
-                        
-                        experimentJSON = JSON.stringify(experiment, null, 4); // eslint-disable-line
-                        // Declare type property as an enum for the android json library "com.fasterxml.jackson"
-                        experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
-                        this.zipFolder.file(experiment.name + ".txt", experimentJSON);
-                        
-                        nameCodeTable = ModelManager.getNameCodeTable(experiment);
-                        if (nameCodeTable.length !== 0) {
-                            this.zipFolder.file(experiment.name + "_Code_Tabelle.txt", nameCodeTable);
-                        }
-
-                        this.resources.push(result);
-                        for (let resource of this.resources) {
-                            this.zipFolder.folder("resources").file(resource.name, resource);
-                        }
-                        this.resources = null;
-                        this.resources = [];
-                        
-                        this.loadingScreen.firstElementChild.innerHTML = Config.SAVING_PROMPT + "<br>Fortschritt: 0 %";
-                        this.zipFolder.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 9}}, 
-                        function updateCallback(metaData) {
-                            this.loadingScreen.firstElementChild.innerHTML = Config.SAVING_PROMPT + "<br>Fortschritt: " + Math.round(metaData.percent) + " %";
-                        }.bind(this))
-                        .then(function (blob) {
-                            downloadLinkElement.setAttribute("href", URL.createObjectURL(blob));
-                            downloadLinkElement.setAttribute("download", experiment.name + ".zip");
-                            downloadLinkElement.click();
-                        });
-                        return;
-                    }.bind(this));
-                }
-                else {
-                    resource.then(function(result) {
-                        this.resources.push(result);
-                    }.bind(this));
-                }
-            }
-        }
-        else {
-            experimentJSON = JSON.stringify(experiment, null, 4); // eslint-disable-line
-            // Declare type property as an enum for the android json library "com.fasterxml.jackson"
-            experimentJSON = experimentJSON.replace(/"type"/g, "\"@type\"");
-            this.zipFolder.file(experiment.name + ".txt", experimentJSON);
-            
-            nameCodeTable = ModelManager.getNameCodeTable(experiment);
-            if (nameCodeTable.length !== 0) {
-                this.zipFolder.file(experiment.name + "_Code_Tabelle.txt", nameCodeTable);
-            }
-
-            this.zipFolder.generateAsync({type:"blob"})
-            .then(function (blob) {
-                downloadLinkElement.setAttribute("href", URL.createObjectURL(blob));
-                downloadLinkElement.setAttribute("download", experiment.name + ".zip");
-                downloadLinkElement.click();
-            });
-        }
+        LoadingScreenView.show(Config.SAVING_PROMPT + "<br>Fortschritt: 0 %");
+        ImportExportView.exportExperiment(experiment, nameCodeTable, resourcePromises);
     }
 }
 
-// TODO
-function onUploadExperimentButtonClicked() {
-    let uploadElement,
-    experiment,
-    ids;
+function onSaveExperimentProgress(event) {
+    LoadingScreenView.show(Config.SAVING_PROMPT + "<br>Fortschritt: " + Math.round(event.data.percent) + " %");
+}
 
-    if (confirm(Config.LOAD_EXPERIMENT_ALERT)) { // eslint-disable-line no-alert
-        uploadElement = document.querySelector("#" + Config.UPLOAD_INPUT_ID);
-        uploadElement.addEventListener("change", function(event) {
-            new Promise(function(resolve, reject) {
-                var reader = new FileReader();
-                reader.onload = function() { resolve(reader.result); };
-                reader.onerror = reject;
-                reader.readAsText(event.target.files[0]);
-            }).then(function(result) {
-                experiment = JSON.parse(result);
-                ModelManager.removeExperiment();
-                TreeView.removeNode(TreeView.rootNode);
-                for (let encodedResource of experiment.encodedResources) {
-                    ModelManager.addResource(encodedResource.fileName, encodedResource.base64String);
-                }
-                ModelManager.saveExperiment(experiment);
-                ids = ModelManager.getIds(experiment);
-                IdManager.setIds(ids);
-                WhereAmIView.update([]);
-                InputView.hide();
-                InputView.hideAlert();
-                // TODOthen
-                //TreeView init and createNodes
-            });
-        });
-        uploadElement.click();
+function onExperimentSaved() {
+    LoadingScreenView.hide();
+}
+
+function onUploadExperiment() {
+    
+    if (confirm(Config.LOAD_EXPERIMENT_ALERT)) {
+        
+
+//###
+        // TODO: Get experiment and resources from zip file in this function
+        ImportExportView.importExperiment();
+//###
+
+
     }
 }
 
-function onNewExperimentButtonClicked() {
+function onExperimentUploaded(event) {
+    let newNode;
+
+    TreeView.removeSubtree(TreeView.rootNode);
+    ModelManager.removeExperiment();
+
+    ModelManager.saveExperiment(event.data.experiment);
+    ModelManager.setIds(event.data.experiment);
+    for (let resource of event.data.resources) {
+        ModelManager.addResource(resource);
+    }
+    WhereAmIView.update([]);
+    InputView.hide();
+    InputView.hideAlert();   
+    newNode = TreeView.createSubtree(event.data.experiment);
+    TreeView.updateNodeLinks(event.data.experiment, undefined, undefined, undefined);   
+    TreeView.clickNode(newNode, undefined);
+}
+
+function onNewExperiment() {
     let experiment,
     newNode;
 
-    if (confirm(Config.NEW_EXPERIMENT_ALERT)) { // eslint-disable-line no-alert
-        IdManager.removeIds();
+    if (confirm(Config.NEW_EXPERIMENT_ALERT)) {
+
+        TreeView.removeSubtree(TreeView.rootNode);
         ModelManager.removeExperiment();
-        TreeView.removeNode(TreeView.rootNode);
+        experiment = ModelManager.initExperiment();
         WhereAmIView.update([]);
         InputView.hide();
         InputView.hideAlert();
-        experiment = ModelManager.initExperiment();
-        newNode = createNode(this, undefined, experiment, undefined, undefined);
-        newNode.updatePosition(TreeView.getCenter().x, TreeView.getCenter().y, true);
-        TreeView.setRoot(newNode);
+        newNode = TreeView.createSubtree(experiment);
+        TreeView.updateNodeLinks(experiment, undefined, undefined, undefined);   
+        TreeView.clickNode(newNode, undefined);
     }
 }
 
-function createNode(that, parentNode, data, stepType, questionType) {
-    let id = data.id,
-    description = data.name,
-    elements,
-    node;
-
-    if (parentNode === undefined) {
-        elements = SvgFactory.createRootNodeElements(Config.EXPERIMENT_ICON_SRC);
-        node = new RootNode(elements, id, Config.TYPE_EXPERIMENT, description);
-    }
-    else if (parentNode.type === Config.TYPE_EXPERIMENT) {
-        elements = SvgFactory.createTimelineNodeElements(Config.EXPERIMENT_GROUP_ICON_SRC);
-        node = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, parentNode, that.timelineEventListener, TreeView.getWidth());
-    }
-    else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-        elements = SvgFactory.createDeflateableNodeElements(false, true, Config.SURVEY_ICON_SRC);
-        node = new DeflateableNode(elements, id, Config.TYPE_SURVEY, description, parentNode);
-    }
-    else if (parentNode.type === Config.TYPE_SURVEY) {
-        if (stepType === Config.STEP_TYPE_INSTRUCTION) {
-            elements = SvgFactory.createMoveableNodeElements(true, false, Config.INSTRUCTION_ICON_SRC);
-            node = new MoveableNode(elements, id, stepType, description, parentNode);
-        }
-        else if (stepType === Config.STEP_TYPE_BREATHING_EXERCISE) {
-            elements = SvgFactory.createMoveableNodeElements(true, false, Config.BREATHING_EXERCISE_ICON_SRC);
-            node = new MoveableNode(elements, id, stepType, description, parentNode);
-        }
-        else if (stepType === Config.STEP_TYPE_QUESTIONNAIRE) {
-            elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTIONNAIRE_ICON_SRC);
-            node = new MoveableNode(elements, id, Config.STEP_TYPE_QUESTIONNAIRE, description, parentNode);
-        }
-        else {
-            throw "The step type " + stepType + " is not defined.";
-        }
-    }
-    else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        if (questionType === Config.QUESTION_TYPE_CHOICE) {
-            elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTION_ICON_SRC);
-            node = new MoveableNode(elements, id, Config.QUESTION_TYPE_CHOICE, description, parentNode);
-        }
-        else if (questionType !== Config.QUESTION_TYPE_CHOICE && questionType !== undefined) {
-            elements = SvgFactory.createMoveableNodeElements(true, false, Config.QUESTION_ICON_SRC);
-            node = new MoveableNode(elements, id, questionType, description, parentNode);
-        }
-        else {
-            throw "The question type " + questionType + " is not defined.";
-        }
-    }
-    else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
-        description = data.text;
-        elements = SvgFactory.createStandardNodeElements(true, false, Config.ANSWER_ICON_SRC);
-        node = new StandardNode(elements, id, Config.TYPE_ANSWER, description, parentNode);
-    }
-    else {
-        throw "The node type " + parentNode.type + " is not defined.";
-    }
-    for (let listener of that.nodeEventListener) {
-        node.addEventListener(listener.eventType, listener.callback);
-    }
-    node.parentNode = parentNode;
-    if (parentNode !== undefined) {
-        parentNode.childNodes.push(node);
-    }
-    TreeView.insertNode(node);
-    return node;
-}
-
-// Node events
+// *** TreeView callback functions:
+// **
+// *
 
 function onNodeMouseEnter(event) {
     let hoveredNode = event.data.target;
 
-    hoveredNode.emphasize(this.currentSelection);
-    // InfoView
+    if (!TreeView.currentSelection.includes(hoveredNode)) {
+        hoveredNode.emphasize();
+    }
+
+
+//###
+    // TODO: InfoView
+//###
+
+
 }
 
 function onNodeMouseLeave(event) {
     let hoveredNode = event.data.target;
+    
+    if (!TreeView.currentSelection.includes(hoveredNode)) {
+        hoveredNode.deemphasize();
+    }
 
-    hoveredNode.deemphasize(this.currentSelection);
-    // InfoView
+
+//###
+    // TODO: InfoView
+//###
+
+
 }
 
 function onNodeClicked(event) {
     let clickedNode = event.data.target,
-    previousFocusedNode = TreeView.currentFocusedNode,
-    parentNode = clickedNode.parentNode,
-    experiment = Storage.load(),
+    experiment = ModelManager.getExperiment(),
     nodeDataModel = ModelManager.getDataFromNodeId(clickedNode.id, experiment),
     parentNodeDataModel,
-    movingVector = {
-        x: undefined,
-        y: undefined,
-    },
-    ongoingInstructionsForInputView = [],
+    pastOngoingInstructions,
     firstNodeOfRow,
-    questionsForInputView = [],
-    promise,
-    validationResult;
+    pastAndFutureQuestions,
+    promise;
 
-    if (clickedNode !== previousFocusedNode) {
-        this.currentSelection = [];
-        updateCurrentSelection(this, clickedNode);
-        TreeView.currentFocusedNode = clickedNode;
-
-        clickedNode.emphasize(this.currentSelection);
-        clickedNode.focus();
-        clickedNode.show();
-        for (let childNode of clickedNode.childNodes) {
-            childNode.show();
-            hideChildrenBeginningFromNode(childNode);
-        }
-        hideNextNodesAndChildrenBeginningFromNode(clickedNode);
-        hidePreviousNodesAndChildrenBeginningFromNode(clickedNode);
-        while (parentNode !== undefined) {
-            hideNextNodesAndChildrenBeginningFromNode(parentNode);
-            hidePreviousNodesAndChildrenBeginningFromNode(parentNode);
-            parentNode = parentNode.parentNode;
-        }
-        showNeighboursBeginningFromNode(clickedNode);
-        
-        if (previousFocusedNode !== undefined) {
-            previousFocusedNode.defocus(this.currentSelection);
-            previousFocusedNode.deemphasize(this.currentSelection);
-        }
-        
-        if (clickedNode instanceof TimelineNode && clickedNode.childNodes.length === 0) {
-            clickedNode.updateTimelineLength();
-        }
-
-        movingVector.x = TreeView.getCenter().x - clickedNode.center.x;
-        movingVector.y = TreeView.getCenter().y - clickedNode.center.y;
-        if (previousFocusedNode !== undefined) {
-            if (clickedNode instanceof RootNode) {
-                moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
-                moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_TREE);
-            }
-            else if (clickedNode.parentNode instanceof TimelineNode) {
-                moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
-            }
-            else if (clickedNode.parentNode === previousFocusedNode.parentNode) {
-                moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_ROW);
-            }
-            else {
-                moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
-                moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_ROW);
-            }
-        }
-        else {
-            moveTreeVertical(clickedNode, movingVector.y, Config.MOVING_MODE_TREE);
-            moveTreeHorizontal(clickedNode, movingVector.x, Config.MOVING_MODE_TREE);
-        }
-
-        WhereAmIView.update(this.currentSelection);
-
+    if (clickedNode !== TreeView.currentFocusedNode) {
         if (clickedNode.parentNode !== undefined) {
             parentNodeDataModel = ModelManager.getDataFromNodeId(clickedNode.parentNode.id, experiment);
             if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-                ongoingInstructionsForInputView = getOngoingInstructionsForInputView(clickedNode, ongoingInstructionsForInputView);
-                if (ongoingInstructionsForInputView.length === 0) {
-                    nodeDataModel.waitForStep = 0;
-                    ModelManager.updateExperiment(nodeDataModel);
-                }
+                // Ongoing instructions are those with a duration.
+                // E.g.:
+                // "Ongoing Instruction" (durationInMin = 2):
+                // --> "Put something for at least 2 Minutes in your mouth."
+                //
+                // To avoid letting the user wait for the whole two minutes,
+                // we can let him do something parallel.
+                // Questionnaire -> Instruction -> BreathingExercise -> some other Step ....
+                //
+                // Now its time for the "Corresponding Instruction":
+                // --> "Put the something out of your mouth."
+                //
+                // The "Corresponding Instruction" has to wait for the "Ongoing Instruction".
+                // --> ("Corresponding Instruction".waitForStep = "Ongoing Instruction".id).
+                //
+                // To be able to create such an instruction,
+                // the InputView needs to know all past ongoing instructions.
+                pastOngoingInstructions = ModelManager.getPastOngoingInstructions(clickedNode);
             }
             if (clickedNode.parentNode.type === Config.QUESTION_TYPE_CHOICE) {
-                firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
-                questionsForInputView = getQuestionsForInputView(firstNodeOfRow, clickedNode.parentNode, questionsForInputView);
+                firstNodeOfRow = TreeView.getFirstNodeOfRow(clickedNode.parentNode);
+                // The answers of a choice question can link to different questions.
+                // Thats why we need all past and future questions for the InputView
+                // when an answer node is clicked.
+                pastAndFutureQuestions = ModelManager.getPastAndFutureQuestions(firstNodeOfRow, clickedNode.parentNode);
             }
         }
         
-        InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, ongoingInstructionsForInputView, questionsForInputView);
-        InputView.selectFirstInput();
 
-        validationResult = InputValidator.inputIsValid(clickedNode, nodeDataModel, parentNodeDataModel);
-        if (validationResult === true) {
-            InputView.hideAlert();
-            InputView.enableInputs();
-            enableNodeActions(this, TreeView.rootNode);
-            this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-        }
-        else {
-            validationResult.correspondingNode.click();
-            InputView.showAlert(validationResult.alert);
-            InputView.enableInputs();
-            InputView.disableInputsExcept(validationResult.invalidInput);
-            disableNodeActions(this, TreeView.rootNode);
-            this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-        }
-
+//###
         // TODO: Move this to a seperate thread
-
         if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
             if (nodeDataModel.imageFileName !== null) {
                 promise = ModelManager.getResource(nodeDataModel.imageFileName);
@@ -508,872 +369,455 @@ function onNodeClicked(event) {
                 });
             }
         }
+//###
+
+
+        TreeView.navigateToNode(clickedNode);
+        WhereAmIView.update(TreeView.currentSelection);
+        InputView.show(clickedNode, nodeDataModel, parentNodeDataModel, pastOngoingInstructions, pastAndFutureQuestions);
+        InputView.selectFirstInput();
+        
+
+//###
+        // Is this necessary in onNodeClicked()
+        /*
+        validationResult = InputValidator.inputIsValid(clickedNode, nodeDataModel, parentNodeDataModel);
+        if (validationResult === true) {
+            InputView.hideAlert();
+            InputView.enableInputs();
+            TreeView.enableNodeActions();
+            ImportExportView.enableSaveButton();
+        }
+        else {
+            validationResult.correspondingNode.click();
+            InputView.showAlert(validationResult.alert);
+            InputView.enableInputs();
+            InputView.disableInputsExcept(validationResult.invalidInput);
+            TreeView.disableNodeActions();
+            ImportExportView.disableSaveButton();
+        }
+        */
+//###
+
+
     }
 }
 
-function updateCurrentSelection(that, node) {
-    if (node === undefined) {
-        return;
-    }
-    that.currentSelection.push(node);
-    updateCurrentSelection(that, node.parentNode);
-}
-
-function hideChildrenBeginningFromNode(node) {
-    if (node.childNodes === undefined || node.childNodes.length === 0) {
-        return;
-    }
-    for (let childNode of node.childNodes) {
-        childNode.hide();
-        hideChildrenBeginningFromNode(childNode);
-    }
-}
-
-function hideNextNodesAndChildrenBeginningFromNode(node) {
-    if (node.nextNode === undefined) {
-        return;
-    }
-    node.nextNode.hide();
-    hideChildrenBeginningFromNode(node.nextNode);
-    hideNextNodesAndChildrenBeginningFromNode(node.nextNode);
-}
-
-function hidePreviousNodesAndChildrenBeginningFromNode(node) {
-    if (node.previousNode === undefined) {
-        return;
-    }
-    node.previousNode.hide();
-    hideChildrenBeginningFromNode(node.previousNode);
-    hidePreviousNodesAndChildrenBeginningFromNode(node.previousNode);
-}
-
-function showNeighboursBeginningFromNode(node) {
-    showRightNeighbours(node);
-    showLeftNeighbours(node);
-}
-
-function showRightNeighbours(node) {
-    if (node.nextNode === undefined) {
-        return;
-    }
-    node.nextNode.show();
-    showRightNeighbours(node.nextNode);
-}
-
-function showLeftNeighbours(node) {
-    if (node.previousNode === undefined) {
-        return;
-    }
-    node.previousNode.show();
-    showLeftNeighbours(node.previousNode);
-}
-
-function moveTreeVertical(clickedNode, movingVectorY, movingMode) {
-    let startNode;
-
-    if (movingMode === Config.MOVING_MODE_TREE) {
-        startNode = getRootNode(clickedNode);
-        startNode.updatePosition(startNode.center.x, startNode.center.y + movingVectorY, true);
-    }
-    else if (movingMode === Config.MOVING_MODE_ROW) {
-        startNode = clickedNode.parentNode;
-    }
-    else {
-        throw "Moving mode " + movingMode + " is not defined.";
-    }
-    moveChildNodesVertical(startNode, movingVectorY);
-}
-
-function moveTreeHorizontal(clickedNode, movingVectorX, movingMode) {
-    let startNode;
-
-    if (movingMode === Config.MOVING_MODE_TREE) {
-        startNode = getRootNode(clickedNode);
-        startNode.updatePosition(startNode.center.x + movingVectorX, startNode.center.y, true);
-    }
-    else if (movingMode === Config.MOVING_MODE_ROW) {
-        startNode = clickedNode.parentNode;
-    }
-    else {
-        throw "Moving mode " + movingMode + " is not defined.";
-    }
-    moveChildNodesHorizontal(startNode, movingVectorX);
-}
-
-function getRootNode(node) {
-    if (node.parentNode === undefined) {
-        return node;
-    }
-    return getRootNode(node.parentNode);
-}
-
-function moveChildNodesVertical(node, movingVectorY) {
-    if (node.childNodes === undefined || node.childNodes.length === 0) {
-        return;
-    }
-    for (let childNode of node.childNodes) {
-        childNode.updatePosition(childNode.center.x, childNode.center.y + movingVectorY, true);
-        moveChildNodesVertical(childNode, movingVectorY);
-    }
-}
-
-function moveChildNodesHorizontal(node, movingVectorX) {
-    if (node.childNodes === undefined || node.childNodes.length === 0) {
-        return;
-    }
-    for (let childNode of node.childNodes) {
-        childNode.updatePosition(childNode.center.x + movingVectorX, childNode.center.y, true);
-        moveChildNodesHorizontal(childNode, movingVectorX);
-    }
-}
-
-function getOngoingInstructionsForInputView(node, ongoingInstructionsForInputView) {
-    let ongoingInstruction,
-    modelData,
-    experiment = Storage.load();
-
-    if (node.previousNode === undefined) {
-        return ongoingInstructionsForInputView;
-    }
-    modelData = ModelManager.getDataFromNodeId(node.previousNode.id, experiment);
-    if (modelData.type === Config.STEP_TYPE_INSTRUCTION 
-        && modelData.durationInMin !== null 
-        && modelData.durationInMin !== 0) {
-        ongoingInstruction = {
-            label: modelData.name,
-            value: modelData.id,
-        };
-        ongoingInstructionsForInputView.splice(0, 0, ongoingInstruction);
-    }
-    return getOngoingInstructionsForInputView(node.previousNode, ongoingInstructionsForInputView);
-}
-
-function getQuestionsForInputView(node, exceptionNode, questionsForInputView) {
-    let question,
-    modelData,
-    experiment = Storage.load();
-
-    if (node === undefined) {
-        return questionsForInputView;
-    }
-    if (node !== exceptionNode) {
-        modelData = ModelManager.getDataFromNodeId(node.id, experiment);
-        question = {
-            label: modelData.name,
-            value: modelData.id,
-        };
-        questionsForInputView.push(question);
-    }
-    return getQuestionsForInputView(node.nextNode, exceptionNode, questionsForInputView);
-}
-
-function onAddNextNode(event) {
+function onAddNode(event) {
     let clickedNode = event.data.target,
-    inputData,
-    position = {
-        x: clickedNode.center.x + Config.NODE_DISTANCE_HORIZONTAL,
-        y: clickedNode.center.y,
-    },
+    experiment,
     newNode,
+    newNodeData,
+    nodeToUpdateData,
+    previousNodeData,
+    nextNodeData,
     stepType,
-    questionType,
-    firstNodeOfRow,
-    rowIds = [];
+    questionType;
 
-    if (event.data.stepType === undefined && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-        stepType = Config.STEP_TYPE_INSTRUCTION;
-    }
-    else {
-        stepType = event.data.stepType;
-    }
-    if (event.data.questionType === undefined && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_TEXT;
-    }
-    else {
-        questionType = event.data.questionType;
-    }
-    inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined, stepType, questionType);
-    newNode = createNode(this, clickedNode.parentNode, inputData, stepType, questionType);
-    newNode.updatePosition(position.x, position.y, true);
-    if (clickedNode.nextNode !== undefined) {
-        clickedNode.nextNode.previousNode = newNode;
-        newNode.nextNode = clickedNode.nextNode;
-    }
-    clickedNode.nextNode = newNode;
-    newNode.previousNode = clickedNode;
-    if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-        firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        updateStepLinks(firstNodeOfRow);
-    }
-    if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
-    }
-    if (clickedNode.type === Config.TYPE_ANSWER) {
-        firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
-    }
-    moveNextNodes(newNode, false);
-    newNode.click();
-}
-
-function onAddPreviousNode(event) {
-    let clickedNode = event.data.target,
-    inputData,
-    position = {
-        x: clickedNode.center.x - Config.NODE_DISTANCE_HORIZONTAL,
-        y: clickedNode.center.y,
-    },
-    newNode,
-    stepType,
-    questionType,
-    firstNodeOfRow,
-    rowIds = [];
-
-    if (event.data.stepType === undefined && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-        stepType = Config.STEP_TYPE_INSTRUCTION;
-    }
-    else {
-        stepType = event.data.stepType;
-    }
-    if (event.data.questionType === undefined && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        questionType = Config.QUESTION_TYPE_TEXT;
-    }
-    else {
-        questionType = event.data.questionType;
-    }
-    inputData = ModelManager.extendExperiment(clickedNode.parentNode, undefined, stepType, questionType);
-    newNode = createNode(this, clickedNode.parentNode, inputData, stepType, questionType);
-    newNode.updatePosition(position.x, position.y, true);
-    if (clickedNode.previousNode !== undefined) {
-        clickedNode.previousNode.nextNode = newNode;
-        newNode.previousNode = clickedNode.previousNode;
-    }
-    clickedNode.previousNode = newNode;
-    newNode.nextNode = clickedNode;
-    if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-        firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        updateStepLinks(firstNodeOfRow);
-    }
-    if (clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
-    }
-    if (clickedNode.type === Config.TYPE_ANSWER) {
-        firstNodeOfRow = getFirstNodeOfRow(clickedNode.parentNode);
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
-    }
-    movePreviousNodes(newNode, false);
-    newNode.click();
-}
-
-function updateStepLinks(node) {
-    let properties = {};
-    if (node.nextNode === undefined) {
-        properties.id = node.id;
-        properties.nextStepId = null;
-        if (node.previousNode !== undefined) {
-            properties.previousStepId = node.previousNode.id;
-        }
-        else {
-            properties.previousStepId = null;
-        }
-        ModelManager.updateExperiment(properties);
-        return;
-    }
-    properties.id = node.id;
-    properties.nextStepId = node.nextNode.id;
-    if (node.previousNode !== undefined) {
-        properties.previousStepId = node.previousNode.id;
-    }
-    else {
-        properties.previousStepId = null;
-    }
-    ModelManager.updateExperiment(properties);
-    updateStepLinks(node.nextNode);
-}
-
-function updateQuestionLinks(node, rowIds) {
-    let properties = {},
-    experiment = ModelManager.getExperiment(),
-    dataModel = ModelManager.getDataFromNodeId(node.id, experiment);
-
-    properties.id = node.id;
-    if (node.nextNode === undefined) {
-        if (node.type !== Config.QUESTION_TYPE_CHOICE) {
-            properties.nextQuestionId = null;
-        }
-        else {
-            for (let answer of dataModel.answers) {
-                if (!(rowIds.includes(answer.nextQuestionId))) {
-                    answer.nextQuestionId = null;
-                    ModelManager.updateExperiment(answer);
-                }
-            }
-        }
-        if (node.previousNode !== undefined) {
-            properties.previousQuestionId = node.previousNode.id;
-        }
-        else {
-            properties.previousQuestionId = null;
-        }
-        ModelManager.updateExperiment(properties);
-        return;
-    }
-    if (node.type !== Config.QUESTION_TYPE_CHOICE) {
-        properties.nextQuestionId = node.nextNode.id;
-    }
-    else {
-        if (dataModel.choiceType === Config.CHOICE_TYPE_SINGLE_CHOICE) {
-            for (let answer of dataModel.answers) {
-                if (!(rowIds.includes(answer.nextQuestionId))) {
-                    answer.nextQuestionId = node.nextNode.id;
-                    ModelManager.updateExperiment(answer);
-                }
-            }
-        }
-        else {
-            for (let answer of dataModel.answers) {
-                answer.nextQuestionId = node.nextNode.id;
-                ModelManager.updateExperiment(answer);
-            }
-        }
-    }
-    if (node.previousNode === undefined) {
-        properties.previousQuestionId = null;
-    }
-    else {
-        properties.previousQuestionId = node.previousNode.id;
-    }
-    ModelManager.updateExperiment(properties);
-    updateQuestionLinks(node.nextNode, rowIds);
-}
-
-function getRowIds(node, rowIds) {
-    if (node === undefined) {
-        return rowIds;
-    }
-    rowIds.push(node.id);
-    return getRowIds(node.nextNode, rowIds);
-}
-
-function getFirstNodeOfRow(node) {
-    if (node.previousNode === undefined) {
-        return node;
-    }
-    return getFirstNodeOfRow(node.previousNode);
-}
-
-function movePreviousNodes(node, moveTowardsNode) {
-    if (node.previousNode === undefined) {
-        return;
-    }
-    if (moveTowardsNode) {
-        node.previousNode.updatePosition(node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
-        if (node.previousNode.childNodes !== undefined
-            && node.previousNode.childNodes.length !== 0) {
-            moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
-        }
-    }
-    else {
-        node.previousNode.updatePosition(node.previousNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
-        if (node.previousNode.childNodes !== undefined
-            && node.previousNode.childNodes.length !== 0) {
-            moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
-        }
-    }
-    movePreviousNodes(node.previousNode, moveTowardsNode);
-}
-
-function moveNextNodes(node, moveTowardsNode) {
-    if (node.nextNode === undefined) {
-        return;
-    }
-    if (moveTowardsNode) {
-        node.nextNode.updatePosition(node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
-        if (node.nextNode.childNodes !== undefined
-            && node.nextNode.childNodes.length !== 0) {
-            moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
-        }
-    }
-    else {
-        node.nextNode.updatePosition(node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
-        if (node.nextNode.childNodes !== undefined
-            && node.nextNode.childNodes.length !== 0) {
-            moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
-        }
-    }
-    moveNextNodes(node.nextNode, moveTowardsNode);
-}
-
-function onAddChildNode(event) {
-    let clickedNode = event.data.target,
-    inputData,
-    position = {},
-    newNode,
-    stepType,
-    questionType,
-    firstNodeOfRow,
-    rowIds = [];
-
-    if (clickedNode.parentNode !== undefined) {
-        if (event.data.stepType === undefined && clickedNode.type === Config.TYPE_SURVEY) {
+    // First step:
+    // Extending and updating the data model
+    if (event.type === Config.EVENT_ADD_CHILD_NODE) {
+        // Initial step and question types when adding a node
+        if (clickedNode.type === Config.TYPE_SURVEY) {
             stepType = Config.STEP_TYPE_INSTRUCTION;
         }
-        else {
-            stepType = event.data.stepType;
-        }
-        if (event.data.questionType === undefined && clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        if (clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
             questionType = Config.QUESTION_TYPE_TEXT;
         }
-        else {
-            questionType = event.data.questionType;
+        newNodeData = ModelManager.extendExperiment(clickedNode, undefined, stepType, questionType);
+    }
+    else {
+        // Initial step and question types when adding a node
+        if (clickedNode.parentNode !== undefined
+            && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
+            stepType = Config.STEP_TYPE_INSTRUCTION;
+        }
+        if (clickedNode.parentNode !== undefined
+            && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+            questionType = Config.QUESTION_TYPE_TEXT;
+        }
+        newNodeData = ModelManager.extendExperiment(clickedNode.parentNode, undefined, stepType, questionType);
+    }
+    experiment = ModelManager.getExperiment();
+
+    if (event.type === Config.EVENT_ADD_CHILD_NODE) {
+        if (clickedNode.type === Config.QUESTION_TYPE_CHOICE) {
+
+            nodeToUpdateData = ModelManager.getDataFromNodeId(clickedNode.id, experiment);
+            if (clickedNode.previousNode !== undefined) {
+                previousNodeData = ModelManager.getDataFromNodeId(clickedNode.previousNode.id, experiment);
+            }
+            if (clickedNode.nextNode !== undefined) {
+                nextNodeData = ModelManager.getDataFromNodeId(clickedNode.nextNode.id, experiment);
+            }
         }
     }
-    inputData = ModelManager.extendExperiment(clickedNode, undefined, stepType, questionType);
-    newNode = createNode(this, clickedNode, inputData, stepType, questionType);
-    position.x = clickedNode.center.x;
-    position.y = clickedNode.center.y + Config.NODE_DISTANCE_VERTICAL;
-    newNode.updatePosition(position.x, position.y, true);
-    if (clickedNode.type === Config.QUESTION_TYPE_CHOICE) {
-        firstNodeOfRow = getFirstNodeOfRow(clickedNode);
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
+    else {
+
+        if (clickedNode.type === Config.TYPE_ANSWER) {
+
+            nodeToUpdateData = ModelManager.getDataFromNodeId(clickedNode.parentNode.id, experiment);
+            if (clickedNode.parentNode.nextNode !== undefined) {
+                nextNodeData = ModelManager.getDataFromNodeId(clickedNode.parentNode.nextNode.id, experiment);
+            }
+            if (clickedNode.parentNode.previousNode !== undefined) {
+                previousNodeData = ModelManager.getDataFromNodeId(clickedNode.parentNode.previousNode.id, experiment);
+            }
+        }
+        if (event.type === Config.EVENT_ADD_PREVIOUS_NODE) {
+            if (clickedNode.parentNode !== undefined
+                && (clickedNode.parentNode.type === Config.TYPE_SURVEY
+                    || clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE)) {
+    
+                nodeToUpdateData = newNodeData;
+                if (clickedNode.previousNode !== undefined) {
+                    previousNodeData = ModelManager.getDataFromNodeId(clickedNode.previousNode.id, experiment);
+                }
+                nextNodeData = ModelManager.getDataFromNodeId(clickedNode.id, experiment);
+            }
+        }
+        if (event.type === Config.EVENT_ADD_NEXT_NODE) {
+            if (clickedNode.parentNode !== undefined
+                && (clickedNode.parentNode.type === Config.TYPE_SURVEY
+                    || clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE)) {
+    
+                nodeToUpdateData = newNodeData;
+                if (clickedNode.nextNode !== undefined) {
+                    nextNodeData = ModelManager.getDataFromNodeId(clickedNode.nextNode.id, experiment);
+                }
+                previousNodeData = ModelManager.getDataFromNodeId(clickedNode.id, experiment);
+            }
+        }
     }
-    clickedNode.hideAddChildButton();
-    newNode.click();
+    if (event.type === Config.EVENT_ADD_CHILD_NODE) {
+        if (clickedNode.type === Config.QUESTION_TYPE_CHOICE) {
+            ModelManager.updateQuestionLinks(nodeToUpdateData, previousNodeData, nextNodeData, undefined, true);
+        }
+    }
+    else {
+        if (clickedNode.parentNode !== undefined) {
+            if (clickedNode.type === Config.TYPE_ANSWER
+                || clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                    ModelManager.updateQuestionLinks(nodeToUpdateData, previousNodeData, nextNodeData, undefined, true);
+            }
+            if (clickedNode.parentNode.type === Config.TYPE_SURVEY) {
+                ModelManager.updateStepLinks(nodeToUpdateData, previousNodeData, nextNodeData);
+            }
+        }
+    }
+    
+    // Second step:
+    // Updating the views
+    newNode = TreeView.createSubtree(newNodeData);
+    if (event.type === Config.EVENT_ADD_NEXT_NODE) {
+        TreeView.updateNodeLinks(newNodeData, clickedNode.parentNode, clickedNode, clickedNode.nextNode);
+    }
+    if (event.type === Config.EVENT_ADD_PREVIOUS_NODE) {
+        TreeView.updateNodeLinks(newNodeData, clickedNode.parentNode, clickedNode.previousNode, clickedNode);
+    }
+    if (event.type === Config.EVENT_ADD_CHILD_NODE) {
+        TreeView.updateNodeLinks(newNodeData, clickedNode, undefined, undefined);
+    }
+    TreeView.clickNode(newNode, undefined);
 }
 
 function onChangeNode(event) {
     let nodeToChange = event.data.target,
-    experiment,
     stepType = event.data.stepType,
     questionType = event.data.questionType,
-    newDataModel,
+    experiment = ModelManager.getExperiment(),
+    nodeToChangeData = ModelManager.getDataFromNodeId(nodeToChange.id, experiment),
+    initialProperties = {
+        id: nodeToChange.id,
+    },
     newNode,
-    firstNodeOfRow,
-    rowIds = [],
-    childIds = [];
-
-    if (stepType !== undefined) {
-        newDataModel = ModelManager.extendExperiment(nodeToChange.parentNode, undefined, stepType, undefined);
-        newNode = createNode(this, nodeToChange.parentNode, newDataModel, stepType, undefined);
-    }
-    else {
-        newDataModel = ModelManager.extendExperiment(nodeToChange.parentNode, undefined, undefined, questionType);
-        newNode = createNode(this, nodeToChange.parentNode, newDataModel, undefined, questionType);
-    }
-    newNode.updatePosition(nodeToChange.center.x, nodeToChange.center.y, true);
-    newNode.nextNode = nodeToChange.nextNode;
-    newNode.previousNode = nodeToChange.previousNode;
-    if (nodeToChange.previousNode !== undefined) {
-        nodeToChange.previousNode.nextNode = newNode;
+    newNodeData,
+    parentNodeData,
+    nextNodeData;
+    
+    if (nodeToChange.parentNode !== undefined) {
+        parentNodeData = ModelManager.getDataFromNodeId(nodeToChange.parentNode.id, experiment);
     }
     if (nodeToChange.nextNode !== undefined) {
-        nodeToChange.nextNode.previousNode = newNode;
+        nextNodeData = ModelManager.getDataFromNodeId(nodeToChange.nextNode.id, experiment);
     }
 
-    firstNodeOfRow = getFirstNodeOfRow(newNode);
+    // First step:
+    // Shortening, extending and updating the data model
+    ModelManager.shortenExperiment(nodeToChangeData, parentNodeData);
+    newNodeData = ModelManager.extendExperiment(nodeToChange.parentNode, initialProperties, stepType, questionType);
+    experiment = ModelManager.getExperiment();
     if (stepType !== undefined) {
-        updateStepLinks(firstNodeOfRow);
-        experiment = ModelManager.getExperiment();
-        updateWaitForStepLinks(firstNodeOfRow, nodeToChange, experiment);
+        // If the node to change is a node with a duration (detailed example in onNodeClicked()),
+        // next steps could wait for it. Those steps have to be updated to wait for no step anymore.
+        if (nodeToChangeData.durationInMin !== undefined
+            && nodeToChangeData.durationInMin > 0
+            && nextNodeData !== undefined) {
+                ModelManager.removeWaitForStepLinks(nextNodeData, nodeToChangeData, experiment);
+        }
+    }
+
+    // Second step:
+    // Updating the views
+    TreeView.removeSubtree(nodeToChange);
+    newNode = TreeView.createSubtree(newNodeData);
+    TreeView.updateNodeLinks(newNodeData, nodeToChange.parentNode, nodeToChange.previousNode, nodeToChange.nextNode);
+    TreeView.clickNode(newNode, undefined);
+}
+
+function onSwitchNodes(event) {
+    let experiment = ModelManager.getExperiment(),
+    // The switching pair
+    rightNode,
+    leftNode,
+    // The node before the switching pair
+    previousNode,
+    // Tthe node after the switching pair
+    nextNode,
+    rightNodeData,
+    leftNodeData,
+    previousNodeData,
+    nextNodeData,
+    nextFocusedNode = event.data.target;
+
+    if (event.type === Config.EVENT_MOVE_NODE_LEFT) {
+        rightNode = event.data.target;
+        leftNode = rightNode.previousNode;
     }
     else {
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
+        leftNode = event.data.target;
+        rightNode = leftNode.nextNode;
     }
-    if (nodeToChange.childNodes !== undefined && nodeToChange.childNodes.length !== 0) {
-        childIds = getRowIds(nodeToChange.childNodes[0], childIds);
+    previousNode = leftNode.previousNode;
+    nextNode = rightNode.nextNode;
+    
+    // First step:
+    // Updating the data model
+    rightNodeData = ModelManager.getDataFromNodeId(rightNode.id, experiment);
+    leftNodeData = ModelManager.getDataFromNodeId(leftNode.id, experiment);
+    if (previousNode !== undefined) {
+        previousNodeData = ModelManager.getDataFromNodeId(previousNode.id, experiment);
     }
-    ModelManager.shortenExperiment(nodeToChange.id, nodeToChange.parentNode.id, childIds);
-    TreeView.removeNode(nodeToChange);
-    newNode.click();
+    if (nextNode !== undefined) {
+        nextNodeData = ModelManager.getDataFromNodeId(nextNode.id, experiment);
+    }
+    
+    if (rightNode.parentNode.type === Config.TYPE_SURVEY) {
+        if (rightNodeData.waitForStep === leftNodeData.id) {
+            rightNodeData.waitForStep = 0;
+        }
+        ModelManager.updateStepLinks(rightNodeData, previousNodeData, leftNodeData);
+        ModelManager.updateStepLinks(leftNodeData, rightNodeData, nextNodeData);
+    }
+
+    if (rightNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        ModelManager.updateQuestionLinks(rightNodeData, previousNodeData, leftNodeData, undefined, true);
+        ModelManager.updateQuestionLinks(leftNodeData, rightNodeData, nextNodeData, undefined, true);
+    }
+
+    // Second step:
+    // Updating the views
+    TreeView.switchNodes(leftNode, rightNode, previousNode, nextNode);
+    TreeView.clickNode(nextFocusedNode, undefined);
 }
-
-function onMoveNodeLeft(event) {
-    let correspondingNode = event.data.target,
-    tempPrevPrevNode,
-    tempPrevNode,
-    tempCorrNode,
-    tempNextNode,
-    firstNodeOfRow,
-    rowIds;
-
-    correspondingNode.previousNode.updatePosition(correspondingNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, correspondingNode.center.y, true);
-    if (correspondingNode.previousNode.childNodes !== undefined && correspondingNode.previousNode.childNodes.length !== 0) {
-        moveTreeHorizontal(correspondingNode.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * 2, Config.MOVING_MODE_ROW); // eslint-disable-line no-magic-numbers
-    }
-    moveNextNodesRight(correspondingNode);
-    movePreviousNodesRight(correspondingNode.previousNode);
-
-    tempPrevPrevNode = correspondingNode.previousNode.previousNode;
-    tempPrevNode = correspondingNode.previousNode;
-    tempCorrNode = correspondingNode;
-    tempNextNode = correspondingNode.nextNode;
-
-    if (tempPrevPrevNode !== undefined) {
-        tempPrevPrevNode.nextNode = tempCorrNode;
-    }
-    tempCorrNode.previousNode = tempPrevPrevNode;
-    tempCorrNode.nextNode = tempPrevNode;
-    tempPrevNode.previousNode = tempCorrNode;
-    tempPrevNode.nextNode = tempNextNode;
-    if (tempNextNode !== undefined) {
-        tempNextNode.previousNode = tempPrevNode;
-    }
-
-    correspondingNode.showMoveRightButton();
-    if (correspondingNode.previousNode === undefined) {
-        correspondingNode.hideMoveLeftButton();
-    }
-
-    firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
-    if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
-        updateStepLinks(firstNodeOfRow);
-    }
-    if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
-    }
-}
-
-function movePreviousNodesRight(node) {
-    if (node.previousNode === undefined) {
-        return;
-    }
-    node.previousNode.updatePosition(node.previousNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
-    if (node.previousNode.childNodes !== undefined && node.previousNode.childNodes.length !== 0) {
-        moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
-    }
-    movePreviousNodesRight(node.previousNode);
-}
-
-function moveNextNodesRight(node) {
-    if (node.nextNode === undefined) {
-        return;
-    }
-    node.nextNode.updatePosition(node.nextNode.center.x + Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
-    if (node.nextNode.childNodes !== undefined && node.nextNode.childNodes.length !== 0) {
-        moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL, Config.MOVING_MODE_ROW);
-    }
-    moveNextNodesRight(node.nextNode);
-}
-
-function onMoveNodeRight(event) {
-    let correspondingNode = event.data.target,
-    tempPrevNode,
-    tempCorrNode,
-    tempNextNode,
-    tempNextNextNode,
-    firstNodeOfRow,
-    rowIds;
-
-    correspondingNode.nextNode.updatePosition(correspondingNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, correspondingNode.center.y, true);
-    if (correspondingNode.nextNode.childNodes !== undefined && correspondingNode.nextNode.childNodes.length !== 0) {
-        moveTreeHorizontal(correspondingNode.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -2, Config.MOVING_MODE_ROW); // eslint-disable-line no-magic-numbers
-    }
-    moveNextNodesLeft(correspondingNode.nextNode);
-    movePreviousNodesLeft(correspondingNode);
-
-    tempPrevNode = correspondingNode.previousNode;
-    tempCorrNode = correspondingNode;
-    tempNextNode = correspondingNode.nextNode;
-    tempNextNextNode = correspondingNode.nextNode.nextNode;
-    if (tempPrevNode !== undefined) {
-        tempPrevNode.nextNode = tempNextNode;
-    }
-    tempNextNode.previousNode = tempPrevNode;
-    tempNextNode.nextNode = tempCorrNode;
-    tempCorrNode.previousNode = tempNextNode;
-    tempCorrNode.nextNode = tempNextNextNode;
-    if (tempNextNextNode !== undefined) {
-        tempNextNextNode.previousNode = tempCorrNode;
-    }
-
-    correspondingNode.showMoveLeftButton();
-    if (correspondingNode.nextNode === undefined) {
-        correspondingNode.hideMoveRightButton();
-    }
-
-    firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
-    if (correspondingNode.parentNode.type === Config.TYPE_SURVEY) {
-        updateStepLinks(firstNodeOfRow);
-    }
-    if (correspondingNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
-    }
-}
-
-function movePreviousNodesLeft(node) {
-    if (node.previousNode === undefined) {
-        return;
-    }
-    node.previousNode.updatePosition(node.previousNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.previousNode.center.y, true);
-    if (node.previousNode.childNodes !== undefined && node.previousNode.childNodes.length !== 0) {
-        moveTreeHorizontal(node.previousNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
-    }
-    movePreviousNodesLeft(node.previousNode);
-}
-
-function moveNextNodesLeft(node) {
-    if (node.nextNode === undefined) {
-        return;
-    }
-    node.nextNode.updatePosition(node.nextNode.center.x - Config.NODE_DISTANCE_HORIZONTAL, node.nextNode.center.y, true);
-    if (node.nextNode.childNodes !== undefined && node.nextNode.childNodes.length !== 0) {
-        moveTreeHorizontal(node.nextNode.childNodes[0], Config.NODE_DISTANCE_HORIZONTAL * -1, Config.MOVING_MODE_ROW);
-    }
-    moveNextNodesLeft(node.nextNode);
-}
-
-// TimelineView event callbacks
 
 function onTimelineClicked(event) {
-    let correspondingNode = event.data.correspondingNode,
-    clickedPosition = event.data.position,
+    let timelineNode = event.data.correspondingNode,
+    experiment = ModelManager.getExperiment(),
+    timelineNodeData = ModelManager.getDataFromNodeId(timelineNode.id, experiment),
     properties = {
         absoluteStartDaysOffset: event.data.absoluteStartDaysOffset,
         absoluteStartAtHour: event.data.absoluteStartAtHour,
         absoluteStartAtMinute: event.data.absoluteStartAtMinute,
     },
-    inputData,
-    newNode,
-    timeInMin,
-    timeSortedChildNodes;
+    timeInMin = properties.absoluteStartDaysOffset * 24 * 60 + properties.absoluteStartAtHour * 60 + properties.absoluteStartAtMinute, // eslint-disable-line no-magic-numbers
+    newSurveyNode,
+    newSurveyData,
+    previousSurveyNode,
+    nextSurveyNode,
+    // The survey with the greatest start time
+    lastSurveyData;
 
-    if (TreeView.currentFocusedNode instanceof TimelineNode || TreeView.currentFocusedNode.parentNode instanceof TimelineNode) {
-        inputData = ModelManager.extendExperiment(correspondingNode, properties, undefined, undefined);
-        newNode = createNode(this, correspondingNode, inputData, undefined, undefined);
-        newNode.updatePosition(clickedPosition.x, clickedPosition.y, true);
-        timeInMin = event.data.timeInMin;
-        correspondingNode.updateNodeTimeMap(newNode, timeInMin);
-        timeSortedChildNodes = correspondingNode.getTimeSortedChildNodes();
-        updateSurveyLinks(timeSortedChildNodes);
-        correspondingNode.updateTimelineLength();
-        newNode.click();
+
+//###
+    // TODO: Check if a clicking scope is necessary or if the timeline can be clicked from anywhere
+//###
+
+
+    // First step:
+    // Extending, updating and shortening the data model
+    newSurveyData = ModelManager.extendExperiment(timelineNode, properties, undefined, undefined);
+    lastSurveyData = ModelManager.updateSurveyLinks(timelineNodeData);
+    experiment = ModelManager.getExperiment();
+
+    // Second step:
+    // Updating the views
+    if (newSurveyData.previousSurveyId !== undefined) {
+        previousSurveyNode = ModelManager.getDataFromNodeId(newSurveyData.previousSurveyId, experiment);
     }
+    if (newSurveyData.nextSurveyId !== undefined) {
+        nextSurveyNode = ModelManager.getDataFromNodeId(newSurveyData.nextSurveyId, experiment);
+    }
+    newSurveyNode = TreeView.createSubtree(newSurveyData);
+    TreeView.updateNodeLinks(newSurveyData, timelineNode, previousSurveyNode, nextSurveyNode);
+    timelineNode.updateNodeTimeMap(newSurveyNode.id, timeInMin);
+    timelineNode.updateTimelineLength(lastSurveyData);
+    TreeView.clickNode(newSurveyNode, undefined);
 }
 
-function updateSurveyLinks(timeSortedChildNodes) {
-    let properties = {};
-    for (let i = 0; i < timeSortedChildNodes.length; i++) {
-        properties.id = timeSortedChildNodes[i].id;
-        if (i !== timeSortedChildNodes.length - 1) {
-            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
-        }
-        else {
-            properties.nextSurveyId = null;
-        }
-        if (timeSortedChildNodes.length === 1) {
-            timeSortedChildNodes[i].previousNode = undefined;
-            properties.previousSurveyId = null;
-            timeSortedChildNodes[i].nextNode = undefined;
-            properties.nextSurveyId = null;
-        }
-        else if (i === 0) {
-            timeSortedChildNodes[i].previousNode = undefined;
-            properties.previousSurveyId = null;
-            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
-            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
-        }
-        else if (i === timeSortedChildNodes.length - 1) {
-            timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
-            properties.previousSurveyId = timeSortedChildNodes[i - 1].id;
-            timeSortedChildNodes[i].nextNode = undefined;
-            properties.nextSurveyId = null;
-        }
-        else {
-            timeSortedChildNodes[i].previousNode = timeSortedChildNodes[i - 1];
-            properties.previousSurveyId = timeSortedChildNodes[i - 1].id;
-            timeSortedChildNodes[i].nextNode = timeSortedChildNodes[i + 1];
-            properties.nextSurveyId = timeSortedChildNodes[i + 1].id;
-        }
-        ModelManager.updateExperiment(properties);
-    }
-}
-
-// InputView event callbacks
+// *** InputView callback functions:
+// **
+// *
 
 function onRemoveNode(event) {
     let nodeToRemove = event.data.correspondingNode,
-    experiment = Storage.load(),
-    dataModel = ModelManager.getDataFromNodeId(nodeToRemove.id, experiment),
-    firstNodeOfRow,
-    timeSortedChildNodes,
+    experiment = ModelManager.getExperiment(),
+    nodeToRemoveData = ModelManager.getDataFromNodeId(nodeToRemove.id, experiment),
+    parentNodeData,
+    previousNodeData,
+    nextNodeData,
+    previousPreviousNodeData,
+    nextNextNodeData,
     nextFocusedNode,
-    rowIds = [],
-    childIds = [];
+    timelineNodeData,
+    lastSurveyData;
 
-    if (dataModel.durationInMin !== 0) {
-        firstNodeOfRow = getFirstNodeOfRow(nodeToRemove);
-        updateWaitForStepLinks(firstNodeOfRow, nodeToRemove, experiment);
+    if (nodeToRemove.parentNode !== undefined) {
+        parentNodeData = ModelManager.getDataFromNodeId(nodeToRemove.parentNode.id, experiment);
+        nextFocusedNode = nodeToRemove.parentNode;
     }
-    getChildIds(nodeToRemove, childIds);
-    ModelManager.shortenExperiment(nodeToRemove.id, nodeToRemove.parentNode.id, childIds);
-    if (nodeToRemove.type === Config.STEP_TYPE_INSTRUCTION) {
-        if (dataModel.imageFileName !== null && dataModel.imageFileName !== undefined) {
-            ModelManager.removeResource(dataModel.imageFileName);
+    if (nodeToRemove.previousNode !== undefined) {
+        if (nodeToRemove.previousNode.previousNode !== undefined) {
+            previousPreviousNodeData = ModelManager.getDataFromNodeId(nodeToRemove.previousNode.previousNode.id, experiment);
         }
-        if (dataModel.videoFileName !== null && dataModel.videoFileName !== undefined) {
-            ModelManager.removeResource(dataModel.videoFileName);
-        }
+        previousNodeData = ModelManager.getDataFromNodeId(nodeToRemove.previousNode.id, experiment);
+        nextFocusedNode = nodeToRemove.previousNode;
     }
-    removeChildResources(nodeToRemove, experiment);
-    if (nodeToRemove.parentNode instanceof TimelineNode) {
-        nodeToRemove.parentNode.shortenNodeTimeMap(nodeToRemove);
-        timeSortedChildNodes = nodeToRemove.parentNode.getTimeSortedChildNodes();
-        updateSurveyLinks(timeSortedChildNodes);
-        nodeToRemove.parentNode.updateTimelineLength();
-        if (nodeToRemove.nextNode !== undefined) {
-            nextFocusedNode = nodeToRemove.nextNode;
+    if (nodeToRemove.nextNode !== undefined) {
+        if (nodeToRemove.nextNode.nextNode !== undefined) {
+            nextNextNodeData = ModelManager.getDataFromNodeId(nodeToRemove.nextNode.nextNode.id, experiment);
         }
-        else if (nodeToRemove.previousNode !== undefined) {
-            nextFocusedNode = nodeToRemove.previousNode;
-        }
-        else {
-            nextFocusedNode = nodeToRemove.parentNode;
-        }
+        nextNodeData = ModelManager.getDataFromNodeId(nodeToRemove.nextNode.id, experiment);
+        nextFocusedNode = nodeToRemove.nextNode;
     }
-    else {
-        if (nodeToRemove.nextNode !== undefined) {
-            nodeToRemove.nextNode.previousNode = nodeToRemove.previousNode;
-            nextFocusedNode = nodeToRemove.nextNode;
-            moveNextNodes(nodeToRemove, true);
-            firstNodeOfRow = getFirstNodeOfRow(nodeToRemove.nextNode);
-        }
-        if (nodeToRemove.previousNode !== undefined) {
-            nodeToRemove.previousNode.nextNode = nodeToRemove.nextNode;
-            nextFocusedNode = nodeToRemove.previousNode;
-            if (nodeToRemove.nextNode === undefined) {
-                movePreviousNodes(nodeToRemove, true);
+    
+    // First step:
+    // Updating and shortening the data model
+    ModelManager.shortenExperiment(nodeToRemoveData, parentNodeData);
+    experiment = ModelManager.getExperiment();
+    ModelManager.removeSubtreeResources(nodeToRemoveData, experiment);
+    if (nodeToRemove.parentNode !== undefined) {
+        if (nodeToRemove.parentNode.type === Config.TYPE_SURVEY) {
+            if (previousNodeData !== undefined) {
+                ModelManager.updateStepLinks(previousNodeData, previousPreviousNodeData, nextNodeData);
             }
-            firstNodeOfRow = getFirstNodeOfRow(nodeToRemove.previousNode);
-        }
-        if (nodeToRemove.nextNode === undefined && nodeToRemove.previousNode === undefined) {
-            nodeToRemove.parentNode.showAddChildButton();
-            nextFocusedNode = nodeToRemove.parentNode;
-        }
-        if (firstNodeOfRow !== undefined) {
-            if (nodeToRemove.parentNode.type === Config.TYPE_SURVEY) {
-                updateStepLinks(firstNodeOfRow);
+            if (nextNodeData !== undefined) {
+                ModelManager.updateStepLinks(nextNodeData, previousNodeData, nextNextNodeData);
             }
-            if (nodeToRemove.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                rowIds = getRowIds(firstNodeOfRow, rowIds);
-                updateQuestionLinks(firstNodeOfRow, rowIds);
+            // If the node to change is a node with a duration (detailed example in onNodeClicked()),
+            // next steps could wait for it. Those steps have to be updated to wait for no step anymore.
+            if (nodeToRemoveData.durationInMin !== undefined
+                && nodeToRemoveData.durationInMin > 0
+                && nextNodeData !== undefined) {
+                    experiment = ModelManager.getExperiment();
+                    ModelManager.removeWaitForStepLinks(nextNodeData, nodeToRemoveData, experiment);
             }
         }
-    }
-    nodeToRemove.parentNode.childNodes.splice(nodeToRemove.parentNode.childNodes.indexOf(nodeToRemove), 1);
-    TreeView.removeNode(nodeToRemove);
-    nextFocusedNode.click();
-}
-
-function updateWaitForStepLinks(node, nodeToWaitFor, experiment) {
-    let dataModel;
-    if (node === undefined) {
-        return;
-    }
-    dataModel = ModelManager.getDataFromNodeId(node.id, experiment);
-    if (dataModel.waitForStep === nodeToWaitFor.id) {
-        dataModel.waitForStep = 0;
-        ModelManager.updateExperiment(dataModel);
-    }
-    updateWaitForStepLinks(node.nextNode, nodeToWaitFor, experiment);
-}
-
-function getChildIds(node, childIds) {
-    if (node.childNodes.length === 0 || node.childNodes === undefined) {
-        return;
-    }
-    for (let childNode of node.childNodes) {
-        childIds.push(childNode.id);
-        getChildIds(childNode, childIds);
-    }
-}
-
-function removeChildResources(node, experiment) {
-    let inputData;
-
-    if (node.childNodes.length === 0 || node.childNodes === undefined) {
-        return;
-    }
-    for (let childNode of node.childNodes) {
-        inputData = ModelManager.getDataFromNodeId(childNode.id, experiment);
-        if (childNode.type === Config.STEP_TYPE_INSTRUCTION) {
-            if (inputData.imageFileName !== null && inputData.imageFileName !== undefined) {
-                ModelManager.removeResource(inputData.imageFileName);
-            }
-            if (inputData.videoFileName !== null && inputData.videoFileName !== undefined) {
-                ModelManager.removeResource(inputData.videoFileName);
-            }
+        if (nodeToRemove.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            experiment = ModelManager.getExperiment();
+            timelineNodeData = ModelManager.getDataFromNodeId(nodeToRemove.parentNode.id, experiment);
+            lastSurveyData = ModelManager.updateSurveyLinks(timelineNodeData);
         }
-        removeChildResources(childNode, experiment);
+        if (nodeToRemove.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+            ModelManager.updateQuestionLinks(previousNodeData, previousPreviousNodeData, nextNodeData, nodeToRemoveData, false);
+            ModelManager.updateQuestionLinks(nextNodeData, previousNodeData, nextNextNodeData, nodeToRemoveData, false);
+        }
     }
+
+    // Second step:
+    // Updating the views
+    if (nodeToRemove.parentNode !== undefined
+        && nodeToRemove.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            nodeToRemove.parentNode.shortenNodeTimeMap(nodeToRemove.id);
+            nodeToRemove.parentNode.updateTimelineLength(lastSurveyData);
+    }
+    TreeView.removeSubtree(nodeToRemove);
+    TreeView.clickNode(nextFocusedNode, undefined);
 }
 
 function onInputChanged(event) {
-    let correspondingNode = event.data.correspondingNode,
+    let dataChangingNode = event.data.correspondingNode,
     experiment = ModelManager.getExperiment(),
-    currentDataModel = ModelManager.getDataFromNodeId(correspondingNode.id, experiment),
-    newDataModel = event.data.newModelProperties,
-    nodeUpdatedDataModel,
-    parentNodeDataModel,
-    firstNodeOfRow,
-    timeInMin,
-    timeSortedChildNodes,
+    newDataProperties = event.data.newModelProperties,
+    updatedNodeData,
+    parentNode,
+    parentNodeData,
+    previousNode,
+    previousNodeData,
+    nextNode,
+    nextNodeData,
+    lastSurveyData,
     fileName,
-    rowIds = [],
-    validationResult,
-    addResourceResult;
+    addResourceResult,
+    timeInMin,
+    validationResult;
 
+
+//###
     // TODO survey frequency buttons; Label is not hidden when an alert in InputView is triggered
-    // console.log(newDataModel.surveyFrequency);
+    // console.log(newDataProperties.surveyFrequency);
+//###
 
-    newDataModel.id = correspondingNode.id;
-    if (newDataModel.name !== undefined) {
-        correspondingNode.updateDescription(newDataModel.name);
+
+    if (dataChangingNode.parentNode !== undefined) {
+        parentNode = dataChangingNode.parentNode;
+        parentNodeData = ModelManager.getDataFromNodeId(parentNode.id, experiment);
     }
-    if (newDataModel.text !== undefined && correspondingNode.type === Config.TYPE_ANSWER) {
-        correspondingNode.updateDescription(newDataModel.text);
+    if (dataChangingNode.nextNode !== undefined) {
+        nextNode = dataChangingNode.nextNode;
+        nextNodeData = ModelManager.getDataFromNodeId(nextNode.id, experiment);
     }
-    if (newDataModel.absoluteStartDaysOffset !== undefined || newDataModel.absoluteStartAtHour !== undefined) {
-        if (newDataModel.absoluteStartDaysOffset === undefined) {
-            timeInMin = currentDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + newDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + newDataModel.absoluteStartAtMinute * 1;
-        }
-        else {
-            timeInMin = newDataModel.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + currentDataModel.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + currentDataModel.absoluteStartAtMinute * 1;
-        }
-        correspondingNode.parentNode.updateNodeTimeMap(correspondingNode, timeInMin);
-        timeSortedChildNodes = correspondingNode.parentNode.getTimeSortedChildNodes();
-        updateSurveyLinks(timeSortedChildNodes);
-        correspondingNode.parentNode.updateTimelineLength();
+    if (dataChangingNode.previousNode !== undefined) {
+        previousNode = dataChangingNode.previousNode;
+        previousNodeData = ModelManager.getDataFromNodeId(previousNode.id, experiment);
     }
 
-    if (correspondingNode.type === Config.STEP_TYPE_INSTRUCTION) {
-        if (newDataModel.durationInMin === 0) {
-            firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
-            updateWaitForStepLinks(firstNodeOfRow, correspondingNode, experiment);
+    // First step:
+    // Updating the data model
+    ModelManager.updateExperiment(newDataProperties);
+    experiment = ModelManager.getExperiment();
+    updatedNodeData = ModelManager.getDataFromNodeId(dataChangingNode.id, experiment);
+    if (dataChangingNode.parentNode !== undefined
+        && dataChangingNode.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            lastSurveyData = ModelManager.updateSurveyLinks(parentNodeData);
+    }
+    if (dataChangingNode.type === Config.STEP_TYPE_INSTRUCTION) {
+        if (dataChangingNode.nextNode !== undefined
+            && newDataProperties.durationInMin === 0) {
+                nextNodeData = ModelManager.getDataFromNodeId(dataChangingNode.nextNode.id, experiment);
+                ModelManager.removeWaitForStepLinks(nextNodeData, updatedNodeData, experiment);
         }
-        if (newDataModel.imageFileName !== undefined) {
-            fileName = newDataModel.imageFileName;
+        if (newDataProperties.imageFileName !== undefined) {
+            fileName = newDataProperties.imageFileName;
         }
-        if (newDataModel.videoFileName !== undefined){
-            fileName = newDataModel.videoFileName;
+        if (newDataProperties.videoFileName !== undefined){
+            fileName = newDataProperties.videoFileName;
+        }
+        if (fileName === null) {
+            ModelManager.removeResource(event.data.previousFileName);
         }
         if (fileName !== undefined && fileName !== null) {
             addResourceResult = ModelManager.addResource(event.data.resourceFile);
             addResourceResult.then(
                 function() {
-                    ModelManager.updateExperiment(newDataModel);
-                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                }.bind(this),
+                    LoadingScreenView.hide();
+                },
                 function(error) {
+                    newDataProperties.imageFileName = null;
+                    newDataProperties.videoFileName = null;
+                    ModelManager.updateExperiment(newDataProperties);
+                    InputView.clearFileInputs();
+                    LoadingScreenView.hide();
                     if (error.toString().includes("The serialized value is too large")) {
                         alert(Config.FILE_TOO_LARGE + " (" + fileName + ")"); // eslint-disable-line no-alert
                     }
@@ -1383,69 +827,47 @@ function onInputChanged(event) {
                     else {
                         alert(error.toString() + " (" + fileName + ")"); // eslint-disable-line no-alert
                     }
-                    InputView.clearFileInputs();
-                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                }.bind(this)
+                }
             );
         }
-        else {
-            ModelManager.updateExperiment(newDataModel);
-        }
-        if (fileName === null) {
-            ModelManager.removeResource(event.data.previousFileName);
-        }
     }
-    else if (correspondingNode.type === Config.QUESTION_TYPE_CHOICE) {
-        ModelManager.updateExperiment(newDataModel);
-        firstNodeOfRow = getFirstNodeOfRow(correspondingNode);
-        rowIds = getRowIds(firstNodeOfRow, rowIds);
-        updateQuestionLinks(firstNodeOfRow, rowIds);
-    }
-    else {
-        ModelManager.updateExperiment(newDataModel);
+    if (dataChangingNode.type === Config.QUESTION_TYPE_CHOICE) {
+        ModelManager.updateQuestionLinks(updatedNodeData, previousNodeData, nextNodeData, undefined, false);
     }
 
-    WhereAmIView.update(this.currentSelection);
-    
-    experiment = ModelManager.getExperiment();
-    if (correspondingNode.parentNode !== undefined) {
-        parentNodeDataModel = ModelManager.getDataFromNodeId(correspondingNode.parentNode.id, experiment);
+    // Second step:
+    // Updating the views
+    TreeView.updateNodeLinks(updatedNodeData, parentNode, previousNode, nextNode);
+    if (updatedNodeData.absoluteStartDaysOffset !== undefined
+        && updatedNodeData.absoluteStartAtHour !== undefined
+        && updatedNodeData.absoluteStartAtMinute !== undefined) {
+            timeInMin = updatedNodeData.absoluteStartDaysOffset * 24 * 60 + updatedNodeData.absoluteStartAtHour * 60 + updatedNodeData.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
+            parentNode.updateNodeTimeMap(dataChangingNode.id, timeInMin);
+            parentNode.updateTimelineLength(lastSurveyData);
     }
-    nodeUpdatedDataModel = ModelManager.getDataFromNodeId(correspondingNode.id, experiment);
-    validationResult = InputValidator.inputIsValid(correspondingNode, nodeUpdatedDataModel, parentNodeDataModel);
+    if (updatedNodeData.name !== undefined) {
+        dataChangingNode.updateDescription(updatedNodeData.name);
+    }
+    if (updatedNodeData.text !== undefined && dataChangingNode.type === Config.TYPE_ANSWER) {
+        dataChangingNode.updateDescription(updatedNodeData.text);
+    }
+    WhereAmIView.update(this.currentSelection);
+    TreeView.navigateToNode(dataChangingNode);
+
+    validationResult = InputValidator.inputIsValid(dataChangingNode, updatedNodeData, parentNodeData);
     if (validationResult === true) {
         InputView.hideAlert();
         InputView.enableInputs();
-        enableNodeActions(this, TreeView.rootNode);
-        this.saveButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        TreeView.enableNodeActions();
+        ImportExportView.enableSaveButton();
     }
     else {
         validationResult.correspondingNode.click();
         InputView.showAlert(validationResult.alert);
         InputView.enableInputs();
         InputView.disableInputsExcept(validationResult.invalidInput);
-        disableNodeActions(this, TreeView.rootNode);
-        this.saveButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-    }
-}
-
-function disableNodeActions(that, node) {
-    if (node === undefined) {
-        return;
-    }
-    node.setIsClickable(false);
-    for (let childNode of node.childNodes) {
-        disableNodeActions(that, childNode);
-    }
-}
-
-function enableNodeActions(that, node) {
-    if (node === undefined) {
-        return;
-    }
-    node.setIsClickable(true);
-    for (let childNode of node.childNodes) {
-        enableNodeActions(that, childNode);
+        TreeView.disableNodeActions();
+        ImportExportView.disableSaveButton();
     }
 }
 

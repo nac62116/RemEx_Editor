@@ -10,6 +10,7 @@ class Question {
         this.text = "Text";
         this.hint = "Hinweis";
         this.nextQuestionId = null;
+        this.previousQuestionId = null;
     }
 }
 

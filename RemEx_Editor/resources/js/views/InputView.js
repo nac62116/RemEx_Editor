@@ -414,6 +414,7 @@ function onInputChanged(event) {
     reader = new FileReader();
 
     if (event.target.value !== "") {
+        properties.id = this.correspondingNode.id;
         if (event.target.type === "text") {
             event.target.value = escapeHtml(event.target.value);
         }

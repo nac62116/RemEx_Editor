@@ -5,12 +5,9 @@ import StandardNode from "./StandardNode.js";
 
 class TimelineNode extends StandardNode {
 
-    constructor(nodeElements, id, type, description, parentNode, timelineEventListener, treeViewWidth) {
-        super(nodeElements, id, type, description, parentNode);
+    constructor(nodeElements, id, type, description, treeViewWidth) {
+        super(nodeElements, id, type, description);
         this.timeline = new TimelineView(nodeElements.timelineElements, treeViewWidth, this);
-        for (let listener of timelineEventListener) {
-            this.timeline.addEventListener(listener.eventType, listener.callback);
-        }
         this.nodeTimeMap = new Map();
     }
 
@@ -24,15 +21,13 @@ class TimelineNode extends StandardNode {
         this.timeline.show();
     }
 
-    defocus(currentSelection) {
-        super.defocus();
-        if (!currentSelection.includes(this)) {
-            this.timeline.hide();
-        }
+    deemphasize() {
+        super.deemphasize();
+        this.timeline.hide();
     }
 
-    updatePosition(centerX, centerY, makeStatic) {
-        super.updatePosition(centerX, centerY, makeStatic);
+    updatePosition(centerX, centerY) {
+        super.updatePosition(centerX, centerY);
         this.timeline.updatePosition(centerX, centerY + Config.NODE_DISTANCE_VERTICAL);
     }
 
@@ -41,85 +36,31 @@ class TimelineNode extends StandardNode {
         this.timeline.isClickable = isClickable;
     }
 
-    getTimelineCenter() {
-        return this.timeline.center;
-    }
-
-    updateTimelineLength() {
-        let ascSortedTimes = [],
-        maxTimeInMin;
-        for (let time of this.nodeTimeMap.values()) {
-            ascSortedTimes.push(time);
-        }
-        ascSortedTimes.sort(function(a, b){return a - b;});
-
-        if (ascSortedTimes.length === 0) {
-            maxTimeInMin = Config.ONE_DAY_IN_MIN;
+    updateTimelineLength(lastSurvey) {
+        let maxTimeInMin;
+        
+        if (lastSurvey !== undefined) {
+            maxTimeInMin = lastSurvey.absoluteStartDaysOffset * 24 * 60 + lastSurvey.absoluteStartAtHour * 60 + lastSurvey.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
         }
         else {
-            maxTimeInMin = ascSortedTimes[ascSortedTimes.length - 1];
+            maxTimeInMin = 0;
         }
 
         this.timeline.updateLength(maxTimeInMin);
-        this.timeline.updateNodePositions(this.nodeTimeMap);
     }
 
-    updateNodeTimeMap(correspondingNode, timeInMin) {
-        this.nodeTimeMap.set(correspondingNode, timeInMin);
+    updateNodeTimeMap(correspondingNodeId, timeInMin) {
+        this.nodeTimeMap.set(correspondingNodeId, timeInMin);
     }
 
-    shortenNodeTimeMap(correspondingNode) {
-        this.nodeTimeMap.delete(correspondingNode);
+    shortenNodeTimeMap(correspondingNodeId) {
+        this.nodeTimeMap.delete(correspondingNodeId);
     }
 
-    getTimeSortedChildNodes() {
-        let timeSortedChildNodes = [],
-        firstPart,
-        secondPart;
+    getPositionOnTimeline(nodeId) {
+        let time = this.nodeTimeMap.get(nodeId);
 
-        for (let [node, time] of this.nodeTimeMap.entries()) {
-            if (timeSortedChildNodes.length === 0) {
-                timeSortedChildNodes.push(node);
-            }
-            else if (timeSortedChildNodes.length === 1) {
-                if (this.nodeTimeMap.get(timeSortedChildNodes[0]) >= time) {
-                    timeSortedChildNodes.unshift(node);
-                }
-                else {
-                    timeSortedChildNodes.push(node);
-                }
-            }
-            else {
-                for (let i = 0; i < timeSortedChildNodes.length - 1; i++) {
-                    if (this.nodeTimeMap.get(timeSortedChildNodes[i]) <= time) {
-                        if (this.nodeTimeMap.get(timeSortedChildNodes[i + 1]) >= time) {
-                            firstPart = timeSortedChildNodes.slice(0, i + 1);
-                            firstPart.push(node);
-                            secondPart = timeSortedChildNodes.slice(i + 1);
-                            timeSortedChildNodes = firstPart.concat(secondPart);
-                            break;
-                        }
-                        else {
-                            if (i === timeSortedChildNodes.length - 2) { // eslint-disable-line no-magic-numbers
-                                timeSortedChildNodes.push(node);
-                                break;
-                            }
-                            else {
-                                continue;
-                            }
-                        }
-                    }
-                    else {
-                        firstPart = timeSortedChildNodes.slice(0, i);
-                        firstPart.push(node);
-                        secondPart = timeSortedChildNodes.slice(i);
-                        timeSortedChildNodes = firstPart.concat(secondPart);
-                        break;
-                    }
-                }
-            }
-        }
-        return timeSortedChildNodes;
+        return this.timeline.getPositionFromTime(this.timeline, time);
     }
 }
 
@@ -286,19 +227,6 @@ class TimelineView extends Observable {
             descriptionCount++;
         }
     }
-
-    updateNodePositions(nodeTimeMap) {
-        let position;
-
-        for (let [node, time] of nodeTimeMap.entries()) {
-            position = getPositionFromTime(this, time);
-            node.updatePosition(position.x, position.y, true);
-            for (let childNode of node.childNodes) {
-                // Updating childNodes on their current position to redraw the correct input paths
-                childNode.updatePosition(childNode.center.x, childNode.center.y, true);
-            }
-        }
-    }
 }
 
 // Event callback functions
@@ -346,11 +274,9 @@ function onClick(event) {
         timeInMin = getTimeFromPosition(this, position);
         data = {
             correspondingNode: this.correspondingNode,
-            position: position,
             absoluteStartDaysOffset: Math.floor(timeInMin / Config.ONE_DAY_IN_MIN),
             absoluteStartAtHour: Math.floor((timeInMin % Config.ONE_DAY_IN_MIN) / Config.ONE_HOUR_IN_MIN),
             absoluteStartAtMinute: timeInMin % Config.ONE_DAY_IN_MIN % Config.ONE_HOUR_IN_MIN,
-            timeInMin: timeInMin,
         };
         controllerEvent = new Event(Config.EVENT_TIMELINE_CLICKED, data);
         this.notifyAll(controllerEvent);

@@ -12,7 +12,6 @@
         "default-case": "error",
         "eqeqeq": "error",
         "guard-for-in": "error",
-        "no-alert": "error",
         "no-console": "warn",
         "no-else-return": "error",
         "no-empty-function": "error",

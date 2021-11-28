@@ -4,8 +4,8 @@ import Config from "../../utils/Config.js";
 
 class StandardNode extends NodeView {
 
-    constructor(nodeElements, id, type, description, parentNode) {
-        super(nodeElements, id, type, description, parentNode);
+    constructor(nodeElements, id, type, description) {
+        super(nodeElements, id, type, description);
         
         if (this.nodeElements.addNextButton !== undefined) {
             this.nodeElements.addNextButton.addEventListener("click", onAddNextNodeClicked.bind(this));
@@ -47,9 +47,7 @@ class StandardNode extends NodeView {
             this.showAddChildButton();
         }
         else {
-            for (let childNode of this.childNodes) {
-                childNode.show();
-            }
+            this.hideAddChildButton();
         }
     }
 
@@ -67,23 +65,20 @@ class StandardNode extends NodeView {
 
     emphasize() {
         super.emphasize();
-
         this.nodeElements.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_EMPHASIZED);
     }
 
     deemphasize() {
         super.deemphasize();
-
-        if (!this.isFocused) {
-            this.nodeElements.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
-        }
+        this.nodeElements.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
+    
     }
 
-    updatePosition(centerX, centerY, makeStatic) {
+    updatePosition(centerX, centerY) {
         let parentOutputPoint,
         bezierReferencePoint;
 
-        super.updatePosition(centerX, centerY, makeStatic);
+        super.updatePosition(centerX, centerY);
         parentOutputPoint = this.parentNode.bottom;
         bezierReferencePoint = {
             x: parentOutputPoint.x,
@@ -136,7 +131,7 @@ function onAddPreviousNodeClicked() {
         data = {
             target: this,
         };
-        controllerEvent = new ControllerEvent(Config.EVENT_ADD_PREV_NODE, data);
+        controllerEvent = new ControllerEvent(Config.EVENT_ADD_PREVIOUS_NODE, data);
         this.notifyAll(controllerEvent);
     }
 }

@@ -23,17 +23,19 @@ class ModelManager {
     
     initExperiment() {
         let experiment,
-        properties = {};
+        id;
 
-        // TODO Remove this
+
+//###
+        // Remove this
         Storage.clear();
+//###
+
 
         experiment = Storage.load();
         if (experiment === undefined) {
-            IndexedDB.clearDatabase();
-            properties.id = IdManager.getUnusedId();
-            properties.name = Config.NEW_EXPERIMENT_NAME;
-            experiment = createNewExperiment(properties);
+            id = IdManager.getUnusedId();
+            experiment = createNewExperiment(id);
             Storage.save(experiment);
         }
         else {
@@ -48,6 +50,7 @@ class ModelManager {
     }
 
     removeExperiment() {
+        IdManager.removeIds();
         Storage.clear();
         IndexedDB.clearDatabase();
         this.usedResourceFileNames = [];
@@ -58,18 +61,18 @@ class ModelManager {
     }
 
     extendExperiment(parentNode, initialProperties, stepType, questionType) {
-        let properties = getNewModelProperties(parentNode, stepType, questionType),
+        let properties = getNewModelProperties(parentNode, stepType, questionType, initialProperties),
         newData;
 
+        for (let key in initialProperties) {
+            if (Object.prototype.hasOwnProperty.call(initialProperties, key)) {
+                properties[key] = initialProperties[key];
+            }
+        }
         if (parentNode.type === Config.TYPE_EXPERIMENT) {
             newData = createNewExperimentGroup(properties);
         }
         else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            for (let key in initialProperties) {
-                if (Object.prototype.hasOwnProperty.call(initialProperties, key)) {
-                    properties[key] = initialProperties[key];
-                }
-            }
             newData = createNewSurvey(properties);
         }
         else if (parentNode.type === Config.TYPE_SURVEY) {
@@ -82,44 +85,39 @@ class ModelManager {
             newData = createNewAnswer(properties);
         }
         else {
-            throw "The node type " + parentNode.type + " is not defined.";
+            console.log("The node type " + parentNode.type + " is not defined.");
         }
         return newData;
     }
 
-    shortenExperiment(id, parentId, childIds) {
+    shortenExperiment(nodeData, parentData) {
         let experiment = Storage.load(),
-        data = this.getDataFromNodeId(id, experiment),
-        parentData = this.getDataFromNodeId(parentId, experiment),
         index;
 
-        IdManager.removeId(id);
-        for (let childId of childIds) {
-            IdManager.removeId(childId);
-        }
         if (parentData.groups !== undefined) {
-            index = parentData.groups.indexOf(data);
+            index = parentData.groups.indexOf(nodeData);
             parentData.groups.splice(index, 1);
         }
         else if (parentData.surveys !== undefined) {
-            index = parentData.surveys.indexOf(data);
+            index = parentData.surveys.indexOf(nodeData);
             parentData.surveys.splice(index, 1);
         }
         else if (parentData.steps !== undefined) {
-            index = parentData.steps.indexOf(data);
+            index = parentData.steps.indexOf(nodeData);
             parentData.steps.splice(index, 1);
         }
         else if (parentData.questions !== undefined) {
-            index = parentData.questions.indexOf(data);
+            index = parentData.questions.indexOf(nodeData);
             parentData.questions.splice(index, 1);
         }
         else if (parentData.answers !== undefined) {
-            index = parentData.answers.indexOf(data);
+            index = parentData.answers.indexOf(nodeData);
             parentData.answers.splice(index, 1);
         }
         else {
-            throw "The model data was not shorten properly.";
+            console.log("The model data was not shorten properly.");
         }
+        removeIds(nodeData);
         Storage.save(experiment);
     }
 
@@ -141,7 +139,7 @@ class ModelManager {
         Storage.save(experiment);
     }
 
-    getIds(experiment) {
+    setIds(experiment) {
         let ids = [];
 
         for (let group of experiment.groups) {
@@ -163,7 +161,7 @@ class ModelManager {
                 }
             }
         }
-        return ids;
+        IdManager.setIds(ids);
     }
 
     getDataFromNodeId(id, experiment) {
@@ -205,7 +203,144 @@ class ModelManager {
                 }
             }
         }
-        return null;
+        return undefined;
+    }
+
+    updateSurveyLinks(timelineNodeData) {
+        let timeSurveyMap = new Map(),
+        timeInMin,
+        times = [],
+        lastSurvey;
+
+        for (let survey of timelineNodeData.surveys) {
+            timeInMin = survey.absoluteStartDaysOffset * 24 * 60 + survey.absoluteStartAtHour * 60 + survey.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
+            times.push(timeInMin);
+            timeSurveyMap.set(timeInMin, survey);
+        }
+        // Ascending sort
+        timeInMin.sort(function(a, b){return a - b;});
+        for (let i = 0; i < times.length; i++) {
+            // First iteration with length === 1
+            if (i === 0 && i === times.length - 1) {
+                timeSurveyMap.get(times[i]).previousSurveyId = null;
+                timeSurveyMap.get(times[i]).nextSurveyId = null;
+            }
+            // First iteration
+            if (i === 0) {
+                timeSurveyMap.get(times[i]).previousSurveyId = null;
+                timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]);
+            }
+            // Last iteration
+            else if (i === timeInMin.length - 1) {
+                lastSurvey = timeSurveyMap.get(times[i]);
+                lastSurvey.previousSurveyId = timeSurveyMap.get(times[i - 1]);
+                lastSurvey.nextSurveyId = null;
+            }
+            // All other iterations
+            else {
+                timeSurveyMap.get(times[i]).previousSurveyId = timeSurveyMap.get(times[i - 1]);
+                timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]);
+            }
+        }
+        this.updateExperiment(timelineNodeData);
+        return lastSurvey;
+    }
+
+    updateStepLinks(stepData, previousStepData, nextStepData) {
+
+        if (previousStepData !== undefined) {
+            stepData.previousStepId = previousStepData.id;
+            previousStepData.nextStepId = stepData.id;
+            this.updateExperiment(previousStepData);
+        }
+
+        if (nextStepData !== undefined) {
+            stepData.nextStepId = nextStepData.id;
+            nextStepData.previousStepId = stepData.id;
+            this.updateExperiment(nextStepData);
+        }
+
+        this.updateExperiment(stepData);
+    }
+
+    removeWaitForStepLinks(stepData, stepToWaitForData, experiment) {
+        let nextStepData = this.getDataFromNodeId(stepData.nextStepId, experiment);
+
+        if (stepData === undefined) {
+            return;
+        }
+        if (stepData.waitForStep === stepToWaitForData.id) {
+            stepData.waitForStep = 0;
+            this.updateExperiment(stepData);
+        }
+        this.removeWaitForStepLinks(nextStepData, stepToWaitForData, experiment);
+    }
+
+    updateQuestionLinks(questionData, previousQuestionData, nextQuestionData, questionToRemoveData, updatePreviousAnswerLinks) {
+
+        if (previousQuestionData !== undefined) {
+            questionData.previousQuestionId = previousQuestionData.id;
+            previousQuestionData.nextQuestionId = questionData.id;
+            // Answers of a choice question can link to different questions.
+            // We have to update the links of those answers too.
+            if (previousQuestionData.type === Config.QUESTION_TYPE_CHOICE) {
+                for (let answer of previousQuestionData.answers) {
+                    if (updatePreviousAnswerLinks) {
+                        if (nextQuestionData !== undefined) {
+                            if (answer.nextQuestionId === nextQuestionData.id) {
+                                answer.nextQuestionId = questionData.id;
+                            }
+                        }
+                        else {
+                            answer.nextQuestionId = questionData.id;
+                        }
+                    }
+                    if (questionToRemoveData !== undefined
+                        && answer.nextQuestionId === questionToRemoveData.id) {
+                            answer.nextQuestionId = questionData.id;
+                    }
+                }
+            }
+            this.updateExperiment(previousQuestionData);
+        }
+
+        if (nextQuestionData !== undefined) {
+            questionData.nextQuestionId = nextQuestionData.id;
+            nextQuestionData.previousQuestionId = questionData.id;
+            // Answers of a choice question can link to different questions.
+            // We have to update the links of those answers too.
+            if (questionData.type === Config.QUESTION_TYPE_CHOICE) {
+                for (let answer of questionData.answers) {
+                    if (answer.nextQuestionId === null 
+                        || (questionToRemoveData !== undefined
+                            && answer.nextQuestionId === questionToRemoveData.id)) {
+                        answer.nextQuestionId = nextQuestionData.id;
+                    }
+                }
+            }
+            this.updateExperiment(nextQuestionData);
+        }
+        if (questionData !== undefined) {
+            this.updateExperiment(questionData);
+        }
+    }
+
+    getPastOngoingInstructions(stepNode) {
+        let experiment = this.getExperiment(),
+        pastOngoingInstructions = [];
+
+        pastOngoingInstructions = getPastOngoingInstructions(this, stepNode.previousNode, experiment, pastOngoingInstructions);
+
+        return pastOngoingInstructions;
+    }
+
+    getPastAndFutureQuestions(questionNode, exceptionNode) {
+        let experiment = this.getExperiment(),
+        pastAndFutureQuestions = [];
+
+        pastAndFutureQuestions = getPastAndFutureQuestions(this, questionNode, exceptionNode, experiment, pastAndFutureQuestions);
+
+        return pastAndFutureQuestions;
     }
 
     addResource(resourceFile) {
@@ -233,6 +368,22 @@ class ModelManager {
                 }
             });
         });
+    }
+
+    removeSubtreeResources(node, experiment) {
+        let nodeData = this.getDataFromNodeId(node.id, experiment);
+        if (node === undefined) {
+            return;
+        }
+        if (nodeData.imageFileName !== undefined && nodeData.imageFileName !== null) {
+            this.removeResource(nodeData.imageFileName);
+        }
+        if (nodeData.videoFileName !== undefined && nodeData.videoFileName !== null) {
+            this.removeResource(nodeData.videoFileName);
+        }
+        for (let childNode of node.childNodes) {
+            this.removeSubtreeResources(childNode, experiment);
+        }
     }
 
     removeResource(fileName) {
@@ -301,12 +452,18 @@ class ModelManager {
     }
 }
 
-function getNewModelProperties(parentNode, stepType, questionType) {
+function getNewModelProperties(parentNode, stepType, questionType, initialProperties) {
     let modelProperties = {
-        id: IdManager.getUnusedId(),
+        id: undefined,
         parentNode: parentNode,
     };
     
+    if (initialProperties !== undefined && initialProperties.id !== undefined) {
+        modelProperties.id = initialProperties.id;
+    }
+    else {
+        modelProperties.id = IdManager.getUnusedId();
+    }
     if (parentNode.type === Config.TYPE_SURVEY) {
         modelProperties.type = stepType;
     }
@@ -316,11 +473,10 @@ function getNewModelProperties(parentNode, stepType, questionType) {
     return modelProperties;
 }
 
-function createNewExperiment(properties) {
+function createNewExperiment(id) {
     let experiment = new Experiment();
 
-    Storage.clear();
-    experiment.id = properties.id;
+    experiment.id = id;
 
     return experiment;
 }
@@ -370,7 +526,7 @@ function createNewStep(properties) {
         step = new Questionnaire();
     }
     else {
-        throw "The step type " + properties.type + " is not defined.";
+        console.log("The step type " + properties.type + " is not defined.");
     }
     step.id = properties.id;
     for (let group of experiment.groups) {
@@ -408,7 +564,7 @@ function createNewQuestion(properties) {
         question = new TimeIntervalQuestion();
     }
     else {
-        throw "The question type " + properties.type + " is not defined.";
+        console.log("The question type " + properties.type + " is not defined.");
     }
     question.id = properties.id;
     for (let group of experiment.groups) {
@@ -456,6 +612,78 @@ function createNewAnswer(properties) {
     Storage.save(experiment);
 
     return answer;
+}
+
+function removeIds(nodeData) {
+    if (nodeData === undefined) {
+        return;
+    }
+
+    IdManager.removeId(nodeData.id);
+
+    if (nodeData.groups !== undefined) {
+        for (let group of nodeData.groups) {
+            removeIds(group);
+        }
+    }
+    if (nodeData.surveys !== undefined) {
+        for (let survey of nodeData.surveys) {
+            removeIds(survey);
+        }
+    }
+    if (nodeData.steps !== undefined) {
+        for (let step of nodeData.steps) {
+            removeIds(step);
+        }
+    }
+    if (nodeData.questions !== undefined) {
+        for (let question of nodeData.questions) {
+            removeIds(question);
+        }
+    }
+    if (nodeData.answers !== undefined) {
+        for (let answer of nodeData.answers) {
+            removeIds(answer);
+        }
+    }
+}
+
+function getPastOngoingInstructions(that, node, experiment, pastOngoingInstructions) {
+    let pastOngoingInstruction,
+    modelData;
+
+    if (node === undefined) {
+        return pastOngoingInstructions;
+    }
+    modelData = that.getDataFromNodeId(node.id, experiment);
+    if (modelData.type === Config.STEP_TYPE_INSTRUCTION 
+        && modelData.durationInMin !== null 
+        && modelData.durationInMin !== 0) {
+        pastOngoingInstruction = {
+            label: modelData.name,
+            value: modelData.id,
+        };
+        pastOngoingInstructions.splice(0, 0, pastOngoingInstruction);
+    }
+    return getPastOngoingInstructions(that, node.previousNode, experiment, pastOngoingInstructions);
+}
+
+function getPastAndFutureQuestions(that, node, exceptionNode, experiment, questionsForInputView) {
+    let question,
+    modelData;
+
+    if (node === undefined) {
+        return questionsForInputView;
+    }
+    if (node !== exceptionNode) {
+        modelData = that.getDataFromNodeId(node.id, experiment);
+        question = {
+            label: modelData.name,
+            value: modelData.id,
+        };
+        questionsForInputView.push(question);
+    }
+    return getPastAndFutureQuestions(that, node.nextNode, exceptionNode, experiment, questionsForInputView);
 }
 
 export default new ModelManager();

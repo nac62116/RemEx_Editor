@@ -3,8 +3,8 @@ import StandardNode from "./StandardNode.js";
 
 class DeflateableNode extends StandardNode {
 
-    constructor(nodeElements, id, type, description, parentNode) {
-        super(nodeElements, id, type, description, parentNode); 
+    constructor(nodeElements, id, type, description) {
+        super(nodeElements, id, type, description); 
     }
 
     show() {

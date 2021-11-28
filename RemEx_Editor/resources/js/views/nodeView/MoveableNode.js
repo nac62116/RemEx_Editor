@@ -4,8 +4,8 @@ import {Event} from "../../utils/Observable.js";
 
 class MoveableNode extends StandardNode {
 
-    constructor(nodeElements, id, type, description, parentNode) {
-        super(nodeElements, id, type, description, parentNode);
+    constructor(nodeElements, id, type, description) {
+        super(nodeElements, id, type, description);
         this.nodeElements.moveRightButton.addEventListener("click", onMoveRightButtonClicked.bind(this));
         this.nodeElements.moveRightButton.addEventListener("mouseenter", onMoveButtonMouseEnter.bind(this));
         this.nodeElements.moveRightButton.addEventListener("mouseleave", onMoveButtonMouseLeave.bind(this));
@@ -46,8 +46,8 @@ class MoveableNode extends StandardNode {
         this.nodeElements.moveLeftButton.setAttribute("display", "none");
     }
 
-    updatePosition(centerX, centerY, makeStatic) {
-        super.updatePosition(centerX, centerY, makeStatic);
+    updatePosition(centerX, centerY) {
+        super.updatePosition(centerX, centerY);
 
         this.nodeElements.moveRightButton.setAttribute("cx", this.center.x + Config.NODE_MOVE_BUTTON_CENTER_OFFSET_X);
         this.nodeElements.moveRightButton.setAttribute("cy", this.center.y - Config.NODE_MOVE_BUTTON_CENTER_OFFSET_Y);
