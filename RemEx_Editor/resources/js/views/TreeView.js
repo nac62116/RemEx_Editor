@@ -44,7 +44,7 @@ class TreeView {
         if (node.nextNode !== undefined) {
             node.nextNode.previousNode = node.previousNode;
         }
-        removeNodes(node);
+        removeNodes(this, node);
     }
 
     updateNodeLinks(nodeData, parentNode, previousNode, nextNode) {
@@ -388,7 +388,7 @@ function removeNodes(that, node) {
         }
     }
     for (let childNode of node.childNodes) {
-        removeNodes(childNode);
+        removeNodes(that, childNode);
     }
 }
 

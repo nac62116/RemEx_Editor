@@ -532,19 +532,16 @@ function onChangeNode(event) {
     },
     newNode,
     newNodeData,
-    parentNodeData,
     nextNodeData;
     
-    if (nodeToChange.parentNode !== undefined) {
-        parentNodeData = ModelManager.getDataFromNodeId(nodeToChange.parentNode.id, experiment);
-    }
     if (nodeToChange.nextNode !== undefined) {
         nextNodeData = ModelManager.getDataFromNodeId(nodeToChange.nextNode.id, experiment);
     }
 
     // First step:
     // Shortening, extending and updating the data model
-    ModelManager.shortenExperiment(nodeToChangeData, parentNodeData);
+    ModelManager.removeSubtreeResources(nodeToChange, experiment);
+    ModelManager.shortenExperiment(nodeToChange, nodeToChange.parentNode);
     newNodeData = ModelManager.extendExperiment(nodeToChange.parentNode, initialProperties, stepType, questionType);
     experiment = ModelManager.getExperiment();
     if (stepType !== undefined) {
@@ -703,9 +700,9 @@ function onRemoveNode(event) {
     
     // First step:
     // Updating and shortening the data model
-    ModelManager.shortenExperiment(nodeToRemoveData, parentNodeData);
+    ModelManager.removeSubtreeResources(nodeToRemove, experiment);
+    ModelManager.shortenExperiment(nodeToRemove, nodeToRemove.parentNode);
     experiment = ModelManager.getExperiment();
-    ModelManager.removeSubtreeResources(nodeToRemoveData, experiment);
     if (nodeToRemove.parentNode !== undefined) {
         if (nodeToRemove.parentNode.type === Config.TYPE_SURVEY) {
             if (previousNodeData !== undefined) {

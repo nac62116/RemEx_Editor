@@ -90,8 +90,10 @@ class ModelManager {
         return newData;
     }
 
-    shortenExperiment(nodeData, parentData) {
+    shortenExperiment(node, parentNode) {
         let experiment = Storage.load(),
+        nodeData = this.getDataFromNodeId(node.id, experiment),
+        parentData = this.getDataFromNodeId(parentNode.id, experiment),
         index;
 
         if (parentData.groups !== undefined) {
@@ -123,12 +125,11 @@ class ModelManager {
 
     updateExperiment(properties) {
         let experiment = Storage.load(),
-        data = this.getDataFromNodeId(properties.id, experiment);
+        nodeData = this.getDataFromNodeId(properties.id, experiment);
         
-        // TODO
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
-                data[key] = properties[key];
+                nodeData[key] = properties[key];
                 if (key === "imageFileName" || key === "videoFileName") {
                     if (!this.usedResourceFileNames.includes(properties[key])) {
                         this.usedResourceFileNames.push(properties[key]);
