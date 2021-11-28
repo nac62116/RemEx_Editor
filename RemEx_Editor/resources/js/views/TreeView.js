@@ -16,7 +16,8 @@ class TreeView {
         this.currentSelection = [];
         this.rootNode = undefined;
         // Node map to store the nodes that arent linked yet
-        // Key: id, Value: node
+        // Key: id
+        // Value: node
         this.nodeMap = new Map();
     }
 
@@ -422,7 +423,6 @@ function showPreviousNodes(node, neighbourCount, treeViewCenter) {
     }
 
     node.show();
-    node.deemphasize();
     // Child nodes of a timeline node need to be positioned on the timeline
     if (node.parentNode !== undefined && node.parentNode instanceof TimelineNode) {
         positionOnTimeline = node.parentNode.getPositionOnTimeline(node.id);
@@ -446,7 +446,6 @@ function showNextNodes(node, neighbourCount, treeViewCenter) {
     }
 
     node.show();
-    node.deemphasize();
     // Child nodes of a timeline node need to be positioned on the timeline
     if (node.parentNode !== undefined && node.parentNode instanceof TimelineNode) {
         positionOnTimeline = node.parentNode.getPositionOnTimeline(node.id);

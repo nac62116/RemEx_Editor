@@ -21,6 +21,11 @@ class TimelineNode extends StandardNode {
         this.timeline.show();
     }
 
+    emphasize() {
+        super.emphasize();
+        this.timeline.show();
+    }
+
     deemphasize() {
         super.deemphasize();
         this.timeline.hide();
@@ -60,7 +65,7 @@ class TimelineNode extends StandardNode {
     getPositionOnTimeline(nodeId) {
         let time = this.nodeTimeMap.get(nodeId);
 
-        return this.timeline.getPositionFromTime(this.timeline, time);
+        return this.timeline.getPositionFromTime(time);
     }
 }
 
@@ -219,13 +224,21 @@ class TimelineView extends Observable {
             isGreater = timeInMin % Config.ONE_DAY_IN_MIN === 0 || timeInMin % Config.ONE_HOUR_IN_MIN;
             descriptionLines[0] = Config.TIMELINE_LABEL_DESCRIPTIONS_PREFIX + " " + dayCount;
             descriptionLines[1] = labelDescriptions[descriptionCount];
-            position = getPositionFromTime(this, timeInMin);
+            position = this.getPositionFromTime(timeInMin);
             label = SvgFactory.createTimelineLabel(position, descriptionLines, isGreater);
             this.timelineElements.labels.push(label);
             treeView.insertBefore(label.description, this.timelineElements.timeline);
             treeView.insertBefore(label.stroke, this.timelineElements.timeline);
             descriptionCount++;
         }
+    }
+
+    getPositionFromTime(timeInMin) {
+        let position = {
+            x: this.start.x + (timeInMin / this.timelineLengthInMin * (this.end.x - this.start.x)),
+            y: this.center.y,
+        };
+        return position;
     }
 }
 
@@ -281,14 +294,6 @@ function onClick(event) {
         controllerEvent = new Event(Config.EVENT_TIMELINE_CLICKED, data);
         this.notifyAll(controllerEvent);
     }
-}
-
-function getPositionFromTime(that, timeInMin) {
-    let position = {
-        x: that.start.x + (timeInMin / that.timelineLengthInMin * (that.end.x - that.start.x)),
-        y: that.center.y,
-    };
-    return position;
 }
 
 function getTimeFromPosition(that, position) {

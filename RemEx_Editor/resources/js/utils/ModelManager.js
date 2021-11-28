@@ -60,9 +60,16 @@ class ModelManager {
         return Storage.load();
     }
 
-    extendExperiment(parentNode, initialProperties, stepType, questionType) {
-        let properties = getNewModelProperties(parentNode, stepType, questionType, initialProperties),
+    extendExperiment(parentNode, initialProperties) {
+        let properties = {},
         newData;
+
+        if (initialProperties !== undefined && initialProperties.id !== undefined) {
+            properties.id = initialProperties.id;
+        }
+        else {
+            properties.id = IdManager.getUnusedId();
+        }
 
         for (let key in initialProperties) {
             if (Object.prototype.hasOwnProperty.call(initialProperties, key)) {
@@ -73,16 +80,16 @@ class ModelManager {
             newData = createNewExperimentGroup(properties);
         }
         else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            newData = createNewSurvey(properties);
+            newData = createNewSurvey(properties, parentNode);
         }
         else if (parentNode.type === Config.TYPE_SURVEY) {
-            newData = createNewStep(properties);
+            newData = createNewStep(properties, parentNode);
         }
         else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-            newData = createNewQuestion(properties);
+            newData = createNewQuestion(properties, parentNode);
         }
         else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
-            newData = createNewAnswer(properties);
+            newData = createNewAnswer(properties, parentNode);
         }
         else {
             console.log("The node type " + parentNode.type + " is not defined.");
@@ -92,8 +99,8 @@ class ModelManager {
 
     shortenExperiment(node, parentNode) {
         let experiment = Storage.load(),
-        nodeData = this.getDataFromNodeId(node.id, experiment),
-        parentData = this.getDataFromNodeId(parentNode.id, experiment),
+        nodeData = this.getDataById(node.id, experiment),
+        parentData = this.getDataById(parentNode.id, experiment),
         index;
 
         if (parentData.groups !== undefined) {
@@ -125,7 +132,7 @@ class ModelManager {
 
     updateExperiment(properties) {
         let experiment = Storage.load(),
-        nodeData = this.getDataFromNodeId(properties.id, experiment);
+        nodeData = this.getDataById(properties.id, experiment);
         
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
@@ -165,12 +172,19 @@ class ModelManager {
         IdManager.setIds(ids);
     }
 
-    getDataFromNodeId(id, experiment) {
-        if (experiment.id === id) {
-            return experiment;
+    getDataById(id, experiment) {
+        let tmpExperiment;
+        if (experiment === undefined) {
+            tmpExperiment = Storage.load();
         }
-        if (experiment.groups !== undefined) {
-            for (let group of experiment.groups) {
+        else {
+            tmpExperiment = experiment;
+        }
+        if (tmpExperiment.id === id) {
+            return tmpExperiment;
+        }
+        if (tmpExperiment.groups !== undefined) {
+            for (let group of tmpExperiment.groups) {
                 if (group.id === id){
                     return group;
                 }
@@ -219,7 +233,7 @@ class ModelManager {
             timeSurveyMap.set(timeInMin, survey);
         }
         // Ascending sort
-        timeInMin.sort(function(a, b){return a - b;});
+        times.sort(function(a, b){return a - b;});
         for (let i = 0; i < times.length; i++) {
             // First iteration with length === 1
             if (i === 0 && i === times.length - 1) {
@@ -232,7 +246,7 @@ class ModelManager {
                 timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]);
             }
             // Last iteration
-            else if (i === timeInMin.length - 1) {
+            else if (i === times.length - 1) {
                 lastSurvey = timeSurveyMap.get(times[i]);
                 lastSurvey.previousSurveyId = timeSurveyMap.get(times[i - 1]);
                 lastSurvey.nextSurveyId = null;
@@ -243,6 +257,7 @@ class ModelManager {
                 timeSurveyMap.get(times[i]).nextSurveyId = timeSurveyMap.get(times[i + 1]);
             }
         }
+        console.log(timelineNodeData);
         this.updateExperiment(timelineNodeData);
         return lastSurvey;
     }
@@ -264,17 +279,10 @@ class ModelManager {
         this.updateExperiment(stepData);
     }
 
-    removeWaitForStepLinks(stepData, stepToWaitForData, experiment) {
-        let nextStepData = this.getDataFromNodeId(stepData.nextStepId, experiment);
+    removeWaitForStepLinks(stepData, stepToWaitForData) {
+        let experiment = Storage.load();
 
-        if (stepData === undefined) {
-            return;
-        }
-        if (stepData.waitForStep === stepToWaitForData.id) {
-            stepData.waitForStep = 0;
-            this.updateExperiment(stepData);
-        }
-        this.removeWaitForStepLinks(nextStepData, stepToWaitForData, experiment);
+        removeWaitForStepLinks(this, stepData, stepToWaitForData, experiment);
     }
 
     updateQuestionLinks(questionData, previousQuestionData, nextQuestionData, questionToRemoveData, updatePreviousAnswerLinks) {
@@ -327,7 +335,7 @@ class ModelManager {
     }
 
     getPastOngoingInstructions(stepNode) {
-        let experiment = this.getExperiment(),
+        let experiment = Storage.load(),
         pastOngoingInstructions = [];
 
         pastOngoingInstructions = getPastOngoingInstructions(this, stepNode.previousNode, experiment, pastOngoingInstructions);
@@ -336,7 +344,7 @@ class ModelManager {
     }
 
     getPastAndFutureQuestions(questionNode, exceptionNode) {
-        let experiment = this.getExperiment(),
+        let experiment = Storage.load(),
         pastAndFutureQuestions = [];
 
         pastAndFutureQuestions = getPastAndFutureQuestions(this, questionNode, exceptionNode, experiment, pastAndFutureQuestions);
@@ -371,20 +379,10 @@ class ModelManager {
         });
     }
 
-    removeSubtreeResources(node, experiment) {
-        let nodeData = this.getDataFromNodeId(node.id, experiment);
-        if (node === undefined) {
-            return;
-        }
-        if (nodeData.imageFileName !== undefined && nodeData.imageFileName !== null) {
-            this.removeResource(nodeData.imageFileName);
-        }
-        if (nodeData.videoFileName !== undefined && nodeData.videoFileName !== null) {
-            this.removeResource(nodeData.videoFileName);
-        }
-        for (let childNode of node.childNodes) {
-            this.removeSubtreeResources(childNode, experiment);
-        }
+    removeSubtreeResources(node) {
+        let experiment = Storage.load();
+
+        removeSubtreeResources(this, node, experiment);
     }
 
     removeResource(fileName) {
@@ -453,25 +451,33 @@ class ModelManager {
     }
 }
 
-function getNewModelProperties(parentNode, stepType, questionType, initialProperties) {
-    let modelProperties = {
-        id: undefined,
-        parentNode: parentNode,
-    };
-    
-    if (initialProperties !== undefined && initialProperties.id !== undefined) {
-        modelProperties.id = initialProperties.id;
+function removeWaitForStepLinks(that, stepData, stepToWaitForData, experiment) {
+    let nextStepData = that.getDataById(stepData.nextStepId, experiment);
+
+    if (stepData === undefined) {
+        return;
     }
-    else {
-        modelProperties.id = IdManager.getUnusedId();
+    if (stepData.waitForStep === stepToWaitForData.id) {
+        stepData.waitForStep = 0;
+        that.updateExperiment(stepData);
     }
-    if (parentNode.type === Config.TYPE_SURVEY) {
-        modelProperties.type = stepType;
+    removeWaitForStepLinks(that, nextStepData, stepToWaitForData, experiment);
+}
+
+function removeSubtreeResources(that, node, experiment) {
+    let nodeData = that.getDataById(node.id, experiment);
+    if (node === undefined) {
+        return;
     }
-    if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        modelProperties.type = questionType;
+    if (nodeData.imageFileName !== undefined && nodeData.imageFileName !== null) {
+        that.removeResource(nodeData.imageFileName);
     }
-    return modelProperties;
+    if (nodeData.videoFileName !== undefined && nodeData.videoFileName !== null) {
+        that.removeResource(nodeData.videoFileName);
+    }
+    for (let childNode of node.childNodes) {
+        removeSubtreeResources(that, childNode, experiment);
+    }
 }
 
 function createNewExperiment(id) {
@@ -486,24 +492,29 @@ function createNewExperimentGroup(properties) {
     let experiment = Storage.load(),
     group = new ExperimentGroup();
     
-    group.id = properties.id;
+    for (let key in properties) {
+        if (Object.prototype.hasOwnProperty.call(properties, key)) {
+            group[key] = properties[key];
+        }
+    }
     experiment.groups.push(group);
     Storage.save(experiment);
 
     return group;
 }
 
-function createNewSurvey(properties) {
+function createNewSurvey(properties, parentNode) {
     let experiment = Storage.load(),
     survey = new Survey();
     
-    survey.id = properties.id;
-    survey.absoluteStartAtMinute = properties.absoluteStartAtMinute;
-    survey.absoluteStartAtHour = properties.absoluteStartAtHour;
-    survey.absoluteStartDaysOffset = properties.absoluteStartDaysOffset;
+    for (let key in properties) {
+        if (Object.prototype.hasOwnProperty.call(properties, key)) {
+            survey[key] = properties[key];
+        }
+    }
 
     for (let group of experiment.groups) {
-        if (group.id === properties.parentNode.id) {
+        if (group.id === parentNode.id) {
             group.surveys.push(survey);
             break;
         }
@@ -513,7 +524,7 @@ function createNewSurvey(properties) {
     return survey;
 }
 
-function createNewStep(properties) {
+function createNewStep(properties, parentNode) {
     let experiment = Storage.load(),
     step;
     
@@ -529,11 +540,15 @@ function createNewStep(properties) {
     else {
         console.log("The step type " + properties.type + " is not defined.");
     }
-    step.id = properties.id;
+    for (let key in properties) {
+        if (Object.prototype.hasOwnProperty.call(properties, key)) {
+            step[key] = properties[key];
+        }
+    }
     for (let group of experiment.groups) {
-        if (group.id === properties.parentNode.parentNode.id) {
+        if (group.id === parentNode.parentNode.id) {
             for (let survey of group.surveys) {
-                if (survey.id === properties.parentNode.id) {
+                if (survey.id === parentNode.id) {
                     survey.steps.push(step);
                     break;
                 }
@@ -545,7 +560,7 @@ function createNewStep(properties) {
     return step;
 }
 
-function createNewQuestion(properties) {
+function createNewQuestion(properties, parentNode) {
     let experiment = Storage.load(),
     question;
     
@@ -567,13 +582,17 @@ function createNewQuestion(properties) {
     else {
         console.log("The question type " + properties.type + " is not defined.");
     }
-    question.id = properties.id;
+    for (let key in properties) {
+        if (Object.prototype.hasOwnProperty.call(properties, key)) {
+            question[key] = properties[key];
+        }
+    }
     for (let group of experiment.groups) {
-        if (group.id === properties.parentNode.parentNode.parentNode.id) {
+        if (group.id === parentNode.parentNode.parentNode.id) {
             for (let survey of group.surveys) {
-                if (survey.id === properties.parentNode.parentNode.id) {
+                if (survey.id === parentNode.parentNode.id) {
                     for (let step of survey.steps) {
-                        if (step.id === properties.parentNode.id) {
+                        if (step.id === parentNode.id) {
                             step.questions.push(question);
                             break;
                         }
@@ -587,19 +606,23 @@ function createNewQuestion(properties) {
     return question;
 }
 
-function createNewAnswer(properties) {
+function createNewAnswer(properties, parentNode) {
     let experiment = Storage.load(),
     answer = new Answer();
     
-    answer.id = properties.id;
+    for (let key in properties) {
+        if (Object.prototype.hasOwnProperty.call(properties, key)) {
+            answer[key] = properties[key];
+        }
+    }
     for (let group of experiment.groups) {
-        if (group.id === properties.parentNode.parentNode.parentNode.parentNode.id) {
+        if (group.id === parentNode.parentNode.parentNode.parentNode.id) {
             for (let survey of group.surveys) {
-                if (survey.id === properties.parentNode.parentNode.parentNode.id) {
+                if (survey.id === parentNode.parentNode.parentNode.id) {
                     for (let step of survey.steps) {
-                        if (step.id === properties.parentNode.parentNode.id) {
+                        if (step.id === parentNode.parentNode.id) {
                             for (let question of step.questions) {
-                                if (question.id === properties.parentNode.id) {
+                                if (question.id === parentNode.id) {
                                     question.answers.push(answer);
                                     break;
                                 }
@@ -656,7 +679,7 @@ function getPastOngoingInstructions(that, node, experiment, pastOngoingInstructi
     if (node === undefined) {
         return pastOngoingInstructions;
     }
-    modelData = that.getDataFromNodeId(node.id, experiment);
+    modelData = that.getDataById(node.id, experiment);
     if (modelData.type === Config.STEP_TYPE_INSTRUCTION 
         && modelData.durationInMin !== null 
         && modelData.durationInMin !== 0) {
@@ -677,7 +700,7 @@ function getPastAndFutureQuestions(that, node, exceptionNode, experiment, questi
         return questionsForInputView;
     }
     if (node !== exceptionNode) {
-        modelData = that.getDataFromNodeId(node.id, experiment);
+        modelData = that.getDataById(node.id, experiment);
         question = {
             label: modelData.name,
             value: modelData.id,
