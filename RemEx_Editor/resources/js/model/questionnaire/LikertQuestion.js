@@ -3,9 +3,8 @@ import Question from "./Question.js";
 
 class LikertQuestion extends Question {
 
-    constructor() {
-        LikertQuestion.instanceCount = (LikertQuestion.instanceCount || 0) + 1;
-        super(Config.QUESTION_TYPE_LIKERT, "Neue Likertfrage " + LikertQuestion.instanceCount);
+    constructor(id) {
+        super(id, Config.QUESTION_TYPE_LIKERT, "Neue Likertfrage " + id);
         this.scaleMinimumLabel = "Sehr schlecht";
         this.scaleMaximumLabel = "Sehr gut";
         this.initialValue = 1;

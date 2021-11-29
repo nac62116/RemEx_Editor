@@ -3,9 +3,8 @@ import Question from "./Question.js";
 
 class ChoiceQuestion extends Question {
 
-    constructor() {
-        ChoiceQuestion.instanceCount = (ChoiceQuestion.instanceCount || 0) + 1;
-        super(Config.QUESTION_TYPE_CHOICE, "Neue Auswahlfrage " + ChoiceQuestion.instanceCount);
+    constructor(id) {
+        super(id, Config.QUESTION_TYPE_CHOICE, "Neue Auswahlfrage " + id);
         this.choiceType = Config.CHOICE_TYPE_SINGLE_CHOICE;
         this.answers = [];
     }

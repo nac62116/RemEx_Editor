@@ -27,7 +27,7 @@ class WhereAmIView {
                 representingNodeElements = SvgFactory.createRootNodeElements();
                 representingNodeElements.nodeBody.setAttribute("height", Config.WHERE_AM_I_NODE_HEIGHT);
                 representingNode = new RootNode(representingNodeElements, undefined, undefined, currentSelection[i].description);
-                representingNode.updatePosition(this.rootPoint.x, this.rootPoint.y + rootPointOffsetY, true);
+                representingNode.updatePosition(this.rootPoint.x, this.rootPoint.y + rootPointOffsetY);
                 representingNode.nodeElements.nodeDescription.setAttribute("x", representingNode.center.x);
                 representingNode.nodeElements.nodeDescription.setAttribute("y", representingNode.center.y - Config.WHERE_AM_I_NODE_DESCRIPTION_CENTER_OFFSET_Y);
                 for (let newLine of representingNode.nodeElements.nodeDescription.children) {
@@ -55,15 +55,13 @@ class WhereAmIView {
 }
 
 function onRepresentingNodeMouseEnter(event) {
-    let actualNode = this.representationMap.get(event.data.target);
-    if (actualNode.isClickable) {
+    if (!event.data.target.isFocused) {
         event.data.target.emphasize();
     }
 }
 
 function onRepresentingNodeMouseLeave(event) {
-    let actualNode = this.representationMap.get(event.data.target);
-    if (actualNode.isClickable) {
+    if (!event.data.target.isFocused) {
         event.data.target.deemphasize();
     }
 }

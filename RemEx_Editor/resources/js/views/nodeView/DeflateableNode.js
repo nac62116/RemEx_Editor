@@ -5,15 +5,6 @@ class DeflateableNode extends StandardNode {
 
     constructor(nodeElements, id, type, description) {
         super(nodeElements, id, type, description);
-        /*
-        this.nodeElements.nodeBody.addEventListener("mouseenter", onMouseEnter.bind(this));
-        this.nodeElements.nodeBody.addEventListener("mouseleave", onMouseLeave.bind(this));
-        this.nodeElements.nodeDescription.addEventListener("mouseenter", onMouseEnter.bind(this));
-        this.nodeElements.nodeDescription.addEventListener("mouseleave", onMouseLeave.bind(this));
-        this.nodeElements.nodeIcon.addEventListener("click", onClick.bind(this));
-        this.nodeElements.nodeIcon.addEventListener("mouseenter", onMouseEnter.bind(this));
-        this.nodeElements.nodeIcon.addEventListener("mouseleave", onMouseLeave.bind(this));
-        */
     }
 
     show() {
@@ -43,7 +34,10 @@ class DeflateableNode extends StandardNode {
         this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y + offsetVector.y - parentOutputPoint.y) / 2)) + " T " + this.top.x + " " + (this.top.y + offsetVector.y)); // eslint-disable-line no-magic-numbers
         this.bottom.y -= offsetVector.y;
         for (let childNode of this.childNodes) {
-            childNode.updatePosition(childNode.center.x, childNode.center.y, true);
+            if (childNode.center.x !== undefined
+                && childNode.center.y !== undefined) {
+                    childNode.updatePosition(childNode.center.x, childNode.center.y);
+            }
         }
     }
 
@@ -67,7 +61,10 @@ class DeflateableNode extends StandardNode {
         this.nodeElements.inputPath.setAttribute("d", "M " + parentOutputPoint.x + " " + parentOutputPoint.y + " Q " + bezierReferencePoint.x + " " + bezierReferencePoint.y + ", " + (parentOutputPoint.x + ((this.top.x - parentOutputPoint.x) / 2)) + " " + (parentOutputPoint.y + ((this.top.y - parentOutputPoint.y) / 2)) + " T " + (this.top.x) + " " + (this.top.y)); // eslint-disable-line no-magic-numbers
         this.bottom.y -= offsetVector.y;
         for (let childNode of this.childNodes) {
-            childNode.updatePosition(childNode.center.x, childNode.center.y, true);
+            if (childNode.center.x !== undefined
+                && childNode.center.y !== undefined) {
+                    childNode.updatePosition(childNode.center.x, childNode.center.y);
+            }
         }
     }
 }

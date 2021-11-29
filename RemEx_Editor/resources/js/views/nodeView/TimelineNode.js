@@ -23,7 +23,9 @@ class TimelineNode extends StandardNode {
 
     emphasize() {
         super.emphasize();
-        this.timeline.show();
+        if (this.isInCurrentSelection) {
+            this.timeline.show();
+        }
     }
 
     deemphasize() {
@@ -41,11 +43,11 @@ class TimelineNode extends StandardNode {
         this.timeline.isClickable = isClickable;
     }
 
-    updateTimelineLength(lastSurvey) {
+    updateTimelineLength(lastSurveyData) {
         let maxTimeInMin;
         
-        if (lastSurvey !== undefined) {
-            maxTimeInMin = lastSurvey.absoluteStartDaysOffset * 24 * 60 + lastSurvey.absoluteStartAtHour * 60 + lastSurvey.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
+        if (lastSurveyData !== undefined) {
+            maxTimeInMin = lastSurveyData.absoluteStartDaysOffset * 24 * 60 + lastSurveyData.absoluteStartAtHour * 60 + lastSurveyData.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
         }
         else {
             maxTimeInMin = 0;
@@ -60,6 +62,10 @@ class TimelineNode extends StandardNode {
 
     shortenNodeTimeMap(correspondingNodeId) {
         this.nodeTimeMap.delete(correspondingNodeId);
+    }
+
+    clearNodeTimeMap() {
+        this.nodeTimeMap = new Map();
     }
 
     getPositionOnTimeline(nodeId) {

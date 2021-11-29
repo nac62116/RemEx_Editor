@@ -69,8 +69,11 @@ class StandardNode extends NodeView {
     }
 
     deemphasize() {
+        //console.log("before deemphasize node view");
         super.deemphasize();
+        //console.log("before deemphasize standard node");
         this.nodeElements.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
+        //console.log("after deemphasize standard node");
     
     }
 
@@ -79,6 +82,7 @@ class StandardNode extends NodeView {
         bezierReferencePoint;
 
         super.updatePosition(centerX, centerY);
+        //console.log("Standard node update position");
         parentOutputPoint = this.parentNode.bottom;
         bezierReferencePoint = {
             x: parentOutputPoint.x,

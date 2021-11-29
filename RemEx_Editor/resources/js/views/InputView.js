@@ -15,7 +15,7 @@ class InputView extends Observable {
         this.alertElement = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_ALERT_ID);
         this.loadingScreen = document.querySelector("#" + Config.LOADING_SCREEN_ID);
         this.correspondingNode = undefined;
-        this.currentFileName = undefined;
+        this.currentFileName = null;
     }
 
     show(node, dataModel, parentDataModel, ongoingInstructions, questions) {
@@ -399,7 +399,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
 function onInputChanged(event) {
     let data = {
         correspondingNode: this.correspondingNode,
-        newModelProperties: undefined,
+        newDataProperties: undefined,
         resourceFile: undefined,
     },
     inputChangeEvent,
@@ -485,7 +485,7 @@ function onInputChanged(event) {
         else {
             properties[correspondingModelProperty] = event.target.value;
         }
-        data.newModelProperties = properties;
+        data.newDataProperties = properties;
     
         if (correspondingModelProperty === Config.TYPE_STEP || correspondingModelProperty === Config.TYPE_QUESTION) {
             if (correspondingModelProperty === Config.TYPE_STEP) {
@@ -614,7 +614,7 @@ function onRemoveNodeButtonClicked() {
 function onClearFileInputs(event) {
     let data = {
         correspondingNode: this.correspondingNode,
-        newModelProperties: {},
+        newDataProperties: {},
         previousFileName: this.currentFileName,
     },
     correspondingInputElement = event.target.parentElement.querySelector("input"),
@@ -623,9 +623,10 @@ function onClearFileInputs(event) {
     videoElement = this.inputFieldsContainer.querySelector("video"),
     inputChangeEvent;
     
+    data.newDataProperties.id = this.correspondingNode.id;
     this.currentFileName = null;
     correspondingInputElement.value = null;
-    data.newModelProperties[correspondingInputElement.getAttribute("name")] = null;
+    data.newDataProperties[correspondingInputElement.getAttribute("name")] = null;
 
     for (let inputElement of inputElements) {
         for (let child of inputElement.parentElement.children) {

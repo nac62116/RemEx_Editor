@@ -1,10 +1,10 @@
 class Question {
 
-    constructor(type, name) {
+    constructor(id, type, name) {
         if (new.target === Question) {
             throw new TypeError("Cannot construct Abstract instances directly");
         }
-        this.id = null;
+        this.id = id;
         this.type = type;
         this.name = name;
         this.text = "Text";

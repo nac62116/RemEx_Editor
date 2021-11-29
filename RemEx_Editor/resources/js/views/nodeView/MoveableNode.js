@@ -49,6 +49,8 @@ class MoveableNode extends StandardNode {
     updatePosition(centerX, centerY) {
         super.updatePosition(centerX, centerY);
 
+        //console.log("Moveable node update position");
+
         this.nodeElements.moveRightButton.setAttribute("cx", this.center.x + Config.NODE_MOVE_BUTTON_CENTER_OFFSET_X);
         this.nodeElements.moveRightButton.setAttribute("cy", this.center.y - Config.NODE_MOVE_BUTTON_CENTER_OFFSET_Y);
 

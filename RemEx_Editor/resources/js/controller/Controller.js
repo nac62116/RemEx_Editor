@@ -149,6 +149,7 @@ class Controller {
         // ChoiceQuestions have Answers
         // ***
         experiment = ModelManager.initExperiment();
+        ModelManager.setIds(experiment);
 
         // LoadingScreenView
         LoadingScreenView.init(loadingScreenElement);
@@ -312,7 +313,11 @@ function onNodeClicked(event) {
     pastOngoingInstructions,
     firstNodeOfRow,
     pastAndFutureQuestions,
-    promise;
+    promise,
+    childNodeData,
+    timeInMin,
+    timelineNodeData,
+    lastSurveyData;
 
     if (clickedNode !== TreeView.currentFocusedNode) {
         if (clickedNode.parentNode !== undefined) {
@@ -362,11 +367,15 @@ function onNodeClicked(event) {
                         alert(result); // eslint-disable-line no-alert
                     }
                     else {
-                        if (nodeData.imageFileName !== null) {
-                            InputView.setImageResource(result, nodeData.id);
+                        if (result.type.includes("image/")) {
+                            if (nodeData.imageFileName !== null) {
+                                InputView.setImageResource(result, nodeData.id);
+                            }
                         }
-                        if (nodeData.videoFileName !== null) {
-                            InputView.setVideoResource(result, nodeData.id);
+                        if (result.type.includes("video/")) {
+                            if (nodeData.videoFileName !== null) {
+                                InputView.setVideoResource(result, nodeData.id);
+                            }
                         }
                     }
                 });
@@ -375,40 +384,32 @@ function onNodeClicked(event) {
 //###
 
 
-        TreeView.navigateToNode(clickedNode);
-        // Setting the initial timeline length
-        if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP
-            && clickedNode.childNodes.length === 0) {
-            clickedNode.updateTimelineLength(undefined);
+        if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            if (clickedNode.childNodes.length === 0) {
+                clickedNode.clearNodeTimeMap();
+            }
+            else {
+                for (let childNode of clickedNode.childNodes) {
+                    childNodeData = ModelManager.getDataById(childNode.id, undefined);
+                    timeInMin = childNodeData.absoluteStartDaysOffset * 24 * 60 + childNodeData.absoluteStartAtHour * 60 + childNodeData.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
+                    clickedNode.updateNodeTimeMap(childNode.id, timeInMin);
+                }
+                timelineNodeData = ModelManager.getDataById(clickedNode.id);
+                lastSurveyData = ModelManager.getLastSurveyData(timelineNodeData);
+                clickedNode.updateTimelineLength(lastSurveyData);
+            }
         }
+        TreeView.navigateToNode(clickedNode);
         WhereAmIView.update(TreeView.currentSelection);
         InputView.hideAlert();
         InputView.show(clickedNode, nodeData, parentNodeDataModel, pastOngoingInstructions, pastAndFutureQuestions);
         InputView.selectFirstInput();
-        
-
-//###
-        // Is this necessary in onNodeClicked()
-        /*
-        validationResult = InputValidator.inputIsValid(clickedNode, nodeDataModel, parentNodeDataModel);
-        if (validationResult === true) {
-            InputView.hideAlert();
-            InputView.enableInputs();
-            TreeView.enableNodeActions();
-            ImportExportView.enableSaveButton();
+        if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            if (lastSurveyData === undefined) {
+                clickedNode.updateTimelineLength(undefined);
+            }
         }
-        else {
-            validationResult.correspondingNode.click();
-            InputView.showAlert(validationResult.alert);
-            InputView.enableInputs();
-            InputView.disableInputsExcept(validationResult.invalidInput);
-            TreeView.disableNodeActions();
-            ImportExportView.disableSaveButton();
-        }
-        */
-//###
-
-
+        // Setting the initial timeline length
     }
 }
 
@@ -622,10 +623,10 @@ function onSwitchNodes(event) {
     }
 
     if (rightNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        ModelManager.updateQuestionLinks(rightNodeData, previousNodeData, leftNodeData, undefined, true);
+        ModelManager.updateQuestionLinks(rightNodeData, previousNodeData, leftNodeData, rightNodeData, true);
         rightNodeData = ModelManager.getDataById(rightNode.id, undefined);
         leftNodeData = ModelManager.getDataById(leftNode.id, undefined);
-        ModelManager.updateQuestionLinks(leftNodeData, rightNodeData, nextNodeData, undefined, true);
+        ModelManager.updateQuestionLinks(leftNodeData, rightNodeData, nextNodeData, rightNodeData, true);
     }
     console.log("After switch:", ModelManager.getExperiment());
 
@@ -752,14 +753,16 @@ function onRemoveNode(event) {
             lastSurveyData = ModelManager.updateSurveyLinks(timelineNodeData);
         }
         if (nodeToRemove.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-            if (nodeToRemove.previousNode.previousNode !== undefined) {
-                previousPreviousNodeData = ModelManager.getDataById(nodeToRemove.previousNode.previousNode.id, undefined);
+            if (nodeToRemove.previousNode !== undefined) {
+                if (nodeToRemove.previousNode.previousNode !== undefined) {
+                    previousPreviousNodeData = ModelManager.getDataById(nodeToRemove.previousNode.previousNode.id, undefined);
+                }
+                previousNodeData = ModelManager.getDataById(nodeToRemove.previousNode.id, undefined);
+                if (nodeToRemove.nextNode !== undefined) {
+                    nextNodeData = ModelManager.getDataById(nodeToRemove.nextNode.id, undefined);
+                }
+                ModelManager.updateQuestionLinks(previousNodeData, previousPreviousNodeData, nextNodeData, nodeToRemoveData, false);
             }
-            previousNodeData = ModelManager.getDataById(nodeToRemove.previousNode.id, undefined);
-            if (nodeToRemove.nextNode !== undefined) {
-                nextNodeData = ModelManager.getDataById(nodeToRemove.nextNode.id, undefined);
-            }
-            ModelManager.updateQuestionLinks(previousNodeData, previousPreviousNodeData, nextNodeData, nodeToRemoveData, false);
             if (nodeToRemove.nextNode !== undefined) {
                 if (nodeToRemove.nextNode.nextNode !== undefined) {
                     nextNextNodeData = ModelManager.getDataById(nodeToRemove.nextNode.nextNode.id, undefined);
@@ -768,8 +771,8 @@ function onRemoveNode(event) {
                 if (nodeToRemove.previousNode !== undefined) {
                     previousNodeData = ModelManager.getDataById(nodeToRemove.previousNode.id, undefined);
                 }
+                ModelManager.updateQuestionLinks(nextNodeData, previousNodeData, nextNextNodeData, nodeToRemoveData, false);
             }
-            ModelManager.updateQuestionLinks(nextNodeData, previousNodeData, nextNextNodeData, nodeToRemoveData, false);
         }
     }
     console.log("After removal:", ModelManager.getExperiment());
@@ -787,7 +790,7 @@ function onRemoveNode(event) {
 
 function onInputChanged(event) {
     let dataChangingNode = event.data.correspondingNode,
-    newDataProperties = event.data.newModelProperties,
+    newDataProperties = event.data.newDataProperties,
     dataChangingNodeData,
     parentNode = dataChangingNode.parentNode,
     parentNodeData,
@@ -803,7 +806,8 @@ function onInputChanged(event) {
 
 
 //###
-    // TODO survey frequency buttons; Label is not hidden when an alert in InputView is triggered
+    // TODO survey frequency buttons -> logic and responsiveness
+    // Label is not hidden when an alert in InputView is triggered
     // console.log(newDataProperties.surveyFrequency);
 //###
 
@@ -829,7 +833,9 @@ function onInputChanged(event) {
             fileName = newDataProperties.videoFileName;
         }
         if (fileName === null) {
-            ModelManager.removeResource(event.data.previousFileName);
+            if (event.data.previousFileName !== null) {
+                ModelManager.removeResource(event.data.previousFileName);
+            }
         }
         if (fileName !== undefined && fileName !== null) {
             addResourceResult = ModelManager.addResource(event.data.resourceFile);
@@ -888,8 +894,8 @@ function onInputChanged(event) {
     if (dataChangingNodeData.text !== undefined && dataChangingNode.type === Config.TYPE_ANSWER) {
         dataChangingNode.updateDescription(dataChangingNodeData.text);
     }
-    WhereAmIView.update(this.currentSelection);
     TreeView.navigateToNode(dataChangingNode);
+    WhereAmIView.update(TreeView.currentSelection);
 
     validationResult = InputValidator.inputIsValid(dataChangingNode, dataChangingNodeData, parentNodeData);
     if (validationResult === true) {

@@ -90,9 +90,11 @@ class TreeView {
         positionOnTimeline;
 
         this.currentFocusedNode = node;
+        for (let node of this.currentSelection) {
+            node.isInCurrentSelection = false;
+        }
         this.currentSelection = [];
         updateCurrentSelection(this, node);
-
         // Defocus, deemphasize and hide all nodes
         hideTree(this.rootNode);
 
@@ -109,11 +111,12 @@ class TreeView {
             }
             // Child nodes of a timeline node need to be positioned on the timeline
             if (this.currentSelection[i].parentNode !== undefined && this.currentSelection[i].parentNode instanceof TimelineNode) {
-                console.log("survey node positioned");
+                //console.log(this.currentSelection[i].description + " positioned");
                 positionOnTimeline = this.currentSelection[i].parentNode.getPositionOnTimeline(this.currentSelection[i].id);
                 this.currentSelection[i].updatePosition(positionOnTimeline.x, positionOnTimeline.y);
             }
             else {
+                //console.log(this.currentSelection[i].description + " positioned");
                 this.currentSelection[i].updatePosition(treeViewCenter.x, y);
             }
             
@@ -125,9 +128,9 @@ class TreeView {
             }
         }
         // Show and position all neighbour nodes and child nodes
-        showPreviousNodes(node.previousNode, 1, treeViewCenter);
-        showNextNodes(node.nextNode, 1, treeViewCenter);
-        showChildNodes(node.childNodes, treeViewCenter);
+        showAndMovePreviousNodes(node.previousNode, 1, treeViewCenter);
+        showAndMoveNextNodes(node.nextNode, 1, treeViewCenter);
+        showAndMoveChildNodes(node.childNodes, treeViewCenter);
     }
 
     switchNodes(leftNode, rightNode, previousNode, nextNode) {
@@ -175,28 +178,23 @@ function createNodes(that, nodeData) {
         Config.QUESTION_TYPE_LIKERT,
         Config.QUESTION_TYPE_POINT_OF_TIME,
         Config.QUESTION_TYPE_TIME_INTERVAL,
-    ];
+    ],
+    childrenData = [];
 
     if (nodeData.type === Config.TYPE_EXPERIMENT) {
         elements = SvgFactory.createRootNodeElements(Config.EXPERIMENT_ICON_SRC);
         newNode = new RootNode(elements, id, Config.TYPE_EXPERIMENT, description);
-        for (let group of nodeData.groups) {
-            createNodes(that, group);
-        }
+        childrenData = nodeData.groups;
     }
     else if (nodeData.type === Config.TYPE_EXPERIMENT_GROUP) {
         elements = SvgFactory.createTimelineNodeElements(Config.EXPERIMENT_GROUP_ICON_SRC);
         newNode = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, that.treeViewElement.clientWidth);
-        for (let survey of nodeData.surveys) {
-            createNodes(that, survey);
-        }
+        childrenData = nodeData.surveys;
     }
     else if (nodeData.type === Config.TYPE_SURVEY) {
         elements = SvgFactory.createDeflateableNodeElements(false, true, Config.SURVEY_ICON_SRC);
         newNode = new DeflateableNode(elements, id, Config.TYPE_SURVEY, description);
-        for (let step of nodeData.steps) {
-            createNodes(that, step);
-        }
+        childrenData = nodeData.steps;
     }
     else if (nodeData.type === Config.STEP_TYPE_INSTRUCTION) {
         elements = SvgFactory.createMoveableNodeElements(true, false, Config.INSTRUCTION_ICON_SRC);
@@ -209,16 +207,12 @@ function createNodes(that, nodeData) {
     else if (nodeData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
         elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTIONNAIRE_ICON_SRC);
         newNode = new MoveableNode(elements, id, nodeData.type, description);
-        for (let question of nodeData.questions) {
-            createNodes(that, question);
-        }
+        childrenData = nodeData.questions;
     }
     else if (nodeData.type === Config.QUESTION_TYPE_CHOICE) {
         elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTION_ICON_SRC);
         newNode = new MoveableNode(elements, id, nodeData.type, description);
-        for (let answer of nodeData.answers) {
-            createNodes(that, answer);
-        }
+        childrenData = nodeData.answers;
     }
     else if (nodeData.type !== Config.QUESTION_TYPE_CHOICE && questionTypes.includes(nodeData.type)) {
         elements = SvgFactory.createMoveableNodeElements(true, false, Config.QUESTION_ICON_SRC);
@@ -243,6 +237,9 @@ function createNodes(that, nodeData) {
         }
     }
     insertNode(that, newNode);
+    for (let childData of childrenData) {
+        createNodes(that, childData);
+    }
     return newNode;
 }
 
@@ -302,13 +299,13 @@ function updateChildNodeLinks(that, nodeData) {
                 }
                 // Last iteration
                 else if (i === childrenData.length - 1) {
-                    nextNode = that.getNodeById(childrenData[i + 1].id);
+                    nextNode = undefined;
                     previousNode = that.getNodeById(childrenData[i - 1].id);
                 }
                 // All other iterations
                 else {
-                    nextNode = undefined;
-                    previousNode = that.getNodeById(childrenData[i + 1].id);
+                    nextNode = that.getNodeById(childrenData[i + 1].id);
+                    previousNode = that.getNodeById(childrenData[i - 1].id);
                 }
                 childNode.nextNode = nextNode;
                 childNode.previousNode = previousNode;
@@ -403,6 +400,7 @@ function updateCurrentSelection(that, node) {
         return;
     }
     that.currentSelection.push(node);
+    node.isInCurrentSelection = true;
     updateCurrentSelection(that, node.parentNode);
 }
 
@@ -418,7 +416,7 @@ function hideTree(node) {
     }
 }
 
-function showPreviousNodes(node, neighbourCount, treeViewCenter) {
+function showAndMovePreviousNodes(node, neighbourCount, treeViewCenter) {
     let nextCount = neighbourCount + 1,
     x = treeViewCenter.x - neighbourCount * Config.NODE_DISTANCE_HORIZONTAL,
     positionOnTimeline;
@@ -432,16 +430,15 @@ function showPreviousNodes(node, neighbourCount, treeViewCenter) {
     if (node.parentNode !== undefined && node.parentNode instanceof TimelineNode) {
         positionOnTimeline = node.parentNode.getPositionOnTimeline(node.id);
         node.updatePosition(positionOnTimeline.x, positionOnTimeline.y);
-        console.log("survey node positioned");
     }
     else {
         node.updatePosition(x, treeViewCenter.y);
     }
 
-    showPreviousNodes(node.previousNode, nextCount, treeViewCenter);
+    showAndMovePreviousNodes(node.previousNode, nextCount, treeViewCenter);
 }
 
-function showNextNodes(node, neighbourCount, treeViewCenter) {
+function showAndMoveNextNodes(node, neighbourCount, treeViewCenter) {
     let nextCount = neighbourCount + 1,
     x = treeViewCenter.x + neighbourCount * Config.NODE_DISTANCE_HORIZONTAL,
     positionOnTimeline;
@@ -461,16 +458,16 @@ function showNextNodes(node, neighbourCount, treeViewCenter) {
         node.updatePosition(x, treeViewCenter.y);
     }
 
-    showNextNodes(node.nextNode, nextCount, treeViewCenter);
+    showAndMoveNextNodes(node.nextNode, nextCount, treeViewCenter);
 }
 
-function showChildNodes(childNodes, treeViewCenter) {
+function showAndMoveChildNodes(childNodes, treeViewCenter) {
     if (childNodes === undefined || childNodes.length === 0) {
         return;
     }
     treeViewCenter.y += Config.NODE_DISTANCE_VERTICAL;
-    showPreviousNodes(childNodes[0], 0, treeViewCenter);
-    showNextNodes(childNodes[0].nextNode, 1, treeViewCenter);
+    showAndMovePreviousNodes(childNodes[0], 0, treeViewCenter);
+    showAndMoveNextNodes(childNodes[0].nextNode, 1, treeViewCenter);
 }
 
 function updateNodeActions(node, enableActions) {

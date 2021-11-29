@@ -41,6 +41,7 @@ class NodeView extends Observable {
         };
         this.isEmphasized = false;
         this.isFocused = false;
+        this.isInCurrentSelection = false;
         this.isClickable = true;
         this.nodeElements.nodeBody.addEventListener("click", onClick.bind(this));
         this.nodeElements.nodeBody.addEventListener("mouseenter", onMouseEnter.bind(this));
@@ -72,11 +73,13 @@ class NodeView extends Observable {
     }
 
     focus() {
+        this.isFocused = true;
         this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR_FOCUSED);
         this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_FOCUSED);
     }
 
     defocus() {
+        this.isFocused = false;
         this.nodeElements.nodeBody.setAttribute("fill", Config.NODE_BODY_FILL_COLOR);
         this.nodeElements.nodeBody.setAttribute("fill-opacity", Config.NODE_BODY_FILL_OPACITY_DEEMPHASIZED);
     }
@@ -96,6 +99,7 @@ class NodeView extends Observable {
     }
 
     updatePosition(centerX, centerY) {
+        //console.log("Node view update position");
         this.center = {
             x: centerX,
             y: centerY,
