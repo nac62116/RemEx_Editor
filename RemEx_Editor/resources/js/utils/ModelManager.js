@@ -28,7 +28,7 @@ class ModelManager {
 
 //###
         // Remove this
-        //Storage.clear();
+        Storage.clear();
 //###
 
 

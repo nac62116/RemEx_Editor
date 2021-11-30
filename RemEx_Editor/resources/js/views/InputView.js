@@ -13,7 +13,6 @@ class InputView extends Observable {
         this.deleteButton = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_DELETE_BUTTON_ID);
         this.deleteButton.addEventListener("click", onRemoveNodeButtonClicked.bind(this));
         this.alertElement = inputViewContainer.querySelector("#" + Config.INPUT_VIEW_ALERT_ID);
-        this.loadingScreen = document.querySelector("#" + Config.LOADING_SCREEN_ID);
         this.correspondingNode = undefined;
         this.currentFileName = null;
     }
@@ -403,6 +402,7 @@ function onInputChanged(event) {
         resourceFile: undefined,
     },
     inputChangeEvent,
+    uploadResourceEvent,
     properties = {},
     correspondingModelProperty = event.target.getAttribute("name"),
     checkboxElements,
@@ -437,7 +437,6 @@ function onInputChanged(event) {
             }
         }
         else if (correspondingModelProperty === "imageFileName") {
-            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
             inputElements = this.inputFieldsContainer.querySelectorAll("input");
             for (let inputElement of inputElements) {
                 if (inputElement.name === "videoFileName") {
@@ -450,7 +449,6 @@ function onInputChanged(event) {
             data.resourceFile = event.target.files[0];
         }
         else if (correspondingModelProperty === "videoFileName") {
-            this.loadingScreen.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
             inputElements = this.inputFieldsContainer.querySelectorAll("input");
             for (let inputElement of inputElements) {
                 if (inputElement.name === "imageFileName") {
@@ -505,7 +503,12 @@ function onInputChanged(event) {
                     alert(Config.FILE_TOO_LARGE + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
                     this.currentFileName = null;
                     this.clearFileInputs();
-                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                    return;
+                }
+                if (!Config.ACCEPTED_RESOURCE_MIME_TYPES.includes(data.resourceFile.type)) {
+                    alert(Config.FILE_TYPE_NOT_SUPPORTED + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
+                    this.currentFileName = null;
+                    this.clearFileInputs();
                     return;
                 }
                 if (properties.imageFileName !== undefined) {
@@ -527,7 +530,6 @@ function onInputChanged(event) {
                                 child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                             }
                         }
-                        this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                         event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                         inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
                         this.notifyAll(inputChangeEvent);
@@ -563,7 +565,6 @@ function onInputChanged(event) {
                                     alert(Config.VIDEO_RESOLUTION_TOO_HIGH + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
                                     this.currentFileName = null;
                                     this.clearFileInputs();
-                                    this.loadingScreen.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
                                     return;
                             }
                             inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);
@@ -571,6 +572,8 @@ function onInputChanged(event) {
                         }.bind(this));
                     }.bind(this);
                     reader.readAsDataURL(data.resourceFile);
+                    uploadResourceEvent = new ControllerEvent(Config.EVENT_UPLOAD_RESOURCE, null);
+                    this.notifyAll(uploadResourceEvent);
                 }
             }
             else {
