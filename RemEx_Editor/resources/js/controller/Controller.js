@@ -5,6 +5,7 @@ import WhereAmIView from "../views/WhereAmIView.js";
 import LoadingScreenView from "../views/LoadingScreenView.js";
 import ImportExportView from "../views/ImportExportView.js";
 import InputValidator from "../utils/InputValidator.js";
+import ShortcutManager from "../utils/ShortcutManager.js";
 import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
 
@@ -33,10 +34,11 @@ import Config from "../utils/Config.js";
 // - Calculate the optimal duration for a survey depending on its content
 // - Survey time randomization
 // APP:
-// - If the device is turned off, the current experiment is finished and can't be resumed (Issues with receiving a boot completed action from the system, to resume the experiment)
-// - Same problem when the user kills the app (swipes it away in the recent apps list) during an experiment between two surveys (not during a survey). If the user kills the app during a survey the survey gets properly finished and the next survey alarm is set
+// - Important: If the device is turned off, the current experiment is finished and can't be resumed (Issues with receiving a boot completed action from the system, to resume the experiment)
+// - Important: Same problem when the user kills the app (swipes it away in the recent apps list) during an experiment between two surveys (not during a survey). If the user kills the app during a survey the survey gets properly finished and the next survey alarm is set
 // - Logging user interactions that are relevant for the researchers
 // BOTH:
+// - Special characters like german "Umlaute" (äöü) are not represented correctly -> Solve this issue by: (RemEx Editor) Encode the experimentJSON with ISO-8859-1 inside the ImportExportView.js and add it to JSZip as bytes; (RemEx App) change the StandardCharsets value inside AdminActivity.java from UTF_8 to ISO_8859_1
 // - Add new survey steps like distraction games, etc...
 // - Add new question types
 // - Upload experiment to server (EDITOR) / Download experiment from server (APP) (Keep offline functionality (save experiment to client) -> Server communication is only needed for up/downloading experiment)
@@ -144,6 +146,16 @@ class Controller {
                 eventType: Config.EVENT_NEW_EXPERIMENT,
                 callback: onNewExperiment,
             },
+        ],
+        shortcutManagerEventListener = [
+            {
+                eventType: Config.EVENT_COPY_NODE,
+                callback: onCopyNode,
+            },
+            {
+                eventType: Config.EVENT_PASTE_NODE,
+                callback: onPasteNode,
+            },
         ];
 
         // experiment is the root of the data model:
@@ -182,6 +194,12 @@ class Controller {
         InputView.init(inputViewContainer);
         for (let listener of inputViewEventListener) {
             InputView.addEventListener(listener.eventType, listener.callback);
+        }
+
+        // ShortcutManager (Handles key shortcuts like copy/paste, save, etc.)
+        ShortcutManager.init();
+        for (let listener of shortcutManagerEventListener) {
+            ShortcutManager.addEventListener(listener.eventType, listener.callback);
         }
 
 
@@ -398,7 +416,7 @@ function onNodeClicked(event) {
                 }
                 timelineNodeData = ModelManager.getDataById(clickedNode.id);
                 lastSurveyData = ModelManager.getLastSurveyData(timelineNodeData);
-                clickedNode.updateTimelineLength(lastSurveyData);
+                TreeView.updateTimelineLength(clickedNode, lastSurveyData);
             }
         }
         TreeView.navigateToNode(clickedNode);
@@ -406,19 +424,13 @@ function onNodeClicked(event) {
         InputView.hideAlert();
         InputView.show(clickedNode, nodeData, parentNodeDataModel, pastOngoingInstructions, pastAndFutureQuestions);
         InputView.selectFirstInput();
-        if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            if (lastSurveyData === undefined) {
-                clickedNode.updateTimelineLength(undefined);
-            }
-        }
-        // Setting the initial timeline length
     }
 }
 
 function onAddNode(event) {
     let clickedNode = event.data.target,
     newNode,
-    newNodeData,
+    newNodeData = event.data.nodeData,
     nodeToUpdateData,
     previousNodeData,
     nextNodeData,
@@ -426,27 +438,29 @@ function onAddNode(event) {
 
     // First step:
     // Extending and updating the data model
-    if (event.type === Config.EVENT_ADD_CHILD_NODE) {
-        // Initial step and question types when adding a node
-        if (clickedNode.type === Config.TYPE_SURVEY) {
-            initialProperties.type = Config.STEP_TYPE_INSTRUCTION;
+    if (newNodeData === undefined) {
+        if (event.type === Config.EVENT_ADD_CHILD_NODE) {
+            // Initial step and question types when adding a node
+            if (clickedNode.type === Config.TYPE_SURVEY) {
+                initialProperties.type = Config.STEP_TYPE_QUESTIONNAIRE;
+            }
+            if (clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                initialProperties.type = Config.QUESTION_TYPE_CHOICE;
+            }
+            newNodeData = ModelManager.extendExperiment(clickedNode, initialProperties);
         }
-        if (clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-            initialProperties.type = Config.QUESTION_TYPE_TEXT;
+        else {
+            // Initial step and question types when adding a node
+            if (clickedNode.parentNode !== undefined
+                && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
+                    initialProperties.type = Config.STEP_TYPE_QUESTIONNAIRE;
+            }
+            if (clickedNode.parentNode !== undefined
+                && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                    initialProperties.type = Config.QUESTION_TYPE_CHOICE;
+            }
+            newNodeData = ModelManager.extendExperiment(clickedNode.parentNode, initialProperties);
         }
-        newNodeData = ModelManager.extendExperiment(clickedNode, initialProperties);
-    }
-    else {
-        // Initial step and question types when adding a node
-        if (clickedNode.parentNode !== undefined
-            && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-                initialProperties.type = Config.STEP_TYPE_INSTRUCTION;
-        }
-        if (clickedNode.parentNode !== undefined
-            && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                initialProperties.type = Config.QUESTION_TYPE_TEXT;
-        }
-        newNodeData = ModelManager.extendExperiment(clickedNode.parentNode, initialProperties);
     }
 
     if (event.type === Config.EVENT_ADD_CHILD_NODE) {
@@ -668,13 +682,13 @@ function onTimelineClicked(event) {
     },
     timeInMin = properties.absoluteStartDaysOffset * 24 * 60 + properties.absoluteStartAtHour * 60 + properties.absoluteStartAtMinute, // eslint-disable-line no-magic-numbers
     newSurveyNode,
-    newSurveyData,
+    newSurveyData = event.data.nodeData,
     previousSurveyNode,
     nextSurveyNode,
     // The survey with the greatest start time
     lastSurveyData;
 
-
+    console.log("Add node");
 //###
     // TODO: Check if a clicking scope is necessary or if the timeline can be clicked from anywhere
 //###
@@ -682,7 +696,9 @@ function onTimelineClicked(event) {
 
     // First step:
     // Extending, updating and shortening the data model
-    newSurveyData = ModelManager.extendExperiment(timelineNode, properties);
+    if (newSurveyData === undefined) {
+        newSurveyData = ModelManager.extendExperiment(timelineNode, properties);
+    }
     timelineNodeData = ModelManager.getDataById(timelineNode.id);
     lastSurveyData = ModelManager.updateSurveyLinks(timelineNodeData);
     newSurveyData = ModelManager.getDataById(newSurveyData.id);
@@ -699,7 +715,7 @@ function onTimelineClicked(event) {
     newSurveyNode = TreeView.createSubtree(newSurveyData);
     TreeView.updateNodeLinks(newSurveyData, timelineNode, previousSurveyNode, nextSurveyNode);
     timelineNode.updateNodeTimeMap(newSurveyNode.id, timeInMin);
-    timelineNode.updateTimelineLength(lastSurveyData);
+    TreeView.updateTimelineLength(timelineNode, lastSurveyData);
     TreeView.clickNode(newSurveyNode, undefined);
 }
 
@@ -803,7 +819,7 @@ function onRemoveNode(event) {
     if (nodeToRemove.parentNode !== undefined
         && nodeToRemove.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
             nodeToRemove.parentNode.shortenNodeTimeMap(nodeToRemove.id);
-            nodeToRemove.parentNode.updateTimelineLength(lastSurveyData);
+            TreeView.updateTimelineLength(nodeToRemove.parentNode, lastSurveyData);
     }
     TreeView.removeSubtree(nodeToRemove);
     TreeView.clickNode(nextFocusedNode, undefined);
@@ -907,7 +923,7 @@ function onInputChanged(event) {
         && dataChangingNodeData.absoluteStartAtMinute !== undefined) {
             timeInMin = dataChangingNodeData.absoluteStartDaysOffset * 24 * 60 + dataChangingNodeData.absoluteStartAtHour * 60 + dataChangingNodeData.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
             parentNode.updateNodeTimeMap(dataChangingNode.id, timeInMin);
-            parentNode.updateTimelineLength(lastSurveyData);
+            TreeView.updateTimelineLength(parentNode, lastSurveyData);
     }
     if (dataChangingNodeData.name !== undefined) {
         dataChangingNode.updateDescription(dataChangingNodeData.name);
@@ -937,6 +953,110 @@ function onInputChanged(event) {
 
 function onUploadResource() {
     LoadingScreenView.show(Config.LOADING_PROMPT);
+}
+
+// *** KeyManager callback functions:
+// **
+// *
+
+function onCopyNode() {
+    let nodeData = ModelManager.getDataById(TreeView.currentFocusedNode.id),
+    clipboardContent = {};
+
+    clipboardContent.nodeData = nodeData;
+    if (TreeView.currentFocusedNode.parentNode !== undefined) {
+        clipboardContent.parentNodeType = TreeView.currentFocusedNode.parentNode.type;
+        ShortcutManager.setClipboardContent(clipboardContent);
+        console.log("copied ", nodeData);
+        // Inform user -> nodeData.name || text (answer) got copied!
+    }
+    else {
+        console.log("not copy of experiment");
+        // Inform user experiment nodes cannot be copied. To copy an experiment just save it on the Desktop. Thats the copy (that can be loaded elsewhere).
+    }
+}
+
+function onPasteNode(event) {
+    let clipboardNodeData = event.data.clipboardContent.nodeData,
+    clipboardNodeDescription,
+    clipboardParentNodeType = event.data.clipboardContent.parentNodeType,
+    insertionParentNode,
+    insertionParentNodeData,
+    newData = {},
+    initialProperties = {},
+    changingProperties = {};
+
+    for (let node of TreeView.currentSelection) {
+        if (clipboardParentNodeType === node.type) {
+            insertionParentNode = node;
+            insertionParentNodeData = ModelManager.getDataById(node.id);
+        }
+    }
+    // Parent type of the pasted data is not in the current selection
+    if (insertionParentNodeData === undefined) {
+        insertionParentNode = TreeView.currentFocusedNode;
+        insertionParentNodeData = ModelManager.getDataById(TreeView.currentFocusedNode.id);
+        while (insertionParentNodeData !== undefined
+                && insertionParentNode !== undefined
+                && insertionParentNode.type !== clipboardParentNodeType) {
+            if (insertionParentNode.type === Config.TYPE_SURVEY) {
+                initialProperties.type = Config.STEP_TYPE_QUESTIONNAIRE;
+            }
+            if (insertionParentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                initialProperties.type = Config.QUESTION_TYPE_CHOICE;
+            }
+            newData = ModelManager.extendExperiment(insertionParentNode, initialProperties);
+            if (newData !== undefined) {
+                if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+                    TreeView.clickTimeline(insertionParentNode, newData);
+                }
+                else {
+                    if (insertionParentNode.childNodes.length === 0) {
+                        TreeView.clickAddChildNodeButton(insertionParentNode, newData);
+                    }
+                    else {
+                        TreeView.clickAddPreviousNodeButton(insertionParentNode.childNodes[0], newData);
+                    }
+                }
+                insertionParentNode = TreeView.getNodeById(newData.id);
+            }
+            insertionParentNodeData = newData;
+        }
+    }
+    if (insertionParentNodeData !== undefined) {
+        if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            while (InputValidator.validateSurvey(undefined, clipboardNodeData, insertionParentNodeData) !== true) {
+                if (clipboardNodeData.absoluteStartAtHour === 23) { // eslint-disable-line no-magic-numbers
+                    changingProperties.absoluteStartAtHour = 0;
+                    changingProperties.absoluteStartDaysOffset = clipboardNodeData.absoluteStartDaysOffset + 1;
+                }
+                else {
+                    changingProperties.absoluteStartAtHour = clipboardNodeData.absoluteStartAtHour + 1;
+                }
+            }
+        }
+        newData = ModelManager.extendExperimentWithCopy(clipboardNodeData, insertionParentNodeData, changingProperties, undefined);
+        if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+            TreeView.clickTimeline(insertionParentNode, newData);
+        }
+        else {
+            if (insertionParentNode.childNodes.length !== 0) {
+                TreeView.clickAddPreviousNodeButton(insertionParentNode.childNodes[0], newData);
+            }
+            else {
+                TreeView.clickAddChildNodeButton(insertionParentNode, newData);
+            }
+        }
+    }
+    else {
+        if (clipboardNodeData.type === Config.TYPE_ANSWER) {
+            clipboardNodeDescription = clipboardNodeData.text;
+        }
+        else {
+            clipboardNodeDescription = clipboardNodeData.name;
+        }
+        alert("Das aktuell ausgewählte Element (" + TreeView.currentFocusedNode.description + ") mit dem Typ (" + TreeView.currentFocusedNode.type + ") kann das kopierte Element (" + clipboardNodeDescription + ") vom Typ (" + clipboardNodeData.type + ") nicht beinhalten");
+    }
 }
 
 export default new Controller();

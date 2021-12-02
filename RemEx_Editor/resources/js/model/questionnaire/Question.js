@@ -1,3 +1,5 @@
+import Config from "../../utils/Config.js";
+
 class Question {
 
     constructor(id, type, name) {
@@ -7,8 +9,8 @@ class Question {
         this.id = id;
         this.type = type;
         this.name = name;
-        this.text = "Text";
-        this.hint = "Hinweis";
+        this.text = Config.NEW_QUESTION_TEXT;
+        this.hint = Config.NEW_QUESTION_HINT;
         this.nextQuestionId = null;
         this.previousQuestionId = null;
     }

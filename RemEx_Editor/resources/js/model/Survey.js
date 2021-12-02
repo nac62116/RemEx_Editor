@@ -5,12 +5,12 @@ class Survey {
     constructor(id) {
         this.id = id;
         this.type = Config.TYPE_SURVEY;
-        this.name = "Neue Befragung " + id;
-        this.maxDurationInMin = 1;
-        this.absoluteStartAtMinute = null;
-        this.absoluteStartAtHour = null;
-        this.absoluteStartDaysOffset = null;
-        this.notificationDurationInMin = 1;
+        this.name = Config.NEW_SURVEY_NAME + id;
+        this.maxDurationInMin = Config.NEW_SURVEY_MAX_DURATION;
+        this.absoluteStartAtMinute = Config.NEW_SURVEY_START_MINUTE;
+        this.absoluteStartAtHour = Config.NEW_SURVEY_START_HOUR;
+        this.absoluteStartDaysOffset = Config.NEW_SURVEY_START_DAYSOFFSET;
+        this.notificationDurationInMin = Config.NEW_SURVEY_NOTIFICATION_DURATION;
         this.nextSurveyId = null;
         this.previousSurveyId = null;
         this.steps = [];

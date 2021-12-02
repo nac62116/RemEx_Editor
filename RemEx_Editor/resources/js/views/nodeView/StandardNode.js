@@ -22,6 +22,9 @@ class StandardNode extends NodeView {
             this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
             this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
         }
+        // This property is only defined when the add buttons are triggered programmatically
+        // and we want to add already defined data (e.g. onPasteNode)
+        this.nodeData = undefined;
     }
 
     show() {
@@ -82,7 +85,6 @@ class StandardNode extends NodeView {
         bezierReferencePoint;
 
         super.updatePosition(centerX, centerY);
-        //console.log("Standard node update position");
         parentOutputPoint = this.parentNode.bottom;
         bezierReferencePoint = {
             x: parentOutputPoint.x,
@@ -100,6 +102,30 @@ class StandardNode extends NodeView {
         if (this.nodeElements.addChildButton !== undefined) {
             this.nodeElements.addChildButton.setAttribute("cx", this.center.x);
             this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y);
+        }
+    }
+
+    clickAddPreviousButton(nodeData) {
+        let event = new MouseEvent("click", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        });
+        this.nodeData = nodeData;
+        if (this.nodeElements.addPreviousButton !== undefined) {
+            this.nodeElements.addPreviousButton.dispatchEvent(event);
+        }
+    }
+
+    clickAddChildButton(nodeData) {
+        let event = new MouseEvent("click", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        });
+        this.nodeData = nodeData;
+        if (this.nodeElements.addChildButton !== undefined) {
+            this.nodeElements.addChildButton.dispatchEvent(event);
         }
     }
 
@@ -134,10 +160,12 @@ function onAddPreviousNodeClicked() {
     if (this.isClickable) {
         data = {
             target: this,
+            nodeData: this.nodeData,
         };
         controllerEvent = new ControllerEvent(Config.EVENT_ADD_PREVIOUS_NODE, data);
         this.notifyAll(controllerEvent);
     }
+    this.nodeData = undefined;
 }
 
 function onAddChildNodeClicked() {
@@ -146,10 +174,12 @@ function onAddChildNodeClicked() {
     if (this.isClickable) {
         data = {
             target: this,
+            nodeData: this.nodeData,
         };
         controllerEvent = new ControllerEvent(Config.EVENT_ADD_CHILD_NODE, data);
         this.notifyAll(controllerEvent);
     }
+    this.nodeData = undefined;
 }
 
 function onAddButtonMouseEnter(event) {

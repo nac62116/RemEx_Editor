@@ -25,13 +25,6 @@ class ModelManager {
         let experiment,
         id;
 
-
-//###
-        // Remove this
-        Storage.clear();
-//###
-
-
         experiment = Storage.load();
         if (experiment === undefined) {
             id = IdManager.getUnusedId();
@@ -79,20 +72,17 @@ class ModelManager {
         if (parentNode.type === Config.TYPE_EXPERIMENT) {
             newData = createNewExperimentGroup(properties);
         }
-        else if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+        if (parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
             newData = createNewSurvey(properties, parentNode);
         }
-        else if (parentNode.type === Config.TYPE_SURVEY) {
+        if (parentNode.type === Config.TYPE_SURVEY) {
             newData = createNewStep(properties, parentNode);
         }
-        else if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        if (parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
             newData = createNewQuestion(properties, parentNode);
         }
-        else if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
+        if (parentNode.type === Config.QUESTION_TYPE_CHOICE) {
             newData = createNewAnswer(properties, parentNode);
-        }
-        else {
-            console.log("The node type " + parentNode.type + " is not defined.");
         }
         return newData;
     }
@@ -220,6 +210,67 @@ class ModelManager {
             }
         }
         return undefined;
+    }
+
+    extendExperimentWithCopy(nodeData, parentNodeData, changingProperties, suffix) {
+        let newData,
+        idLinkMap = new Map();
+
+        idLinkMap = getIdLinkMap(nodeData, idLinkMap);
+        newData = getNewCopy(nodeData, idLinkMap, suffix);
+
+        newData.id = IdManager.getUnusedId();
+        if (newData.type === Config.TYPE_ANSWER) {
+            if (suffix === undefined) {
+                newData.code = newData.code + " " + newData.id;
+            }
+            else {
+                newData.code = newData.code + " " + suffix;
+            }
+        }
+        else {
+            if (suffix === undefined) {
+                newData.name = newData.name + " " + newData.id;
+            }
+            else {
+                newData.name = newData.name + " " + suffix;
+            }
+        }
+        
+        for (let property in changingProperties) {
+            if (Object.prototype.hasOwnProperty.call(changingProperties, property)) {
+                newData[property] = changingProperties[property];
+                if (property === "imageFileName" || property === "videoFileName") {
+                    if (!this.usedResourceFileNames.includes(changingProperties[property])) {
+                        this.usedResourceFileNames.push(changingProperties[property]);
+                    }
+                }
+            }
+        }
+        if (parentNodeData.type === Config.TYPE_EXPERIMENT) {
+            parentNodeData.groups.push(newData);
+        }
+        if (parentNodeData.type === Config.TYPE_EXPERIMENT_GROUP) {
+            parentNodeData.surveys.push(newData);
+        }
+        if (parentNodeData.type === Config.TYPE_SURVEY) {
+            parentNodeData.steps.push(newData);
+        }
+        if (parentNodeData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+            parentNodeData.questions.push(newData);
+        }
+        if (parentNodeData.type === Config.QUESTION_TYPE_CHOICE) {
+            parentNodeData.answers.push(newData);
+        }
+
+        this.updateExperiment(parentNodeData);
+
+        console.log("new data:\n", newData);
+
+        // Controller: 
+        // First model change: update Survey/Step/Question links depending on newData
+        // Second view change: createSubtree; updateTimelineLength, add to NodeTimeMap, InputValidator; click(); etc...
+        return newData;
     }
 
     updateSurveyLinks(timelineNodeData) {
@@ -443,15 +494,15 @@ class ModelManager {
     }
 
     getAllResources() {
-        let encodedResources = [],
+        let resources = [],
         resource;
         for (let fileName of this.usedResourceFileNames) {
             resource = IndexedDB.getResource(fileName);
             if (resource !== null) {
-                encodedResources.push(resource);
+                resources.push(resource);
             }
         }
-        return encodedResources;
+        return resources;
     }
 
     getNameCodeTable(experiment) {
@@ -482,6 +533,185 @@ class ModelManager {
         }
         return nameCodeTable;
     }
+}
+
+function getIdLinkMap(nodeData, idLinkMap) {
+    let id;
+
+    if (nodeData.type === Config.TYPE_EXPERIMENT) {
+        for (let group of nodeData.groups) {
+            getIdLinkMap(group, idLinkMap);
+        }
+    }
+    if (nodeData.type === Config.TYPE_EXPERIMENT_GROUP) {
+        for (let survey of nodeData.surveys) {
+            getIdLinkMap(survey, idLinkMap);
+        }
+    }
+    if (nodeData.type === Config.TYPE_SURVEY) {
+        if (nodeData.nextSurveyId !== null) {
+            id = idLinkMap.get(nodeData.nextSurveyId);
+            if (id === undefined) {
+                id = IdManager.getUnusedId();
+                idLinkMap.set(nodeData.nextSurveyId, id);
+            }
+            nodeData.nextSurveyId = id;
+        }
+        if (nodeData.previousSurveyId !== null) {
+            id = idLinkMap.get(nodeData.previousSurveyId);
+            if (id === undefined) {
+                id = IdManager.getUnusedId();
+                idLinkMap.set(nodeData.previousSurveyId, id);
+            }
+            nodeData.previousSurveyId = id;
+        }
+        for (let step of nodeData.steps) {
+            getIdLinkMap(step, idLinkMap);
+        }
+    }
+    if (nodeData.type === Config.STEP_TYPE_BREATHING_EXERCISE
+        || nodeData.type === Config.STEP_TYPE_INSTRUCTION
+        || nodeData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        if (nodeData.nextStepId !== null) {
+            id = idLinkMap.get(nodeData.nextStepId);
+            if (id === undefined) {
+                id = IdManager.getUnusedId();
+                idLinkMap.set(nodeData.nextStepId, id);
+            }
+            nodeData.nextStepId = id;
+        }
+        if (nodeData.previousStepId !== null) {
+            id = idLinkMap.get(nodeData.previousStepId);
+            if (id === undefined) {
+                id = IdManager.getUnusedId();
+                idLinkMap.set(nodeData.previousStepId, id);
+            }
+            nodeData.previousStepId = id;
+        }
+        if (nodeData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+            for (let question of nodeData.questions) {
+                getIdLinkMap(question, idLinkMap);
+            }
+        }
+    }
+    if (nodeData.type === Config.QUESTION_TYPE_CHOICE
+        || nodeData.type === Config.QUESTION_TYPE_LIKERT
+        || nodeData.type === Config.QUESTION_TYPE_POINT_OF_TIME
+        || nodeData.type === Config.QUESTION_TYPE_TEXT
+        || nodeData.type === Config.QUESTION_TYPE_TIME_INTERVAL) {
+        if (nodeData.nextQuestionId !== null) {
+            id = idLinkMap.get(nodeData.nextQuestionId);
+            if (id === undefined) {
+                id = IdManager.getUnusedId();
+                idLinkMap.set(nodeData.nextQuestionId, id);
+            }
+            nodeData.nextQuestionId = id;
+        }
+        if (nodeData.previousQuestionId !== null) {
+            id = idLinkMap.get(nodeData.previousQuestionId);
+            if (id === undefined) {
+                id = IdManager.getUnusedId();
+                idLinkMap.set(nodeData.previousQuestionId, id);
+            }
+            nodeData.previousQuestionId = id;
+        }
+        if (nodeData.type === Config.QUESTION_TYPE_CHOICE) {
+            for (let answer of nodeData.answers) {
+                getIdLinkMap(answer, idLinkMap);
+            }
+        }
+        
+    }
+    if (nodeData.type === Config.TYPE_ANSWER) {
+        if (nodeData.nextQuestionId !== null) {
+            id = idLinkMap.get(nodeData.nextQuestionId);
+            if (id === undefined) {
+                id = IdManager.getUnusedId();
+                idLinkMap.set(nodeData.nextQuestionId, id);
+            }
+            nodeData.nextQuestionId = id;
+        }
+    }
+
+    return idLinkMap;
+}
+
+function getNewCopy(nodeData, idLinkMap, suffix) {
+    let newData = nodeData,
+    id;
+
+    if (newData.type === Config.TYPE_EXPERIMENT_GROUP) {
+        for (let survey of newData.surveys) {
+            if (idLinkMap.get(survey.id) !== undefined) {
+                id = idLinkMap.get(survey.id);
+            }
+            else {
+                id = IdManager.getUnusedId();
+            }
+            survey.id = id;
+            if (suffix === undefined) {
+                survey.name = survey.name + " " + id;
+            }
+            else {
+                survey.name = survey.name + " " + suffix;
+            }
+            getNewCopy(survey, idLinkMap);
+        }
+    }
+    if (newData.type === Config.TYPE_SURVEY) {
+        for (let step of newData.steps) {
+            if (idLinkMap.get(step.id) !== undefined) {
+                id = idLinkMap.get(step.id);
+            }
+            else {
+                id = IdManager.getUnusedId();
+            }
+            step.id = id;
+            if (suffix === undefined) {
+                step.name = step.name + " " + id;
+            }
+            else {
+                step.name = step.name + " " + suffix;
+            }
+            getNewCopy(step, idLinkMap);
+        }
+    }
+    if (newData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        for (let question of newData.questions) {
+            if (idLinkMap.get(question.id) !== undefined) {
+                id = idLinkMap.get(question.id);
+            }
+            else {
+                id = IdManager.getUnusedId();
+            }
+            question.id = id;
+            if (suffix === undefined) {
+                question.name = question.name + " " + id;
+            }
+            else {
+                question.name = question.name + " " + suffix;
+            }
+            getNewCopy(question, idLinkMap);
+        }
+    }
+    if (newData.type === Config.QUESTION_TYPE_CHOICE) {
+        for (let answer of newData.answers) {
+            if (idLinkMap.get(answer.id) !== undefined) {
+                id = idLinkMap.get(answer.id);
+            }
+            else {
+                id = IdManager.getUnusedId();
+            }
+            answer.id = id;
+            if (suffix === undefined) {
+                answer.code = answer.code + " " + id;
+            }
+            else {
+                answer.code = answer.code + " " + suffix;
+            }
+        }
+    }
+    return newData;
 }
 
 function removeWaitForStepLinks(that, stepData, stepToWaitForData, experiment) {

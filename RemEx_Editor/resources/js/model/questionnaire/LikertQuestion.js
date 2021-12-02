@@ -4,11 +4,11 @@ import Question from "./Question.js";
 class LikertQuestion extends Question {
 
     constructor(id) {
-        super(id, Config.QUESTION_TYPE_LIKERT, "Neue Likertfrage " + id);
-        this.scaleMinimumLabel = "Sehr schlecht";
-        this.scaleMaximumLabel = "Sehr gut";
-        this.initialValue = 1;
-        this.itemCount = 5;
+        super(id, Config.QUESTION_TYPE_LIKERT, Config.NEW_LIKERT_QUESTION_NAME + id);
+        this.scaleMinimumLabel = Config.NEW_LIKERT_QUESTION_SCALE_MIN_LABEL;
+        this.scaleMaximumLabel = Config.NEW_LIKERT_QUESTION_SCALE_MAX_LABEL;
+        this.initialValue = Config.NEW_LIKERT_QUESTION_INITIAL_VALUE;
+        this.itemCount = Config.NEW_LIKERT_QUESTION_ITEM_COUNT;
     }
 }
 

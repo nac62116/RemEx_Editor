@@ -8,6 +8,7 @@ class TimelineNode extends StandardNode {
     constructor(nodeElements, id, type, description, treeViewWidth) {
         super(nodeElements, id, type, description);
         this.timeline = new TimelineView(nodeElements.timelineElements, treeViewWidth, this);
+        this.timeline.updatePosition(0, 0);
         this.nodeTimeMap = new Map();
     }
 
@@ -38,9 +39,25 @@ class TimelineNode extends StandardNode {
         this.timeline.updatePosition(centerX, centerY + Config.NODE_DISTANCE_VERTICAL);
     }
 
+    clickTimeline(position, surveyData) {
+        let event = new MouseEvent("click", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: position.x,
+            clientY: position.y,
+        });
+        this.timeline.nodeData = surveyData;
+        this.timeline.timelineElements.timeline.dispatchEvent(event);
+    }
+
     setIsClickable(isClickable) {
         super.setIsClickable(isClickable);
         this.timeline.isClickable = isClickable;
+    }
+
+    getTimelineLabels() {
+        return this.timeline.timelineElements.labels;
     }
 
     updateTimelineLength(lastSurveyData) {
@@ -68,10 +85,17 @@ class TimelineNode extends StandardNode {
         this.nodeTimeMap = new Map();
     }
 
-    getPositionOnTimeline(nodeId) {
-        let time = this.nodeTimeMap.get(nodeId);
+    getPositionOnTimeline(nodeId, time) {
+        let timeInMin;
 
-        return this.timeline.getPositionFromTime(time);
+        if (time === undefined) {
+            timeInMin = this.nodeTimeMap.get(nodeId);
+        }
+        else {
+            timeInMin = time;
+        }
+
+        return this.timeline.getPositionFromTime(timeInMin);
     }
 }
 
@@ -101,6 +125,9 @@ class TimelineView extends Observable {
         this.timelineElements.timeline.addEventListener("mouseenter", onMouseEnter.bind(this));
         this.timelineElements.timeline.addEventListener("mouseleave", onMouseLeave.bind(this));
         this.timelineElements.labels = [];
+        // This property is only defined when the timeline click is triggered programmatically
+        // and we want to add already defined data (e.g. onPasteNode)
+        this.nodeData = undefined;
     }
 
     show() {
@@ -168,8 +195,7 @@ class TimelineView extends Observable {
         dayCount = 1,
         descriptionCount = 0,
         descriptionLines = [],
-        isGreater,
-        treeView = document.querySelector("#" + Config.TREE_VIEW_ID);
+        isGreater;
 
         if (timelineLengthInMin <= Config.ONE_DAY_IN_MIN) {
             labelSteps = Config.ONE_HOUR_IN_MIN;
@@ -206,10 +232,6 @@ class TimelineView extends Observable {
             this.timelineLengthInMin = Math.ceil(timelineLengthInMin / Config.ONE_YEAR_IN_MIN) * Config.ONE_YEAR_IN_MIN;
             labelDescriptions = Config.TIMELINE_LABEL_DESCRIPTIONS_DAILY;
         }
-        for (let currentLabel of this.timelineElements.labels) {
-            treeView.removeChild(currentLabel.stroke);
-            treeView.removeChild(currentLabel.description);
-        }
         this.timelineElements.labels = [];
         for (let timeInMin = 0; timeInMin <= this.timelineLengthInMin; timeInMin += labelSteps) {
             if (descriptionCount === labelDescriptions.length) {
@@ -233,8 +255,6 @@ class TimelineView extends Observable {
             position = this.getPositionFromTime(timeInMin);
             label = SvgFactory.createTimelineLabel(position, descriptionLines, isGreater);
             this.timelineElements.labels.push(label);
-            treeView.insertBefore(label.description, this.timelineElements.timeline);
-            treeView.insertBefore(label.stroke, this.timelineElements.timeline);
             descriptionCount++;
         }
     }
@@ -296,10 +316,12 @@ function onClick(event) {
             absoluteStartDaysOffset: Math.floor(timeInMin / Config.ONE_DAY_IN_MIN),
             absoluteStartAtHour: Math.floor((timeInMin % Config.ONE_DAY_IN_MIN) / Config.ONE_HOUR_IN_MIN),
             absoluteStartAtMinute: timeInMin % Config.ONE_DAY_IN_MIN % Config.ONE_HOUR_IN_MIN,
+            nodeData: this.nodeData,
         };
         controllerEvent = new Event(Config.EVENT_TIMELINE_CLICKED, data);
         this.notifyAll(controllerEvent);
     }
+    this.nodeData = undefined;
 }
 
 function getTimeFromPosition(that, position) {

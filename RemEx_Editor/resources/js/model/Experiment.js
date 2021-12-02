@@ -5,7 +5,7 @@ class Experiment {
     constructor(id) {
         this.id = id;
         this.type = Config.TYPE_EXPERIMENT;
-        this.name = "Neues Experiment";
+        this.name = Config.NEW_EXPERIMENT_NAME;
         this.groups = [];
     }
 }

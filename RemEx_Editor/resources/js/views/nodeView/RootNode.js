@@ -10,6 +10,9 @@ class RootNode extends NodeView {
         this.nodeElements.addChildButton.addEventListener("click", onAddChildNodeClicked.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+        // This property is only defined when the add buttons are triggered programmatically
+        // and we want to add already defined data (e.g. onPasteNode)
+        this.nodeData = undefined;
     }
 
     focus() {
@@ -33,6 +36,16 @@ class RootNode extends NodeView {
         this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y);
     }
 
+    clickAddChildButton(nodeData) {
+        let event = new MouseEvent("click", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        });
+        this.nodeData = nodeData;
+        this.nodeElements.addChildButton.dispatchEvent(event);
+    }
+
     hideAddChildButton() {
         this.nodeElements.addChildButton.setAttribute("display", "none");
     }
@@ -48,10 +61,12 @@ function onAddChildNodeClicked() {
     if (this.isClickable) {
         data = {
             target: this,
+            nodeData: this.nodeData,
         };
         controllerEvent = new ControllerEvent(Config.EVENT_ADD_CHILD_NODE, data);
         this.notifyAll(controllerEvent);
     }
+    this.nodeData = undefined;
 }
 
 function onAddButtonMouseEnter(event) {

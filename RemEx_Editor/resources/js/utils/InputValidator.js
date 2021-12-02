@@ -63,9 +63,6 @@ class InputValidator {
     inputIsValid(node, nodeData, parentData) {
         let alert,
         invalidInput,
-        nodeTimeInMin,
-        surveyTimeInMin,
-        timeWindow = {},
         result = true;
     
         if (node.type === Config.TYPE_EXPERIMENT_GROUP) {
@@ -84,73 +81,9 @@ class InputValidator {
                 }
             }
         }
+        // TODO: Clean up like here
         else if (node.type === Config.TYPE_SURVEY) {
-            if (nodeData.name !== undefined) {
-                for (let survey of parentData.surveys) {
-                    if (survey.name === nodeData.name && survey.id !== nodeData.id) {
-                        invalidInput = "name";
-                        alert = Config.SURVEY_NAME_NOT_UNIQUE;
-                        result = {
-                            correspondingNode: node,
-                            invalidInput: invalidInput,
-                            alert: alert,
-                        };
-                        return result;
-                    }
-                }
-            }
-            if (nodeData.absoluteStartDaysOffset !== undefined
-                || nodeData.absoluteStartAtHour !== undefined
-                || nodeData.absoluteStartAtMinute !== undefined) {
-    
-                nodeTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
-                for (let survey of parentData.surveys) {
-                    if (survey.id !== nodeData.id) {
-                        surveyTimeInMin = survey.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + survey.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + survey.absoluteStartAtMinute;
-                        timeWindow.start = surveyTimeInMin - nodeData.maxDurationInMin - nodeData.notificationDurationInMin;
-                        timeWindow.end = surveyTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin;
-                        if (nodeTimeInMin >= timeWindow.start && nodeTimeInMin <= timeWindow.end) {
-                            alert = Config.SURVEY_OVERLAPS;
-                            if (nodeData.absoluteStartDaysOffset !== undefined) {
-                                invalidInput = "absoluteStartDaysOffset";
-                            }
-                            else {
-                                invalidInput = "absoluteStartAtHour";
-                            }
-                            result = {
-                                correspondingNode: node,
-                                invalidInput: invalidInput,
-                                alert: alert,
-                            };
-                            return result;
-                        }
-                    }
-                }
-            }
-            if (nodeData.maxDurationInMin !== undefined) {
-                if (nodeData.maxDurationInMin >= Config.SURVEY_MAX_DURATION_IN_MIN) {
-                    invalidInput = "maxDurationInMin";
-                    alert = Config.SURVEY_MAX_DURATION_IN_MIN_ALERT;
-                    result = {
-                        correspondingNode: node,
-                        invalidInput: invalidInput,
-                        alert: alert,
-                    };
-                    return result;
-                }
-            }
-            if (nodeData.notificationDurationInMin !== undefined) {
-                if (nodeData.notificationDurationInMin >= Config.SURVEY_MAX_NOTIFICATION_DURATION_IN_MIN) {
-                    invalidInput = "notificationDurationInMin";
-                    alert = Config.SURVEY_MAX_NOTIFICATION_DURATION_IN_MIN_ALERT;
-                    result = {
-                        correspondingNode: node,
-                        invalidInput: invalidInput,
-                        alert: alert,
-                    };
-                    return result;
-                }
-            }
+            result = this.validateSurvey(node, nodeData, parentData);
         }
         else if (node.type === Config.STEP_TYPE_INSTRUCTION) {
             if (nodeData.header !== undefined) {
@@ -369,6 +302,84 @@ class InputValidator {
         }
         return result;
     }
+    
+    validateSurvey(node, nodeData, parentData) {
+        let alert,
+        invalidInput,
+        nodeTimeInMin,
+        surveyTimeInMin,
+        timeWindow = {},
+        result = true;
+        
+        if (nodeData.name !== undefined) {
+            for (let survey of parentData.surveys) {
+                if (survey.name === nodeData.name && survey.id !== nodeData.id) {
+                    invalidInput = "name";
+                    alert = Config.SURVEY_NAME_NOT_UNIQUE;
+                    result = {
+                        correspondingNode: node,
+                        invalidInput: invalidInput,
+                        alert: alert,
+                    };
+                    return result;
+                }
+            }
+        }
+        if (nodeData.absoluteStartDaysOffset !== undefined
+            || nodeData.absoluteStartAtHour !== undefined
+            || nodeData.absoluteStartAtMinute !== undefined) {
+
+            nodeTimeInMin = nodeData.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + nodeData.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + nodeData.absoluteStartAtMinute;
+            for (let survey of parentData.surveys) {
+                if (survey.id !== nodeData.id) {
+                    surveyTimeInMin = survey.absoluteStartDaysOffset * Config.ONE_DAY_IN_MIN + survey.absoluteStartAtHour * Config.ONE_HOUR_IN_MIN + survey.absoluteStartAtMinute;
+                    timeWindow.start = surveyTimeInMin - nodeData.maxDurationInMin - nodeData.notificationDurationInMin;
+                    timeWindow.end = surveyTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin;
+                    if (nodeTimeInMin >= timeWindow.start && nodeTimeInMin <= timeWindow.end) {
+                        alert = Config.SURVEY_OVERLAPS;
+                        if (nodeData.absoluteStartDaysOffset !== undefined) {
+                            invalidInput = "absoluteStartDaysOffset";
+                        }
+                        else {
+                            invalidInput = "absoluteStartAtHour";
+                        }
+                        result = {
+                            correspondingNode: node,
+                            invalidInput: invalidInput,
+                            alert: alert,
+                        };
+                        return result;
+                    }
+                }
+            }
+        }
+        if (nodeData.maxDurationInMin !== undefined) {
+            if (nodeData.maxDurationInMin >= Config.SURVEY_MAX_DURATION_IN_MIN) {
+                invalidInput = "maxDurationInMin";
+                alert = Config.SURVEY_MAX_DURATION_IN_MIN_ALERT;
+                result = {
+                    correspondingNode: node,
+                    invalidInput: invalidInput,
+                    alert: alert,
+                };
+                return result;
+            }
+        }
+        if (nodeData.notificationDurationInMin !== undefined) {
+            if (nodeData.notificationDurationInMin >= Config.SURVEY_MAX_NOTIFICATION_DURATION_IN_MIN) {
+                invalidInput = "notificationDurationInMin";
+                alert = Config.SURVEY_MAX_NOTIFICATION_DURATION_IN_MIN_ALERT;
+                result = {
+                    correspondingNode: node,
+                    invalidInput: invalidInput,
+                    alert: alert,
+                };
+                return result;
+            }
+        }
+        return result;
+    }
+
 }
 
 export default new InputValidator();

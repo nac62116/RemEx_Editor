@@ -81,6 +81,39 @@ class TreeView {
         nodeToClick.click();
     }
 
+    clickAddPreviousNodeButton(node, nodeData) {
+        node.clickAddPreviousButton(nodeData);
+    }
+
+    clickAddChildNodeButton(node, nodeData) {
+        node.clickAddChildButton(nodeData);
+    }
+
+    clickTimeline(timelineNode, surveyData) {
+        let timeInMin,
+        positionOnTimeline;
+
+        timeInMin = surveyData.absoluteStartDaysOffset * 24 * 60 + surveyData.absoluteStartAtHour * 60 + surveyData.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
+        positionOnTimeline = timelineNode.getPositionOnTimeline(undefined, timeInMin);
+
+        timelineNode.clickTimeline(positionOnTimeline, surveyData);
+    }
+
+    updateTimelineLength(timelineNode, lastSurveyData) {
+        let labels = timelineNode.getTimelineLabels();
+
+        for (let label of labels) {
+            this.treeViewElement.removeChild(label.stroke);
+            this.treeViewElement.removeChild(label.description);
+        }
+        timelineNode.updateTimelineLength(lastSurveyData);
+        labels = timelineNode.getTimelineLabels();
+        for (let label of labels) {
+            timelineNode.nodeElements.nodeBody.insertAdjacentElement("afterend", label.stroke);
+            timelineNode.nodeElements.nodeBody.insertAdjacentElement("afterend", label.description);
+        }
+    }
+
     navigateToNode(node) {
         let treeViewCenter = {
             x: this.treeViewElement.clientWidth / 2, // eslint-disable-line no-magic-numbers
@@ -237,6 +270,9 @@ function createNodes(that, nodeData) {
         }
     }
     insertNode(that, newNode);
+    if (newNode instanceof TimelineNode) {
+        that.updateTimelineLength(newNode, undefined);
+    }
     for (let childData of childrenData) {
         createNodes(that, childData);
     }
@@ -255,6 +291,13 @@ function insertNode(that, node) {
                     if (Object.prototype.hasOwnProperty.call(node.nodeElements.timelineElements, timelineKey)) {
                         if (timelineKey !== "labels") {
                             that.treeViewElement.appendChild(node.nodeElements.timelineElements[timelineKey]);
+                        }
+                        else {
+                            for (let labelKey in node.nodeElements.timelineElements[timelineKey]) {
+                                if (Object.prototype.hasOwnProperty.call(node.nodeElements.timelineElements, labelKey)) {
+                                    that.treeViewElement.appendChild(node.nodeElements.timelineElements[timelineKey][labelKey]);
+                                }
+                            }
                         }
                     }
                 }
