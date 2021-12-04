@@ -212,7 +212,7 @@ class ModelManager {
         return undefined;
     }
 
-    extendExperimentWithCopy(nodeData, parentNodeData, changingProperties, suffix) {
+    extendExperimentWithCopy(nodeData, parentNodeData, suffix) {
         let newData,
         idLinkMap = new Map();
 
@@ -222,7 +222,7 @@ class ModelManager {
         newData.id = IdManager.getUnusedId();
         if (newData.type === Config.TYPE_ANSWER) {
             if (suffix === undefined) {
-                newData.code = newData.code + " " + newData.id;
+                newData.code = newData.code + " (Kopie)";
             }
             else {
                 newData.code = newData.code + " " + suffix;
@@ -230,23 +230,13 @@ class ModelManager {
         }
         else {
             if (suffix === undefined) {
-                newData.name = newData.name + " " + newData.id;
+                newData.name = newData.name + " (Kopie)";
             }
             else {
                 newData.name = newData.name + " " + suffix;
             }
         }
         
-        for (let property in changingProperties) {
-            if (Object.prototype.hasOwnProperty.call(changingProperties, property)) {
-                newData[property] = changingProperties[property];
-                if (property === "imageFileName" || property === "videoFileName") {
-                    if (!this.usedResourceFileNames.includes(changingProperties[property])) {
-                        this.usedResourceFileNames.push(changingProperties[property]);
-                    }
-                }
-            }
-        }
         if (parentNodeData.type === Config.TYPE_EXPERIMENT) {
             parentNodeData.groups.push(newData);
         }
@@ -265,11 +255,6 @@ class ModelManager {
 
         this.updateExperiment(parentNodeData);
 
-        console.log("new data:\n", newData);
-
-        // Controller: 
-        // First model change: update Survey/Step/Question links depending on newData
-        // Second view change: createSubtree; updateTimelineLength, add to NodeTimeMap, InputValidator; click(); etc...
         return newData;
     }
 
@@ -650,7 +635,7 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
             }
             survey.id = id;
             if (suffix === undefined) {
-                survey.name = survey.name + " " + id;
+                survey.name = survey.name + " (Kopie)";
             }
             else {
                 survey.name = survey.name + " " + suffix;
@@ -668,7 +653,7 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
             }
             step.id = id;
             if (suffix === undefined) {
-                step.name = step.name + " " + id;
+                step.name = step.name + " (Kopie)";
             }
             else {
                 step.name = step.name + " " + suffix;
@@ -686,7 +671,7 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
             }
             question.id = id;
             if (suffix === undefined) {
-                question.name = question.name + " " + id;
+                question.name = question.name + " (Kopie)";
             }
             else {
                 question.name = question.name + " " + suffix;
@@ -704,7 +689,7 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
             }
             answer.id = id;
             if (suffix === undefined) {
-                answer.code = answer.code + " " + id;
+                answer.code = answer.code + " (Kopie)";
             }
             else {
                 answer.code = answer.code + " " + suffix;

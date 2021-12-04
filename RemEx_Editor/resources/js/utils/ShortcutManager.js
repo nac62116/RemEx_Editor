@@ -30,8 +30,8 @@ function onKeyDown(event) {
     }
     // ctrl + x (not ctrl + v for pasting as its reserved for the system clipboard)
     if (this.currentPressedKeys.get("Control")
-        && this.currentPressedKeys.get("x")) {
-            this.currentPressedKeys.delete("x");
+        && this.currentPressedKeys.get(" ")) {
+            this.currentPressedKeys.delete(" ");
             if (this.clipboardContent !== undefined) {
                 data.clipboardContent = this.clipboardContent;
                 controllerEvent = new ControllerEvent(Config.EVENT_PASTE_NODE, data);

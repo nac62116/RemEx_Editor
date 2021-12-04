@@ -222,7 +222,11 @@ function onSaveExperiment() {
     validationResult,
     // Writing a nameCodeTable, which provides the answer codes to the corresponding questions/answers to simplify the csv understanding after an experiment.
     nameCodeTable = ModelManager.getNameCodeTable(experiment);
-
+    
+    
+    // TODO: Validate whole Experiment
+    
+    
     // Checking for a valid experiment
     validationResult = InputValidator.experimentIsValid(experiment);
     if (validationResult !== true) {
@@ -983,70 +987,52 @@ function onPasteNode(event) {
     insertionParentNode,
     insertionParentNodeData,
     newData = {},
-    initialProperties = {},
-    changingProperties = {};
+    id = clipboardNodeData.id,
+    name = clipboardNodeData.name,
+    validationResult;
 
-    for (let node of TreeView.currentSelection) {
-        if (clipboardParentNodeType === node.type) {
-            insertionParentNode = node;
-            insertionParentNodeData = ModelManager.getDataById(node.id);
-        }
-    }
-    // Parent type of the pasted data is not in the current selection
-    if (insertionParentNodeData === undefined) {
-        insertionParentNode = TreeView.currentFocusedNode;
-        insertionParentNodeData = ModelManager.getDataById(TreeView.currentFocusedNode.id);
-        while (insertionParentNodeData !== undefined
-                && insertionParentNode !== undefined
-                && insertionParentNode.type !== clipboardParentNodeType) {
-            if (insertionParentNode.type === Config.TYPE_SURVEY) {
-                initialProperties.type = Config.STEP_TYPE_QUESTIONNAIRE;
-            }
-            if (insertionParentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                initialProperties.type = Config.QUESTION_TYPE_CHOICE;
-            }
-            newData = ModelManager.extendExperiment(insertionParentNode, initialProperties);
-            if (newData !== undefined) {
+    if (TreeView.currentFocusedNode.type === clipboardParentNodeType
+        || (TreeView.currentFocusedNode.parentNode !== undefined
+            && TreeView.currentFocusedNode.parentNode.type === clipboardParentNodeType)) {
+                if (TreeView.currentFocusedNode.type === clipboardParentNodeType) {
+                    insertionParentNode = TreeView.currentFocusedNode;
+                }
+                else {
+                    insertionParentNode = TreeView.currentFocusedNode.parentNode;
+                }
+                insertionParentNodeData = ModelManager.getDataById(insertionParentNode.id);
+
+                if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+                    clipboardNodeData.id = undefined;
+                    clipboardNodeData.name = undefined;
+                    validationResult = InputValidator.validateSurvey(undefined, clipboardNodeData, insertionParentNodeData);
+                    while (validationResult.invalidInput === "absoluteStartDaysOffset"
+                            || validationResult.invalidInput === "absoluteStartAtHour") {
+                        if (clipboardNodeData.absoluteStartAtHour === 23) { // eslint-disable-line no-magic-numbers
+                            clipboardNodeData.absoluteStartAtHour = 0;
+                            clipboardNodeData.absoluteStartDaysOffset += 1;
+                        }
+                        else {
+                            clipboardNodeData.absoluteStartAtHour += 1;
+                        }
+                        validationResult = InputValidator.validateSurvey(undefined, clipboardNodeData, insertionParentNodeData);
+                    }
+                }
+                clipboardNodeData.id = id;
+                clipboardNodeData.name = name;
+                newData = ModelManager.extendExperimentWithCopy(clipboardNodeData, insertionParentNodeData, undefined);
                 if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
                     TreeView.clickTimeline(insertionParentNode, newData);
                 }
                 else {
-                    if (insertionParentNode.childNodes.length === 0) {
-                        TreeView.clickAddChildNodeButton(insertionParentNode, newData);
-                    }
-                    else {
+                    if (insertionParentNode.childNodes.length !== 0) {
                         TreeView.clickAddPreviousNodeButton(insertionParentNode.childNodes[0], newData);
                     }
+                    else {
+                        TreeView.clickAddChildNodeButton(insertionParentNode, newData);
+                    }
                 }
-                insertionParentNode = TreeView.getNodeById(newData.id);
-            }
-            insertionParentNodeData = newData;
-        }
-    }
-    if (insertionParentNodeData !== undefined) {
-        if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            while (InputValidator.validateSurvey(undefined, clipboardNodeData, insertionParentNodeData) !== true) {
-                if (clipboardNodeData.absoluteStartAtHour === 23) { // eslint-disable-line no-magic-numbers
-                    changingProperties.absoluteStartAtHour = 0;
-                    changingProperties.absoluteStartDaysOffset = clipboardNodeData.absoluteStartDaysOffset + 1;
-                }
-                else {
-                    changingProperties.absoluteStartAtHour = clipboardNodeData.absoluteStartAtHour + 1;
-                }
-            }
-        }
-        newData = ModelManager.extendExperimentWithCopy(clipboardNodeData, insertionParentNodeData, changingProperties, undefined);
-        if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-            TreeView.clickTimeline(insertionParentNode, newData);
-        }
-        else {
-            if (insertionParentNode.childNodes.length !== 0) {
-                TreeView.clickAddPreviousNodeButton(insertionParentNode.childNodes[0], newData);
-            }
-            else {
-                TreeView.clickAddChildNodeButton(insertionParentNode, newData);
-            }
-        }
+    
     }
     else {
         if (clipboardNodeData.type === Config.TYPE_ANSWER) {
@@ -1055,7 +1041,7 @@ function onPasteNode(event) {
         else {
             clipboardNodeDescription = clipboardNodeData.name;
         }
-        alert("Das aktuell ausgewählte Element (" + TreeView.currentFocusedNode.description + ") mit dem Typ (" + TreeView.currentFocusedNode.type + ") kann das kopierte Element (" + clipboardNodeDescription + ") vom Typ (" + clipboardNodeData.type + ") nicht beinhalten");
+        alert("Das aktuell ausgewählte Element (" + TreeView.currentFocusedNode.description + ") mit dem Typ (" + TreeView.currentFocusedNode.type + ") ist nicht auf der richtigen Ebene um das kopierte Element (" + clipboardNodeDescription + ") vom Typ (" + clipboardNodeData.type + ") einzufügen. Bitte ein Element vom Typ (" + clipboardParentNodeType + ") auswählen um das kopierte Element einzufügen.");
     }
 }
 

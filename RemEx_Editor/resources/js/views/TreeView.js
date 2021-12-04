@@ -495,7 +495,6 @@ function showAndMoveNextNodes(node, neighbourCount, treeViewCenter) {
     if (node.parentNode !== undefined && node.parentNode instanceof TimelineNode) {
         positionOnTimeline = node.parentNode.getPositionOnTimeline(node.id);
         node.updatePosition(positionOnTimeline.x, positionOnTimeline.y);
-        console.log("survey node positioned");
     }
     else {
         node.updatePosition(x, treeViewCenter.y);
