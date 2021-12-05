@@ -5,9 +5,9 @@ import StandardNode from "./StandardNode.js";
 
 class TimelineNode extends StandardNode {
 
-    constructor(nodeElements, id, type, description, treeViewWidth) {
+    constructor(nodeElements, id, type, description, treeViewElement) {
         super(nodeElements, id, type, description);
-        this.timeline = new TimelineView(nodeElements.timelineElements, treeViewWidth, this);
+        this.timeline = new TimelineView(nodeElements.timelineElements, treeViewElement, this);
         this.timeline.updatePosition(0, 0);
         this.nodeTimeMap = new Map();
     }
@@ -85,7 +85,7 @@ class TimelineNode extends StandardNode {
         this.nodeTimeMap = new Map();
     }
 
-    getPositionOnTimeline(nodeId, time) {
+    getPositionOnTimeline(nodeId, time, fromClick) {
         let timeInMin;
 
         if (time === undefined) {
@@ -95,13 +95,13 @@ class TimelineNode extends StandardNode {
             timeInMin = time;
         }
 
-        return this.timeline.getPositionFromTime(timeInMin);
+        return this.timeline.getPositionFromTime(timeInMin, fromClick);
     }
 }
 
 class TimelineView extends Observable {
 
-    constructor(timelineElements, treeViewWidth, correspondingNode) {
+    constructor(timelineElements, treeViewElement, correspondingNode) {
         super();
         this.timelineElements = timelineElements;
         this.center = {
@@ -117,7 +117,8 @@ class TimelineView extends Observable {
             y: undefined,
         };
         this.height = Config.NODE_BODY_HEIGHT;
-        this.width = treeViewWidth * Config.TIMELINE_WIDTH_IN_PERCENTAGE;
+        this.width = treeViewElement.clientWidth * Config.TIMELINE_WIDTH_IN_PERCENTAGE;
+        this.treeviewOffsetX = treeViewElement.getBoundingClientRect().left;
         this.isClickable = true;
         this.correspondingNode = correspondingNode;
         this.timelineLengthInMin = Config.ONE_DAY_IN_MIN;
@@ -252,18 +253,28 @@ class TimelineView extends Observable {
             isGreater = timeInMin % Config.ONE_DAY_IN_MIN === 0 || timeInMin % Config.ONE_HOUR_IN_MIN;
             descriptionLines[0] = Config.TIMELINE_LABEL_DESCRIPTIONS_PREFIX + " " + dayCount;
             descriptionLines[1] = labelDescriptions[descriptionCount];
-            position = this.getPositionFromTime(timeInMin);
+            position = this.getPositionFromTime(timeInMin, false);
             label = SvgFactory.createTimelineLabel(position, descriptionLines, isGreater);
             this.timelineElements.labels.push(label);
             descriptionCount++;
         }
     }
 
-    getPositionFromTime(timeInMin) {
-        let position = {
-            x: this.start.x + (timeInMin / this.timelineLengthInMin * (this.end.x - this.start.x)),
-            y: this.center.y,
-        };
+    getPositionFromTime(timeInMin, fromClick) {
+        let position;
+        
+        if (fromClick) {
+            position = {
+                x: this.start.x + (timeInMin / this.timelineLengthInMin * (this.end.x - this.start.x)) + this.treeviewOffsetX,
+                y: this.center.y,
+            };
+        }
+        else {
+            position = {
+                x: this.start.x + (timeInMin / this.timelineLengthInMin * (this.end.x - this.start.x)),
+                y: this.center.y,
+            };
+        }
         return position;
     }
 }
@@ -328,10 +339,16 @@ function getTimeFromPosition(that, position) {
     let timeInMin,
     lengthFromStart;
 
-    lengthFromStart = position.x - that.start.x;
+    console.log("mouseX", position.x - that.treeviewOffsetX);
+    console.log("timelineStartX", that.start.x);
+    console.log("timelineWidth", that.width);
+    console.log("timelineLengthDays", Math.floor(that.timelineLengthInMin / Config.ONE_DAY_IN_MIN));
+
+    lengthFromStart = position.x - that.start.x - that.treeviewOffsetX;
     timeInMin = lengthFromStart / that.width * that.timelineLengthInMin;
     timeInMin = Math.round(timeInMin);
 
+    console.log("resultTimeDays", Math.floor(timeInMin / Config.ONE_DAY_IN_MIN));
     return timeInMin;
 }
 

@@ -94,7 +94,7 @@ class TreeView {
         positionOnTimeline;
 
         timeInMin = surveyData.absoluteStartDaysOffset * 24 * 60 + surveyData.absoluteStartAtHour * 60 + surveyData.absoluteStartAtMinute; // eslint-disable-line no-magic-numbers
-        positionOnTimeline = timelineNode.getPositionOnTimeline(undefined, timeInMin);
+        positionOnTimeline = timelineNode.getPositionOnTimeline(undefined, timeInMin, true);
 
         timelineNode.clickTimeline(positionOnTimeline, surveyData);
     }
@@ -221,7 +221,7 @@ function createNodes(that, nodeData) {
     }
     else if (nodeData.type === Config.TYPE_EXPERIMENT_GROUP) {
         elements = SvgFactory.createTimelineNodeElements(Config.EXPERIMENT_GROUP_ICON_SRC);
-        newNode = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, that.treeViewElement.clientWidth);
+        newNode = new TimelineNode(elements, id, Config.TYPE_EXPERIMENT_GROUP, description, that.treeViewElement);
         childrenData = nodeData.surveys;
     }
     else if (nodeData.type === Config.TYPE_SURVEY) {

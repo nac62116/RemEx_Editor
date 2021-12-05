@@ -7,7 +7,7 @@ class WhereAmIView {
     init(whereAmIViewContainer) {
         this.whereAmIViewElement = whereAmIViewContainer.firstElementChild;
         this.rootPoint = {
-            x: this.whereAmIViewElement.clientWidth / 2, // eslint-disable-line no-magic-numbers
+            x: whereAmIViewContainer.clientWidth / 2, // eslint-disable-line no-magic-numbers
             y: Config.WHERE_AM_I_VIEW_ROOT_POINT_Y,
         };
         this.representationMap = new Map();

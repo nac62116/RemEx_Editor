@@ -446,10 +446,10 @@ function onAddNode(event) {
         if (event.type === Config.EVENT_ADD_CHILD_NODE) {
             // Initial step and question types when adding a node
             if (clickedNode.type === Config.TYPE_SURVEY) {
-                initialProperties.type = Config.STEP_TYPE_QUESTIONNAIRE;
+                initialProperties.type = Config.STEP_TYPE_INSTRUCTION;
             }
             if (clickedNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                initialProperties.type = Config.QUESTION_TYPE_CHOICE;
+                initialProperties.type = Config.QUESTION_TYPE_TEXT;
             }
             newNodeData = ModelManager.extendExperiment(clickedNode, initialProperties);
         }
@@ -457,11 +457,11 @@ function onAddNode(event) {
             // Initial step and question types when adding a node
             if (clickedNode.parentNode !== undefined
                 && clickedNode.parentNode.type === Config.TYPE_SURVEY) {
-                    initialProperties.type = Config.STEP_TYPE_QUESTIONNAIRE;
+                    initialProperties.type = Config.STEP_TYPE_INSTRUCTION;
             }
             if (clickedNode.parentNode !== undefined
                 && clickedNode.parentNode.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                    initialProperties.type = Config.QUESTION_TYPE_CHOICE;
+                    initialProperties.type = Config.QUESTION_TYPE_TEXT;
             }
             newNodeData = ModelManager.extendExperiment(clickedNode.parentNode, initialProperties);
         }
@@ -691,12 +691,6 @@ function onTimelineClicked(event) {
     nextSurveyNode,
     // The survey with the greatest start time
     lastSurveyData;
-
-    console.log("Add node");
-//###
-    // TODO: Check if a clicking scope is necessary or if the timeline can be clicked from anywhere
-//###
-
 
     // First step:
     // Extending, updating and shortening the data model
