@@ -13,9 +13,8 @@ import Config from "../utils/Config.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Code cleaning
 // -> Survey frequency buttons
-// -> Copy paste option?
+// -> Code cleaning
 // -> Test phase: Test the RemExEditor functionality
 // -> Create .exe file for install
 // -> MIT Licence: Licence text on top of each file and after that the contibutors
@@ -27,7 +26,7 @@ import Config from "../utils/Config.js";
 
 // ENHANCEMENT:
 // EDITOR:
-// - Move IndexedDB transactions to a seperate Thread to avoid UI Blocking
+// - Move IndexedDB transactions to a seperate Thread (Web Worker) to avoid UI Blocking
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
 // - Improve adding the svg elements to the dom. The layers (z-index) are not correct. Nodes should be shown on top of the timeline not under it.
 // - Visualising the question links of answer nodes inside the TreeView
@@ -117,6 +116,10 @@ class Controller {
             {
                 eventType: Config.EVENT_UPLOAD_RESOURCE,
                 callback: onUploadResource,
+            },
+            {
+                eventType: Config.EVENT_RESOURCE_LOADED,
+                callback: onResourceLoaded,
             },
         ],
         importExportViewEventListener = [
@@ -376,10 +379,6 @@ function onNodeClicked(event) {
                 pastAndFutureQuestions = ModelManager.getPastAndFutureQuestions(firstNodeOfRow, clickedNode.parentNode);
             }
         }
-        
-
-//###
-        // TODO: Move this to a seperate thread
         if (clickedNode.type === Config.STEP_TYPE_INSTRUCTION) {
             if (nodeData.imageFileName !== null) {
                 promise = ModelManager.getResource(nodeData.imageFileName);
@@ -388,6 +387,7 @@ function onNodeClicked(event) {
                 promise = ModelManager.getResource(nodeData.videoFileName);
             }
             if (promise !== undefined) {
+                LoadingScreenView.show(Config.LOADING_RESOURCE_PROMPT);
                 promise.then(function(result) {
                     if (typeof(result) === "string" || result === undefined) {
                         alert(Config.LOADING_RESOURCE_FAILED + " (" + result + ")"); // eslint-disable-line no-alert
@@ -408,9 +408,6 @@ function onNodeClicked(event) {
                 });
             }
         }
-//###
-
-
         if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
             if (clickedNode.childNodes.length === 0) {
                 clickedNode.clearNodeTimeMap();
@@ -952,7 +949,11 @@ function onInputChanged(event) {
 }
 
 function onUploadResource() {
-    LoadingScreenView.show(Config.LOADING_PROMPT);
+    LoadingScreenView.show(Config.LOADING_RESOURCE_PROMPT);
+}
+
+function onResourceLoaded() {
+    LoadingScreenView.hide();
 }
 
 // *** KeyManager callback functions:

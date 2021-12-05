@@ -23,7 +23,7 @@ const Config = {
     NODE_VIEW_CONSTRUCTOR_ERROR: "Cannot construct NodeView instances directly. Please construct subclasses of NodeView.",
     SAVING_PROMPT: "Das Experiment wird komprimiert.",
     UPLOADING_PROMPT: "Das Experiment wird extrahiert.",
-    LOADING_PROMPT: "Lädt...",
+    LOADING_RESOURCE_PROMPT: "Die Resource wird geladen.",
     HALF_HOUR_IN_MIN: 30,
     ONE_HOUR_IN_MIN: 60,
     SIX_HOURS_IN_MIN: 360,
@@ -62,6 +62,7 @@ const Config = {
     EVENT_ADD_CHILD_NODE: "addChildNode",
     EVENT_INPUT_CHANGED: "inputChanged",
     EVENT_UPLOAD_RESOURCE: "uploadResource",
+    EVENT_RESOURCE_LOADED: "resourceLoaded",
     EVENT_REMOVE_NODE: "removeNode",
     EVENT_CHANGE_NODE: "changeNode",
     EVENT_TIMELINE_CLICKED: "timelineClicked",
@@ -676,6 +677,9 @@ const Config = {
     VIDEO_RESOLUTION_TOO_HIGH: "Die Auflösung des hochgeladenen Videos ist zu hoch. Die maximal unterstützte Auflösung für Videos ist 1920 x 1080.",
     DATABASE_FULL: "Die Resourcen des Experiments sind bereits zu groß um weitere hochzuladen.",
     LOADING_RESOURCE_FAILED: "Die Ressource der aktuellen Instruktion konnte leider nicht geladen werden. Bitte erneut hochladen.",
+
+    // Web Worker messages
+    WORKER_MESSAGE_GET_RESOURCE: "getResource",
 };
 
 Object.freeze(Config);

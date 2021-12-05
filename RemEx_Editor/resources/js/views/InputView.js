@@ -165,12 +165,14 @@ class InputView extends Observable {
 
     setImageResource(resourceFile, correspondingNodeId) {
         let imageElement = this.inputFieldsContainer.querySelector("img"),
-        reader = new FileReader();
+        reader = new FileReader(),
+        controllerEvent = new ControllerEvent(Config.EVENT_RESOURCE_LOADED, null);
 
         if (imageElement !== null && correspondingNodeId === this.correspondingNode.id) {
             reader.onload = function (event) {
                 imageElement.setAttribute("src", event.target.result);
-            };
+                this.notifyAll(controllerEvent);
+            }.bind(this);
             reader.readAsDataURL(resourceFile);
         }
         this.currentFileName = resourceFile.name;
@@ -180,7 +182,8 @@ class InputView extends Observable {
         let videoElement = this.inputFieldsContainer.querySelector("video"),
         fileType,
         sourceElement,
-        reader = new FileReader();
+        reader = new FileReader(),
+        controllerEvent = new ControllerEvent(Config.EVENT_RESOURCE_LOADED, null);
 
         if (videoElement !== null && correspondingNodeId === this.correspondingNode.id) {
             reader.onload = function (event) {
@@ -189,7 +192,8 @@ class InputView extends Observable {
                 sourceElement.setAttribute("type", "video/" + fileType);
                 sourceElement.setAttribute("src", event.target.result);
                 videoElement.appendChild(sourceElement);
-            };
+                this.notifyAll(controllerEvent);
+            }.bind(this);
             reader.readAsDataURL(resourceFile);
         }
         this.currentFileName = resourceFile.name;
