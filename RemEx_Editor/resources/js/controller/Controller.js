@@ -27,6 +27,7 @@ import Config from "../utils/Config.js";
 
 // ENHANCEMENT:
 // EDITOR:
+// - Move IndexedDB transactions to a seperate Thread to avoid UI Blocking
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
 // - Visualising the question links of answer nodes inside the TreeView
 // - Add key movement (Shortcuts (e.g. Arrows -> navigating through tree, Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
@@ -228,7 +229,7 @@ function onSaveExperiment() {
     
     
     // Checking for a valid experiment
-    validationResult = InputValidator.experimentIsValid(experiment);
+    validationResult = InputValidator.experimentIsValid(experiment, true);
     if (validationResult !== true) {
         TreeView.clickNode(undefined, validationResult.invalidNodeId);
         InputView.showAlert(validationResult.alert);
@@ -932,7 +933,7 @@ function onInputChanged(event) {
     TreeView.navigateToNode(dataChangingNode);
     WhereAmIView.update(TreeView.currentSelection);
 
-    validationResult = InputValidator.inputIsValid(dataChangingNode, dataChangingNodeData, parentNodeData);
+    validationResult = InputValidator.experimentIsValid(ModelManager.getExperiment(), false);
     if (validationResult === true) {
         InputView.hideAlert();
         InputView.enableInputs();
@@ -940,7 +941,7 @@ function onInputChanged(event) {
         ImportExportView.enableSaveButton();
     }
     else {
-        validationResult.correspondingNode.click();
+        TreeView.clickNode(undefined, validationResult.invalidNodeId);
         InputView.showAlert(validationResult.alert);
         InputView.enableInputs();
         InputView.disableInputsExcept(validationResult.invalidInput);
@@ -999,7 +1000,7 @@ function onPasteNode(event) {
                 if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
                     clipboardNodeData.id = undefined;
                     clipboardNodeData.name = undefined;
-                    validationResult = InputValidator.validateSurvey(undefined, clipboardNodeData, insertionParentNodeData);
+                    validationResult = InputValidator.validateSurvey(clipboardNodeData, insertionParentNodeData, false);
                     while (validationResult.invalidInput === "absoluteStartDaysOffset"
                             || validationResult.invalidInput === "absoluteStartAtHour") {
                         if (clipboardNodeData.absoluteStartAtHour === 23) { // eslint-disable-line no-magic-numbers
@@ -1009,7 +1010,7 @@ function onPasteNode(event) {
                         else {
                             clipboardNodeData.absoluteStartAtHour += 1;
                         }
-                        validationResult = InputValidator.validateSurvey(undefined, clipboardNodeData, insertionParentNodeData);
+                        validationResult = InputValidator.validateSurvey(clipboardNodeData, insertionParentNodeData, false);
                     }
                 }
                 clipboardNodeData.id = id;
@@ -1025,6 +1026,21 @@ function onPasteNode(event) {
                     else {
                         TreeView.clickAddChildNodeButton(insertionParentNode, newData);
                     }
+                }
+                validationResult = InputValidator.experimentIsValid(ModelManager.getExperiment(), false);
+                if (validationResult === true) {
+                    InputView.hideAlert();
+                    InputView.enableInputs();
+                    TreeView.enableNodeActions();
+                    ImportExportView.enableSaveButton();
+                }
+                else {
+                    TreeView.clickNode(undefined, validationResult.invalidNodeId);
+                    InputView.showAlert(validationResult.alert);
+                    InputView.enableInputs();
+                    InputView.disableInputsExcept(validationResult.invalidInput);
+                    TreeView.disableNodeActions();
+                    ImportExportView.disableSaveButton();
                 }
     
     }
