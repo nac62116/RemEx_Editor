@@ -120,51 +120,46 @@ class InputView extends Observable {
     }
 
     disableInputsExcept(modelProperty) {
-        let inputElements,
-        imageElement = this.inputFieldsContainer.querySelector("img"),
+        let imageElement = this.inputFieldsContainer.querySelector("img"),
         videoElement = this.inputFieldsContainer.querySelector("video");
 
-        if (typeof(modelProperty) === "string") {
-            inputElements = this.inputFieldsContainer.querySelectorAll("input:not([name=" + modelProperty + "]");
-        }
-
-        if (this.inputFieldsContainer.firstElementChild.firstElementChild.innerHTML === "Typ:") {
-            this.inputFieldsContainer.firstElementChild.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-        }
-        for (let inputElement of inputElements) {
-            inputElement.parentElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-        }
         this.deleteButton.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        for (let child of this.inputFieldsContainer.children) {
+            if (child.title !== modelProperty) {
+                child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+                hideChildrenElements(child);
+            }
+        }
         if (imageElement !== null) {
             imageElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
         if (videoElement !== null) {
             videoElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
-        if (modelProperty === "absoluteStartDaysOffset") {
-            this.inputFieldsContainer.querySelector("input[name=absoluteStartAtHour]").parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            this.inputFieldsContainer.querySelector("input[name=maxDurationInMin]").parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-            this.inputFieldsContainer.querySelector("input[name=notificationDurationInMin]").parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-        }
     }
 
     enableInputs() {
-        let inputElements = this.inputFieldsContainer.querySelectorAll("input"),
-        imageElement = this.inputFieldsContainer.querySelector("img"),
-        videoElement = this.inputFieldsContainer.querySelector("video");
+        let imageElement = this.inputFieldsContainer.querySelector("img"),
+        imageInputField = this.inputFieldsContainer.querySelector("div[title=imageFileName]"),
+        videoElement = this.inputFieldsContainer.querySelector("video"),
+        videoInputField = this.inputFieldsContainer.querySelector("div[title=videoFileName]");
 
-        this.inputFieldsContainer.firstElementChild.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-        for (let inputElement of inputElements) {
-            inputElement.parentElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
-        }
         if (!(this.correspondingNode instanceof RootNode)) {
             this.deleteButton.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
         }
+        for (let child of this.inputFieldsContainer.children) {
+            child.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+            showChildrenElements(child);
+        }
         if (imageElement !== null) {
             imageElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+            imageInputField.querySelector("input").classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+            videoInputField.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
         if (videoElement !== null) {
             videoElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+            videoInputField.querySelector("input").classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+            imageInputField.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
     }
 
@@ -222,6 +217,26 @@ class InputView extends Observable {
     }
 }
 
+function hideChildrenElements(childElement) {
+    if (childElement.children === undefined || childElement.children.length === 0) {
+        return;
+    }
+    for (let child of childElement.children) {
+        child.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        hideChildrenElements(child);
+    }
+}
+
+function showChildrenElements(childElement) {
+    if (childElement.children === undefined || childElement.children.length === 0) {
+        return;
+    }
+    for (let child of childElement.children) {
+        child.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+        showChildrenElements(child);
+    }
+}
+
 function createInputField(that, label, type, values, modelProperty, currentModelValue, addNoSelection) {
     let inputField,
     inputElement,
@@ -229,12 +244,20 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     labelElement,
     imageElement,
     videoElement;
-
+    
     inputField = document.createElement("div");
     inputField.innerHTML = INPUT_FIELD_TEMPLATE_STRING;
     inputField = inputField.firstElementChild;
     inputField.firstElementChild.innerHTML = label;
-
+    if (modelProperty === "absoluteStartAtHour"
+        || modelProperty === "maxDurationInMin"
+        || modelProperty === "notificationDurationInMin") {
+            inputField.title = "absoluteStartDaysOffset";
+    }
+    else {
+        inputField.title = modelProperty;
+    }
+    
     if (type === "radio" || type === "checkbox") {
         if (addNoSelection) {
             labelElement = document.createElement("label");
@@ -381,6 +404,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     if (videoElement !== undefined) {
         that.inputFieldsContainer.appendChild(videoElement);
     }
+    console.log(that.inputFieldsContainer);
 }
 
 function onInputChanged(event) {

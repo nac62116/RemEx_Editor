@@ -29,6 +29,7 @@ import Config from "../utils/Config.js";
 // EDITOR:
 // - Move IndexedDB transactions to a seperate Thread to avoid UI Blocking
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
+// - Improve adding the svg elements to the dom. The layers (z-index) are not correct. Nodes should be shown on top of the timeline not under it.
 // - Visualising the question links of answer nodes inside the TreeView
 // - Add key movement (Shortcuts (e.g. Arrows -> navigating through tree, Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
 // - Show survey time windows on the timeline (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
