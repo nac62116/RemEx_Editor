@@ -82,7 +82,8 @@ body {
 .tree-container {
     position: absolute;
     top: 0;
-    width: 90%;
+    left: 30%;
+    width: 60%;
     height: 70%;
     background-color:rgb(92, 92, 92);
 }
@@ -123,16 +124,16 @@ body {
 
 .input-container {
     position: absolute;
-    top: 70%;
-    width: 60%;
-    height: 30%;
+    top: 0;
+    width: 30%;
+    height: 100%;
     font-family: Helvetica;
     background-color: black;
     color: cornsilk;
     overflow: auto;
     scrollbar-color: rgb(155, 155, 155) rgb(53, 53, 53);
     scrollbar-width: thin;
-    box-shadow: 0 -8px 8px 0px rgba(0, 0, 0, 0.5);
+    box-shadow: 8px 0 8px 0px rgba(0, 0, 0, 0.5);
 }
 
 .input-alert {
@@ -232,8 +233,8 @@ body {
 .info-container {
     position: absolute;
     top: 70%;
-    left: 60%;
-    width: 40%;
+    left: 30%;
+    width: 70%;
     height: 30%;
     background-color: black;
     box-shadow: 0 -8px 8px 0px rgba(0, 0, 0, 0.5);

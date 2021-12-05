@@ -119,18 +119,6 @@ class InputView extends Observable {
         this.alertElement.innerHTML = "";
     }
 
-    selectFirstInput() {
-        let inputElements = this.inputFieldsContainer.querySelectorAll("input");
-
-        for (let inputElement of inputElements) {
-            if (inputElement.getAttribute("type") === "text") {
-                this.inputViewContainer.scrollTop = inputElement.offsetTop + inputElement.clientHeight - inputElement.parentElement.clientHeight;
-                inputElement.select();
-                return;
-            }
-        }
-    }
-
     disableInputsExcept(modelProperty) {
         let inputElements,
         imageElement = this.inputFieldsContainer.querySelector("img"),
@@ -326,13 +314,13 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         if (currentModelValue !== null) {
             if (modelProperty === "imageFileName") {
                 imageElement = document.createElement("img");
-                imageElement.setAttribute("width", "auto");
-                imageElement.setAttribute("height", that.inputViewContainer.clientHeight);
+                imageElement.setAttribute("width", that.inputViewContainer.clientWidth * Config.INPUT_RESOURCE_CONTAINER_WIDTH_RATIO);
+                imageElement.setAttribute("height", "auto");
             }
             else {
                 videoElement = document.createElement("video");
-                videoElement.setAttribute("width", "auto");
-                videoElement.setAttribute("height", that.inputViewContainer.clientHeight);
+                videoElement.setAttribute("width", that.inputViewContainer.clientWidth * Config.INPUT_RESOURCE_CONTAINER_WIDTH_RATIO);
+                videoElement.setAttribute("height", "auto");
                 videoElement.setAttribute("controls", "");
                 
             }
@@ -517,8 +505,8 @@ function onInputChanged(event) {
                         videoElement = this.inputFieldsContainer.querySelector("input[name=videoFileName]");
                         if (imageInputElement === null) {
                             imageInputElement = document.createElement("img");
-                            imageInputElement.setAttribute("width", "auto");
-                            imageInputElement.setAttribute("height", this.inputViewContainer.clientHeight);
+                            imageInputElement.setAttribute("width", this.inputViewContainer.clientWidth * Config.INPUT_RESOURCE_CONTAINER_WIDTH_RATIO);
+                            imageInputElement.setAttribute("height", "auto");
                             imageInputElement.setAttribute("src", fileReaderEvent.target.result);
                             event.target.parentElement.insertAdjacentElement("afterend", imageInputElement);
                         }
@@ -542,8 +530,8 @@ function onInputChanged(event) {
                         imageInputElement = this.inputFieldsContainer.querySelector("input[name=imageFileName]");
                         if (sourceElement === null) {
                             videoElement = document.createElement("video");
-                            videoElement.setAttribute("width", "auto");
-                            videoElement.setAttribute("height", this.inputViewContainer.clientHeight);
+                            videoElement.setAttribute("width", this.inputViewContainer.clientWidth * Config.INPUT_RESOURCE_CONTAINER_WIDTH_RATIO);
+                            videoElement.setAttribute("height", "auto");
                             videoElement.setAttribute("controls", "");
                             sourceElement = document.createElement("source");
                             sourceElement.setAttribute("type", event.target.files[0].type);

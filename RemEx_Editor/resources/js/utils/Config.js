@@ -98,6 +98,7 @@ const Config = {
     INPUT_EXPERIMENT_NAME_LABEL: "Name des Experiments:",
     INPUT_EXPERIMENT_GROUP_NAME_ID: "experimentGroupNameInput",
     INPUT_EXPERIMENT_GROUP_NAME_LABEL: "Name der Experimentgruppe:",
+    INPUT_RESOURCE_CONTAINER_WIDTH_RATIO: 0.92,
     INPUT_SURVEY_FREQUENCY: "surveyFrequency",
     INPUT_SURVEY_FREQUENCY_HOURLY_REPETITION: "Stündlich",
     INPUT_SURVEY_FREQUENCY_DAILY_REPETITION: "Täglich",
@@ -674,6 +675,7 @@ const Config = {
     FILE_TYPE_INSIDE_ZIP_NOT_SUPPORTED: "Der Dateityp einer Resource im Experiment wird nicht unterstützt. Diese Ressource wird nicht geladen. Unterstützte Videoformate sind: .mp4, .webm, .3gp. Unterstützte Bildformate sind: .jpg, .jpeg, .jpe, .png, .bmp, .gif.",
     VIDEO_RESOLUTION_TOO_HIGH: "Die Auflösung des hochgeladenen Videos ist zu hoch. Die maximal unterstützte Auflösung für Videos ist 1920 x 1080.",
     DATABASE_FULL: "Die Resourcen des Experiments sind bereits zu groß um weitere hochzuladen.",
+    LOADING_RESOURCE_FAILED: "Die Ressource der aktuellen Instruktion konnte leider nicht geladen werden. Bitte erneut hochladen.",
 };
 
 Object.freeze(Config);

@@ -387,8 +387,9 @@ function onNodeClicked(event) {
             }
             if (promise !== undefined) {
                 promise.then(function(result) {
-                    if (typeof(result) === "string") {
-                        alert(result); // eslint-disable-line no-alert
+                    if (typeof(result) === "string" || result === undefined) {
+                        alert(Config.LOADING_RESOURCE_FAILED + " (" + result + ")"); // eslint-disable-line no-alert
+                        InputView.clearFileInputs();
                     }
                     else {
                         if (result.type.includes("image/")) {
@@ -427,7 +428,6 @@ function onNodeClicked(event) {
         WhereAmIView.update(TreeView.currentSelection);
         InputView.hideAlert();
         InputView.show(clickedNode, nodeData, parentNodeDataModel, pastOngoingInstructions, pastAndFutureQuestions);
-        InputView.selectFirstInput();
     }
 }
 
