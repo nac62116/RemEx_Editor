@@ -144,12 +144,10 @@ class TreeView {
             }
             // Child nodes of a timeline node need to be positioned on the timeline
             if (this.currentSelection[i].parentNode !== undefined && this.currentSelection[i].parentNode instanceof TimelineNode) {
-                //console.log(this.currentSelection[i].description + " positioned");
                 positionOnTimeline = this.currentSelection[i].parentNode.getPositionOnTimeline(this.currentSelection[i].id);
                 this.currentSelection[i].updatePosition(positionOnTimeline.x, positionOnTimeline.y);
             }
             else {
-                //console.log(this.currentSelection[i].description + " positioned");
                 this.currentSelection[i].updatePosition(treeViewCenter.x, y);
             }
             

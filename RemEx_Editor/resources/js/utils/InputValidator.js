@@ -2,45 +2,62 @@ import Config from "./Config.js";
 
 class InputValidator {
 
-    experimentIsValid(experiment, beforeSaving) {
+    experimentIsValid(data, parentData, beforeSaving) {
         let result;
 
-        result = this.validateExperiment(experiment, beforeSaving);
-        if (result !== true) {
-            return result;
-        }
-        for (let group of experiment.groups) {
-            result = this.validateExperimentGroup(group, experiment, beforeSaving);
+        if (data.type === Config.TYPE_EXPERIMENT) {
+            result = this.validateExperiment(data, beforeSaving);
             if (result !== true) {
                 return result;
             }
-            for (let survey of group.surveys) {
-                result = this.validateSurvey(survey, group, beforeSaving);
-                if (result !== true) {
-                    return result;
+            for (let group of data.groups) {
+                this.experimentIsValid(group, data, beforeSaving);
+            }
+        }
+        if (data.type === Config.TYPE_EXPERIMENT_GROUP) {
+            result = this.validateExperimentGroup(data, parentData, beforeSaving);
+            if (result !== true) {
+                return result;
+            }
+            for (let survey of data.surveys) {
+                this.experimentIsValid(survey, data, beforeSaving);
+            }
+        }
+        if (data.type === Config.TYPE_SURVEY) {
+            result = this.validateSurvey(data, parentData, beforeSaving);
+            if (result !== true) {
+                return result;
+            }
+            for (let step of data.steps) {
+                this.experimentIsValid(step, data, beforeSaving);
+            }
+        }
+        if (parentData.type === Config.TYPE_SURVEY) {
+            result = this.validateStep(data, beforeSaving);
+            if (result !== true) {
+                return result;
+            }
+            if (data.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                for (let question of data.questions) {
+                    this.experimentIsValid(question, data, beforeSaving);
                 }
-                for (let step of survey.steps) {
-                    result = this.validateStep(step, beforeSaving);
-                    if (result !== true) {
-                        return result;
-                    }
-                    if (step.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                        for (let question of step.questions) {
-                            result = this.validateQuestion(question, step, beforeSaving);
-                            if (result !== true) {
-                                return result;
-                            }
-                            if (question.type === Config.QUESTION_TYPE_CHOICE) {
-                                for (let answer of question.answers) {
-                                    result = this.validateAnswer(answer, question);
-                                    if (result !== true) {
-                                        return result;
-                                    }
-                                } 
-                            }
-                        }
-                    }
+            }
+        }
+        if (parentData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+            result = this.validateQuestion(data, parentData, beforeSaving);
+            if (result !== true) {
+                return result;
+            }
+            if (data.type === Config.QUESTION_TYPE_CHOICE) {
+                for (let answer of data.answers) {
+                    this.experimentIsValid(answer, data, beforeSaving);
                 }
+            }
+        }
+        if (data.type === Config.TYPE_ANSWER) {
+            result = this.validateAnswer(data, parentData);
+            if (result !== true) {
+                return result;
             }
         }
         return result;

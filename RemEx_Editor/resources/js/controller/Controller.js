@@ -39,7 +39,7 @@ import Config from "../utils/Config.js";
 // - Important: Same problem when the user kills the app (swipes it away in the recent apps list) during an experiment between two surveys (not during a survey). If the user kills the app during a survey the survey gets properly finished and the next survey alarm is set
 // - Logging user interactions that are relevant for the researchers
 // BOTH:
-// - Special characters like german "Umlaute" (äöü) are not represented correctly -> Solve this issue by: (RemEx Editor) Encode the experimentJSON with ISO-8859-1 inside the ImportExportView.js and add it to JSZip as bytes; (RemEx App) change the StandardCharsets value inside AdminActivity.java from UTF_8 to ISO_8859_1
+// - Special characters like german "Umlaute" (äöü) are not represented correctly -> Encoding changes during zip compression are the problem
 // - Add new survey steps like distraction games, etc...
 // - Add new question types
 // - Upload experiment to server (EDITOR) / Download experiment from server (APP) (Keep offline functionality (save experiment to client) -> Server communication is only needed for up/downloading experiment)
@@ -114,6 +114,10 @@ class Controller {
                 callback: onChangeNode,
             },
             {
+                eventType: Config.EVENT_REPEAT_SURVEY,
+                callback: onRepeatSurvey,
+            },
+            {
                 eventType: Config.EVENT_UPLOAD_RESOURCE,
                 callback: onUploadResource,
             },
@@ -160,6 +164,10 @@ class Controller {
             {
                 eventType: Config.EVENT_PASTE_NODE,
                 callback: onPasteNode,
+            },
+            {
+                eventType: Config.EVENT_KEY_NAVIGATION,
+                callback: onNavigateWithKeyboard,
             },
         ];
 
@@ -233,7 +241,7 @@ function onSaveExperiment() {
     
     
     // Checking for a valid experiment
-    validationResult = InputValidator.experimentIsValid(experiment, true);
+    validationResult = InputValidator.experimentIsValid(experiment, undefined, true);
     if (validationResult !== true) {
         TreeView.clickNode(undefined, validationResult.invalidNodeId);
         InputView.showAlert(validationResult.alert);
@@ -427,6 +435,7 @@ function onNodeClicked(event) {
         WhereAmIView.update(TreeView.currentSelection);
         InputView.hideAlert();
         InputView.show(clickedNode, nodeData, parentNodeDataModel, pastOngoingInstructions, pastAndFutureQuestions);
+        InputView.selectFirstInput();
     }
 }
 
@@ -546,71 +555,6 @@ function onAddNode(event) {
     if (event.type === Config.EVENT_ADD_CHILD_NODE) {
         TreeView.updateNodeLinks(newNodeData, clickedNode, undefined, undefined);
     }
-    TreeView.clickNode(newNode, undefined);
-}
-
-function onChangeNode(event) {
-    let nodeToChange = event.data.target,
-    nodeToChangeData = ModelManager.getDataById(nodeToChange.id),
-    stepType = event.data.stepType,
-    questionType = event.data.questionType,
-    initialProperties = {},
-    newNode,
-    newNodeData,
-    nextNodeData,
-    previousNodeData;
-    
-    if (stepType !== undefined) {
-        initialProperties.type = event.data.stepType;
-    }
-    if (questionType !== undefined) {
-        initialProperties.type = event.data.questionType;
-    }
-
-    // First step:
-    // Shortening, extending and updating the data model
-    ModelManager.removeSubtreeResources(nodeToChange);
-    ModelManager.shortenExperiment(nodeToChange, nodeToChange.parentNode);
-    newNodeData = ModelManager.extendExperiment(nodeToChange.parentNode, initialProperties);
-    if (stepType !== undefined) {
-        // If the node to change is a node with a duration (detailed example in onNodeClicked()),
-        // next steps could wait for it. Those steps have to be updated to wait for no step anymore.
-        if (nodeToChangeData.durationInMin !== undefined
-            && nodeToChangeData.durationInMin > 0
-            && nextNodeData !== undefined) {
-                if (nodeToChange.nextNode !== undefined) {
-                    nextNodeData = ModelManager.getDataById(nodeToChange.nextNode.id);
-                }
-                nodeToChangeData = ModelManager.getDataById(nodeToChange.id);
-                ModelManager.removeWaitForStepLinks(nextNodeData, nodeToChangeData);
-        }
-        newNodeData = ModelManager.getDataById(newNodeData.id);
-        if (nodeToChange.previousNode !== undefined) {
-            previousNodeData = ModelManager.getDataById(nodeToChange.previousNode.id);
-        }
-        if (nodeToChange.nextNode !== undefined) {
-            nextNodeData = ModelManager.getDataById(nodeToChange.nextNode.id);
-        }
-        ModelManager.updateStepLinks(newNodeData, previousNodeData, nextNodeData);
-    }
-    else {
-        newNodeData = ModelManager.getDataById(newNodeData.id);
-        if (nodeToChange.previousNode !== undefined) {
-            previousNodeData = ModelManager.getDataById(nodeToChange.previousNode.id);
-        }
-        if (nodeToChange.nextNode !== undefined) {
-            nextNodeData = ModelManager.getDataById(nodeToChange.nextNode.id);
-        }
-        ModelManager.updateQuestionLinks(newNodeData, previousNodeData, nextNodeData, undefined, false);
-    }
-    newNodeData = ModelManager.getDataById(newNodeData.id);
-    console.log("After change", ModelManager.getExperiment());
-
-    // Second step:
-    // Updating the views
-    TreeView.removeSubtree(nodeToChange);
-    newNode = TreeView.createSubtree(newNodeData);
-    TreeView.updateNodeLinks(newNodeData, nodeToChange.parentNode, nodeToChange.previousNode, nodeToChange.nextNode);
     TreeView.clickNode(newNode, undefined);
 }
 
@@ -822,6 +766,71 @@ function onRemoveNode(event) {
     TreeView.clickNode(nextFocusedNode, undefined);
 }
 
+function onChangeNode(event) {
+    let nodeToChange = event.data.target,
+    nodeToChangeData = ModelManager.getDataById(nodeToChange.id),
+    stepType = event.data.stepType,
+    questionType = event.data.questionType,
+    initialProperties = {},
+    newNode,
+    newNodeData,
+    nextNodeData,
+    previousNodeData;
+    
+    if (stepType !== undefined) {
+        initialProperties.type = event.data.stepType;
+    }
+    if (questionType !== undefined) {
+        initialProperties.type = event.data.questionType;
+    }
+
+    // First step:
+    // Shortening, extending and updating the data model
+    ModelManager.removeSubtreeResources(nodeToChange);
+    ModelManager.shortenExperiment(nodeToChange, nodeToChange.parentNode);
+    newNodeData = ModelManager.extendExperiment(nodeToChange.parentNode, initialProperties);
+    if (stepType !== undefined) {
+        // If the node to change is a node with a duration (detailed example in onNodeClicked()),
+        // next steps could wait for it. Those steps have to be updated to wait for no step anymore.
+        if (nodeToChangeData.durationInMin !== undefined
+            && nodeToChangeData.durationInMin > 0
+            && nextNodeData !== undefined) {
+                if (nodeToChange.nextNode !== undefined) {
+                    nextNodeData = ModelManager.getDataById(nodeToChange.nextNode.id);
+                }
+                nodeToChangeData = ModelManager.getDataById(nodeToChange.id);
+                ModelManager.removeWaitForStepLinks(nextNodeData, nodeToChangeData);
+        }
+        newNodeData = ModelManager.getDataById(newNodeData.id);
+        if (nodeToChange.previousNode !== undefined) {
+            previousNodeData = ModelManager.getDataById(nodeToChange.previousNode.id);
+        }
+        if (nodeToChange.nextNode !== undefined) {
+            nextNodeData = ModelManager.getDataById(nodeToChange.nextNode.id);
+        }
+        ModelManager.updateStepLinks(newNodeData, previousNodeData, nextNodeData);
+    }
+    else {
+        newNodeData = ModelManager.getDataById(newNodeData.id);
+        if (nodeToChange.previousNode !== undefined) {
+            previousNodeData = ModelManager.getDataById(nodeToChange.previousNode.id);
+        }
+        if (nodeToChange.nextNode !== undefined) {
+            nextNodeData = ModelManager.getDataById(nodeToChange.nextNode.id);
+        }
+        ModelManager.updateQuestionLinks(newNodeData, previousNodeData, nextNodeData, undefined, false);
+    }
+    newNodeData = ModelManager.getDataById(newNodeData.id);
+    console.log("After change", ModelManager.getExperiment());
+
+    // Second step:
+    // Updating the views
+    TreeView.removeSubtree(nodeToChange);
+    newNode = TreeView.createSubtree(newNodeData);
+    TreeView.updateNodeLinks(newNodeData, nodeToChange.parentNode, nodeToChange.previousNode, nodeToChange.nextNode);
+    TreeView.clickNode(newNode, undefined);
+}
+
 function onInputChanged(event) {
     let dataChangingNode = event.data.correspondingNode,
     newDataProperties = event.data.newDataProperties,
@@ -838,24 +847,16 @@ function onInputChanged(event) {
     timeInMin,
     validationResult;
 
-
-//###
-    // TODO survey frequency buttons -> logic and responsiveness
-    // Label is not hidden when an alert in InputView is triggered
-    // console.log(newDataProperties.surveyFrequency);
-//###
-
-
     // First step:
     // Updating the data model
     ModelManager.updateExperiment(newDataProperties);
-    if (dataChangingNode.parentNode !== undefined
-        && dataChangingNode.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
+    if (parentNode !== undefined
+        && parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
             parentNodeData = ModelManager.getDataById(parentNode.id);
             lastSurveyData = ModelManager.updateSurveyLinks(parentNodeData);
     }
     if (dataChangingNode.type === Config.STEP_TYPE_INSTRUCTION) {
-        if (dataChangingNode.nextNode !== undefined
+        if (nextNode !== undefined
             && newDataProperties.durationInMin === 0) {
                 nextNodeData = ModelManager.getDataById(nextNode.id);
                 ModelManager.removeWaitForStepLinks(nextNodeData, dataChangingNodeData);
@@ -898,10 +899,10 @@ function onInputChanged(event) {
     }
     if (dataChangingNode.type === Config.QUESTION_TYPE_CHOICE) {
         dataChangingNodeData = ModelManager.getDataById(dataChangingNode.id);
-        if (dataChangingNode.nextNode !== undefined) {
+        if (nextNode !== undefined) {
             nextNodeData = ModelManager.getDataById(nextNode.id);
         }
-        if (dataChangingNode.previousNode !== undefined) {
+        if (previousNode !== undefined) {
             previousNodeData = ModelManager.getDataById(previousNode.id);
         }
         ModelManager.updateQuestionLinks(dataChangingNodeData, previousNodeData, nextNodeData, undefined, false);
@@ -931,7 +932,12 @@ function onInputChanged(event) {
     TreeView.navigateToNode(dataChangingNode);
     WhereAmIView.update(TreeView.currentSelection);
 
-    validationResult = InputValidator.experimentIsValid(ModelManager.getExperiment(), false);
+    if (parentNode !== undefined) {
+        validationResult = InputValidator.experimentIsValid(ModelManager.getDataById(dataChangingNode.id), ModelManager.getDataById(parentNode.id), false);
+    }
+    else {
+        validationResult = InputValidator.experimentIsValid(ModelManager.getDataById(dataChangingNode.id), undefined, false);
+    }
     if (validationResult === true) {
         InputView.hideAlert();
         InputView.enableInputs();
@@ -945,6 +951,109 @@ function onInputChanged(event) {
         InputView.disableInputsExcept(validationResult.invalidInput);
         TreeView.disableNodeActions();
         ImportExportView.disableSaveButton();
+    }
+}
+
+function onRepeatSurvey(event) {
+    let surveyNode = event.data.correspondingNode,
+    surveyData = ModelManager.getDataById(surveyNode.id),
+    id = surveyData.id,
+    name = surveyData.name,
+    suffix,
+    timelineNode = surveyNode.parentNode,
+    timelineNodeData = ModelManager.getDataById(timelineNode.id),
+    validationResult,
+    newData,
+    surveyFrequency = event.data.surveyFrequency,
+    repeatCount = event.data.repeatCount,
+    adjustmentCount = 0,
+    nameAdjustmentMap = new Map(),
+    alertMessage = "";
+
+    for (let i = 0; i < repeatCount; i++) {
+        if (surveyFrequency === "hourly") {
+            if (surveyData.absoluteStartAtHour === 23) { // eslint-disable-line no-magic-numbers
+                surveyData.absoluteStartAtHour = 0;
+                surveyData.absoluteStartDaysOffset += 1;
+            }
+            else {
+                surveyData.absoluteStartAtHour += 1;
+            }
+            suffix = "Tag " + (surveyData.absoluteStartDaysOffset + 1) + " " + surveyData.absoluteStartAtHour + " Uhr";
+        }
+        if (surveyFrequency === "daily") {
+            surveyData.absoluteStartDaysOffset += 1;
+            suffix = "Tag " + (surveyData.absoluteStartDaysOffset + 1);
+        }
+        if (surveyFrequency === "weekly") {
+            surveyData.absoluteStartDaysOffset += 7;
+            suffix = "Woche " + Math.round(((surveyData.absoluteStartDaysOffset + 1) / 7)); //eslint-disable-line no-magic-numbers
+        }
+        if (surveyFrequency === "monthly") {
+            surveyData.absoluteStartDaysOffset += 30;
+            suffix = "Monat " + Math.round(((surveyData.absoluteStartDaysOffset + 1) / 30)); //eslint-disable-line no-magic-numbers
+        }
+        if (surveyFrequency === "yearly") {
+            surveyData.absoluteStartDaysOffset += 365;
+            suffix = "Jahr " + Math.round(((surveyData.absoluteStartDaysOffset + 1) / 365)); //eslint-disable-line no-magic-numbers
+        }
+        surveyData.id = undefined;
+        surveyData.name = undefined;
+        validationResult = InputValidator.validateSurvey(surveyData, timelineNodeData, false);
+        while (validationResult.invalidInput === "absoluteStartDaysOffset"
+                || validationResult.invalidInput === "absoluteStartAtHour") {
+                    console.log("survey Time Changed");
+                    adjustmentCount += 1;
+                    if (surveyData.absoluteStartAtHour === 23) { // eslint-disable-line no-magic-numbers
+                        surveyData.absoluteStartAtHour = 0;
+                        surveyData.absoluteStartDaysOffset += 1;
+                    }
+                    else {
+                        surveyData.absoluteStartAtHour += 1;
+                    }
+                    validationResult = InputValidator.validateSurvey(surveyData, timelineNodeData, false);
+        }
+        surveyData.id = id;
+        surveyData.name = name;
+        if (adjustmentCount > 0) {
+            nameAdjustmentMap.set(surveyData.name + " " + suffix, adjustmentCount);
+            if (surveyFrequency === "hourly") {
+                suffix = "Tag " + (surveyData.absoluteStartDaysOffset + 1) + " " + surveyData.absoluteStartAtHour + " Uhr";
+            }
+            if (surveyFrequency === "daily") {
+                suffix = "Tag " + (surveyData.absoluteStartDaysOffset + 1);
+            }
+            if (surveyFrequency === "weekly") {
+                suffix = "Woche " + Math.round(((surveyData.absoluteStartDaysOffset + 1) / 7)); //eslint-disable-line no-magic-numbers
+            }
+            if (surveyFrequency === "monthly") {
+                suffix = "Monat " + Math.round(((surveyData.absoluteStartDaysOffset + 1) / 30)); //eslint-disable-line no-magic-numbers
+            }
+            if (surveyFrequency === "yearly") {
+                suffix = "Jahr " + Math.round(((surveyData.absoluteStartDaysOffset + 1) / 365)); //eslint-disable-line no-magic-numbers
+            }
+        }
+        newData = ModelManager.extendExperimentWithCopy(surveyData, timelineNodeData, suffix);
+        timelineNodeData = ModelManager.getDataById(timelineNode.id);
+        TreeView.clickTimeline(timelineNode, newData);
+        if (adjustmentCount > 0) {
+            for (let i = 0; i < adjustmentCount; i++) {
+                if (surveyData.absoluteStartAtHour === 0) {
+                    surveyData.absoluteStartAtHour = 23;
+                    surveyData.absoluteStartDaysOffset -= 1;
+                }
+                else {
+                    surveyData.absoluteStartAtHour -= 1;
+                }
+            }
+            adjustmentCount = 0;
+        }
+    }
+    for (let name of nameAdjustmentMap.keys()) {
+        alertMessage = alertMessage + name + " -> +" + nameAdjustmentMap.get(name) + " Stunde/n; ";
+    }
+    if (alertMessage !== "") {
+        alert(Config.SURVEY_TIME_CHANGED + " (" + alertMessage.substr(0, alertMessage.length - 2) + ")"); //eslint-disable-line no-magic-numbers
     }
 }
 
@@ -968,12 +1077,9 @@ function onCopyNode() {
     if (TreeView.currentFocusedNode.parentNode !== undefined) {
         clipboardContent.parentNodeType = TreeView.currentFocusedNode.parentNode.type;
         ShortcutManager.setClipboardContent(clipboardContent);
-        console.log("copied ", nodeData);
-        // Inform user -> nodeData.name || text (answer) got copied!
     }
     else {
-        console.log("not copy of experiment");
-        // Inform user experiment nodes cannot be copied. To copy an experiment just save it on the Desktop. Thats the copy (that can be loaded elsewhere).
+        alert(Config.NO_COPY_OF_EXPERIMENT);
     }
 }
 
@@ -1029,7 +1135,7 @@ function onPasteNode(event) {
                         TreeView.clickAddChildNodeButton(insertionParentNode, newData);
                     }
                 }
-                validationResult = InputValidator.experimentIsValid(ModelManager.getExperiment(), false);
+                validationResult = InputValidator.experimentIsValid(ModelManager.getDataById(newData.id), ModelManager.getDataById(insertionParentNode.id), false);
                 if (validationResult === true) {
                     InputView.hideAlert();
                     InputView.enableInputs();
@@ -1054,6 +1160,32 @@ function onPasteNode(event) {
             clipboardNodeDescription = clipboardNodeData.name;
         }
         alert("Das aktuell ausgewählte Element (" + TreeView.currentFocusedNode.description + ") mit dem Typ (" + TreeView.currentFocusedNode.type + ") ist nicht auf der richtigen Ebene um das kopierte Element (" + clipboardNodeDescription + ") vom Typ (" + clipboardNodeData.type + ") einzufügen. Bitte ein Element vom Typ (" + clipboardParentNodeType + ") auswählen um das kopierte Element einzufügen.");
+    }
+}
+
+function onNavigateWithKeyboard(event) {
+    let key = event.data.key;
+
+    if (key === "ArrowUp") {
+        if (TreeView.currentFocusedNode.parentNode !== undefined) {
+            TreeView.clickNode(TreeView.currentFocusedNode.parentNode);
+        }
+    }
+    if (key === "ArrowDown") {
+        if (TreeView.currentFocusedNode.childNodes !== undefined
+            && TreeView.currentFocusedNode.childNodes.length !== 0) {
+            TreeView.clickNode(TreeView.currentFocusedNode.childNodes[0]);
+        }
+    }
+    if (key === "ArrowLeft") {
+        if (TreeView.currentFocusedNode.previousNode !== undefined) {
+            TreeView.clickNode(TreeView.currentFocusedNode.previousNode);
+        }
+    }
+    if (key === "ArrowRight") {
+        if (TreeView.currentFocusedNode.nextNode !== undefined) {
+            TreeView.clickNode(TreeView.currentFocusedNode.nextNode);
+        }
     }
 }
 

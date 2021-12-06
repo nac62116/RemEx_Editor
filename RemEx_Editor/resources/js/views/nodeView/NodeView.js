@@ -99,7 +99,6 @@ class NodeView extends Observable {
     }
 
     updatePosition(centerX, centerY) {
-        //console.log("Node view update position");
         this.center = {
             x: centerX,
             y: centerY,

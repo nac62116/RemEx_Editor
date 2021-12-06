@@ -30,7 +30,7 @@ class InputView extends Observable {
 
         if (node.parentNode !== undefined) {
             if (node.parentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
-                createInputField(this, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.label, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.inputType, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.values, Config.INPUT_SURVEY_FREQUENCY, node.type, true);
+                createInputField(this, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.label, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.type, Config.INPUT_FIELD_SURVEY_FREQUENCY_DATA.values, Config.INPUT_SURVEY_FREQUENCY, node.type, true);
             }
             if (node.parentNode.type === Config.TYPE_SURVEY) {
                 createInputField(this, Config.INPUT_FIELD_STEP_TYPE_DATA.label, Config.INPUT_FIELD_STEP_TYPE_DATA.inputType, Config.INPUT_FIELD_STEP_TYPE_DATA.values, Config.TYPE_STEP, node.type, false);
@@ -117,6 +117,17 @@ class InputView extends Observable {
     hideAlert() {
         this.alertElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         this.alertElement.innerHTML = "";
+    }
+
+    selectFirstInput() {
+        let inputElements = this.inputFieldsContainer.querySelectorAll("input");
+
+        for (let inputElement of inputElements) {
+            if (inputElement.getAttribute("type") === "text") {
+                inputElement.select();
+                return;
+            }
+        }
     }
 
     disableInputsExcept(modelProperty) {
@@ -247,7 +258,8 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     clearInputButton,
     labelElement,
     imageElement,
-    videoElement;
+    videoElement,
+    tempElement;
     
     inputField = document.createElement("div");
     inputField.innerHTML = INPUT_FIELD_TEMPLATE_STRING;
@@ -275,7 +287,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
                 inputElement.setAttribute("value", 0);
             }
             labelElement.classList.add("radio-label");
-            inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+            //inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
             inputElement.setAttribute("type", type);
             inputElement.setAttribute("name", modelProperty);
             if (currentModelValue === 0 || currentModelValue === null) {
@@ -291,7 +303,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
             labelElement.innerHTML = value.label;
             labelElement.classList.add("radio-label");
             inputElement = document.createElement("input");
-            inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+            //inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
             inputElement.setAttribute("type", type);
             inputElement.setAttribute("name", modelProperty);
             inputElement.setAttribute("value", value.value);
@@ -299,31 +311,57 @@ function createInputField(that, label, type, values, modelProperty, currentModel
                 if (currentModelValue === value.value 
                     || currentModelValue instanceof Array 
                     && currentModelValue.includes(value.value)) {
-                    inputElement.setAttribute("checked", "true");
+                        inputElement.setAttribute("checked", "true");
+                    }
+                }
+                
+                inputElement.addEventListener("click", onInputChanged.bind(that));
+                
+                labelElement.insertAdjacentElement("afterbegin", inputElement);
+                inputField.appendChild(labelElement);
+            }
+        }
+        else if (type === "surveyFrequency") {
+            labelElement = document.createElement("label");
+            labelElement.classList.add("radio-label");
+            for (let value of values) {
+                inputElement = document.createElement("input");
+                //inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+                inputElement.setAttribute("type", value.inputType);
+                inputElement.setAttribute("name", value.property);
+                inputElement.setAttribute("value", value.value);
+                
+                if (value.inputType === "number") {
+                    inputElement.addEventListener("keyup", onInputChanged.bind(that));
+                    inputElement.addEventListener("wheel", function (event) {
+                        event.preventDefault();
+                    });
+                    inputElement.addEventListener("keydown", function (event) {
+                        if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                            event.preventDefault();
+                        }
+                    });
+                }
+                else {
+                    inputElement.addEventListener("click", onInputChanged.bind(that));
+                    inputElement.addEventListener("mouseenter", function(event) {
+                        console.log(event.target.classList);
+                        event.target.classList.add("button-emphasized");
+                    });
+                    inputElement.addEventListener("mouseleave", function(event) {
+                        event.target.classList.remove("button-emphasized");
+                    });
+                }
+                
+                labelElement.insertAdjacentElement("beforeend", inputElement);
+                if (value.inputType === "number") {
+                    tempElement = document.createElement("label");
+                    tempElement.innerHTML = "x";
+                    tempElement.classList.add("radio-label");
+                    labelElement.insertAdjacentElement("beforeend", tempElement);
                 }
             }
-
-            inputElement.addEventListener("click", onInputChanged.bind(that));
-            
-            labelElement.insertAdjacentElement("afterbegin", inputElement);
             inputField.appendChild(labelElement);
-        }
-    }
-    else if (type === "button") {
-        labelElement = document.createElement("label");
-        labelElement.classList.add("radio-label");
-        for (let value of values) {
-            inputElement = document.createElement("input");
-            inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
-            inputElement.setAttribute("type", type);
-            inputElement.setAttribute("name", modelProperty);
-            inputElement.setAttribute("value", value.value);
-
-            inputElement.addEventListener("click", onInputChanged.bind(that));
-            
-            labelElement.insertAdjacentElement("beforeend", inputElement);
-        }
-        inputField.appendChild(labelElement);
     }
     else if (type === "image" || type === "video") {
         clearInputButton = document.createElement("button");
@@ -331,7 +369,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         clearInputButton.innerHTML = "X";
         clearInputButton.addEventListener("click", onClearFileInputs.bind(that));
         inputElement = document.createElement("input");
-        inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+        //inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", "file");
         inputElement.setAttribute("accept", type + "/*");
         inputElement.setAttribute("name", modelProperty);
@@ -356,7 +394,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     }
     else if (type === "time") {
         inputElement = document.createElement("input");
-        inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+        //inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
         inputElement.setAttribute("required", "required");
@@ -368,11 +406,19 @@ function createInputField(that, label, type, values, modelProperty, currentModel
         }
         inputElement.value = currentModelValue.absoluteStartAtHour + ":" + currentModelValue.absoluteStartAtMinute;
         inputElement.addEventListener("keyup", onInputChanged.bind(that));
+        inputElement.addEventListener("wheel", function (event) {
+            event.preventDefault();
+        });
+        inputElement.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+                event.preventDefault();
+            }
+        });
         inputField.appendChild(inputElement);
     }
     else if (type === "number") {
         inputElement = document.createElement("input");
-        inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+        //inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
         inputElement.value = currentModelValue;
@@ -390,7 +436,7 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     }
     else {
         inputElement = document.createElement("input");
-        inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
+        //inputElement.setAttribute("id", inputField.firstElementChild.getAttribute("for"));
         inputElement.setAttribute("type", type);
         inputElement.setAttribute("name", modelProperty);
         inputElement.value = currentModelValue;
@@ -408,7 +454,6 @@ function createInputField(that, label, type, values, modelProperty, currentModel
     if (videoElement !== undefined) {
         that.inputFieldsContainer.appendChild(videoElement);
     }
-    console.log(that.inputFieldsContainer);
 }
 
 function onInputChanged(event) {
@@ -418,6 +463,7 @@ function onInputChanged(event) {
         resourceFile: undefined,
     },
     inputChangeEvent,
+    repeatSurveyEvent,
     uploadResourceEvent,
     properties = {},
     correspondingModelProperty = event.target.getAttribute("name"),
@@ -427,6 +473,7 @@ function onInputChanged(event) {
     imageInputElement,
     videoElement,
     sourceElement,
+    repeatCountElement,
     reader = new FileReader();
 
     if (event.target.value !== "") {
@@ -486,8 +533,8 @@ function onInputChanged(event) {
             }
         }
         else if (event.target.type === "number"
-                || correspondingModelProperty === "waitForStep"
-                || correspondingModelProperty === "nextQuestionId") {
+                && (correspondingModelProperty === "waitForStep"
+                || correspondingModelProperty === "nextQuestionId")) {
             if (event.target.type === "number") {
                 event.target.value = escapeNegativeValues(event.target.value);
                 if (!(correspondingModelProperty === "durationInMin" && this.correspondingNode.type === Config.STEP_TYPE_INSTRUCTION)) {
@@ -495,6 +542,23 @@ function onInputChanged(event) {
                 }
             }
             properties[correspondingModelProperty] = event.target.value * 1;
+        }
+        else if (event.target.parentElement.parentElement.title === "surveyFrequency") {
+            repeatCountElement = event.target.parentElement.querySelector("input[name=repeatCount]");
+            if (correspondingModelProperty === "repeatCount") {
+                event.target.value = escapeNegativeValues(event.target.value);
+                event.target.value = escapeZeroValues(event.target.value);
+                if ((repeatCountElement.value.length >= Config.SURVEY_REPETITION_LIMIT_MAX_DIGITS)) {
+                    repeatCountElement.value = repeatCountElement.value.substring(0, Config.SURVEY_REPETITION_LIMIT_MAX_DIGITS - 1);
+                }
+            }
+            else {
+                data.surveyFrequency = correspondingModelProperty;
+                data.repeatCount = repeatCountElement.value;
+                repeatSurveyEvent = new ControllerEvent(Config.EVENT_REPEAT_SURVEY, data);
+                this.notifyAll(repeatSurveyEvent);
+            }
+            return;
         }
         else {
             properties[correspondingModelProperty] = event.target.value;

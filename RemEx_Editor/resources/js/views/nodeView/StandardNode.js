@@ -72,11 +72,8 @@ class StandardNode extends NodeView {
     }
 
     deemphasize() {
-        //console.log("before deemphasize node view");
         super.deemphasize();
-        //console.log("before deemphasize standard node");
         this.nodeElements.inputPath.setAttribute("stroke-opacity", Config.NODE_INPUT_PATH_STROKE_OPACITY_DEEMPHASIZED);
-        //console.log("after deemphasize standard node");
     
     }
 

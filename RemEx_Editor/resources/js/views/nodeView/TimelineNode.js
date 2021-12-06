@@ -339,16 +339,10 @@ function getTimeFromPosition(that, position) {
     let timeInMin,
     lengthFromStart;
 
-    console.log("mouseX", position.x - that.treeviewOffsetX);
-    console.log("timelineStartX", that.start.x);
-    console.log("timelineWidth", that.width);
-    console.log("timelineLengthDays", Math.floor(that.timelineLengthInMin / Config.ONE_DAY_IN_MIN));
-
     lengthFromStart = position.x - that.start.x - that.treeviewOffsetX;
     timeInMin = lengthFromStart / that.width * that.timelineLengthInMin;
     timeInMin = Math.round(timeInMin);
 
-    console.log("resultTimeDays", Math.floor(timeInMin / Config.ONE_DAY_IN_MIN));
     return timeInMin;
 }
 

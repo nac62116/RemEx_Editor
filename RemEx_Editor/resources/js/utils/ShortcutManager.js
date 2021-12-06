@@ -28,7 +28,7 @@ function onKeyDown(event) {
             controllerEvent = new ControllerEvent(Config.EVENT_COPY_NODE, null);
             this.notifyAll(controllerEvent);
     }
-    // ctrl + x (not ctrl + v for pasting as its reserved for the system clipboard)
+    // ctrl + whitespace (not ctrl + v for pasting as its reserved for the system clipboard)
     if (this.currentPressedKeys.get("Control")
         && this.currentPressedKeys.get(" ")) {
             this.currentPressedKeys.delete(" ");
@@ -41,7 +41,19 @@ function onKeyDown(event) {
 }
 
 function onKeyUp(event) {
+    let data = {},
+    controllerEvent;
+    
     this.currentPressedKeys.delete(event.key);
+    // Arrow keys for movement
+    if (event.key === "ArrowLeft"
+        || event.key === "ArrowRight"
+        || event.key === "ArrowDown"
+        || event.key === "ArrowUp") {
+            data.key = event.key;
+            controllerEvent = new ControllerEvent(Config.EVENT_KEY_NAVIGATION, data);
+            this.notifyAll(controllerEvent);
+    }
 }
 
 export default new ShortcutManager();

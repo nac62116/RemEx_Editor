@@ -24,6 +24,10 @@ body {
     display: none !important;
 }
 
+.button-emphasized {
+    border-color: rgb(0, 96, 223) !important;
+}
+
 .top-line {
     position: absolute;
     top: -10px;
@@ -82,8 +86,8 @@ body {
 .tree-container {
     position: absolute;
     top: 0;
-    left: 30%;
-    width: 60%;
+    left: 32%;
+    width: 58%;
     height: 70%;
     background-color:rgb(92, 92, 92);
 }
@@ -125,7 +129,7 @@ body {
 .input-container {
     position: absolute;
     top: 0;
-    width: 30%;
+    width: 32%;
     height: 100%;
     font-family: Helvetica;
     background-color: black;
@@ -170,6 +174,7 @@ body {
 .input-field label {
     font-size: large;
 }
+
 
 .input-field input {
     padding: 5px;
@@ -234,8 +239,8 @@ body {
 .info-container {
     position: absolute;
     top: 70%;
-    left: 30%;
-    width: 70%;
+    left: 32%;
+    width: 68%;
     height: 30%;
     background-color: black;
     box-shadow: 0 -8px 8px 0px rgba(0, 0, 0, 0.5);

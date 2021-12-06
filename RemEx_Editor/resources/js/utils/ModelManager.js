@@ -252,6 +252,7 @@ class ModelManager {
         if (parentNodeData.type === Config.QUESTION_TYPE_CHOICE) {
             parentNodeData.answers.push(newData);
         }
+        console.log(parentNodeData);
 
         this.updateExperiment(parentNodeData);
 
@@ -462,7 +463,6 @@ class ModelManager {
                 for (let step of survey.steps) {
                     if (step.type === Config.STEP_TYPE_INSTRUCTION) {
                         if (step.imageFileName === fileName || step.videoFileName === fileName) {
-                            console.log("No removal due to ", step);
                             return;
                         }
                     }
@@ -470,7 +470,6 @@ class ModelManager {
             }
         }
         IndexedDB.deleteResource(fileName);
-        console.log("Removal");
         this.usedResourceFileNames.splice(this.usedResourceFileNames.indexOf(fileName), 1);
     }
 

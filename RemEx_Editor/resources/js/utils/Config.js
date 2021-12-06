@@ -60,14 +60,16 @@ const Config = {
     EVENT_ADD_NEXT_NODE: "addNextNode",
     EVENT_ADD_PREVIOUS_NODE: "addPrevNode",
     EVENT_ADD_CHILD_NODE: "addChildNode",
+    EVENT_TIMELINE_CLICKED: "timelineClicked",
     EVENT_INPUT_CHANGED: "inputChanged",
     EVENT_UPLOAD_RESOURCE: "uploadResource",
     EVENT_RESOURCE_LOADED: "resourceLoaded",
     EVENT_REMOVE_NODE: "removeNode",
     EVENT_CHANGE_NODE: "changeNode",
-    EVENT_TIMELINE_CLICKED: "timelineClicked",
+    EVENT_REPEAT_SURVEY: "repeatSurvey",
     EVENT_COPY_NODE: "copyNode",
     EVENT_PASTE_NODE: "pasteNode",
+    EVENT_KEY_NAVIGATION: "keyNavigation",
 
     // DOM Element ids:
 
@@ -108,19 +110,38 @@ const Config = {
 
     INPUT_FIELD_SURVEY_FREQUENCY_DATA: {
         label: "Wiederholungsfrequenz:",
-        inputType: "button",
+        type: "surveyFrequency",
         values: [
             {
                 value: "Stündlich",
+                property: "hourly",
+                inputType: "button",
             },
             {
                 value: "Täglich",
+                property: "daily",
+                inputType: "button",
+            },
+            {
+                value: "Wöchentlich",
+                property: "weekly",
+                inputType: "button",
             },
             {
                 value: "Monatlich",
+                property: "monthly",
+                inputType: "button",
+                
             },
             {
                 value: "Jährlich",
+                property: "yearly",
+                inputType: "button",
+            },
+            {
+                value: "1",
+                property: "repeatCount",
+                inputType: "number",
             },
         ],
     },
@@ -626,6 +647,7 @@ const Config = {
     // Input validation
     
     SURVEY_UPPER_DAY_LIMIT_MAX_DIGITS: 5,
+    SURVEY_REPETITION_LIMIT_MAX_DIGITS: 2,
     SURVEY_MAX_DURATION_IN_MIN: 720,
     INSTRUCTION_HEADER_MAX_LENGTH: 50,
     INSTRUCTION_TEXT_WITH_RESOURCE_MAX_LENGTH: 350,
@@ -677,9 +699,8 @@ const Config = {
     VIDEO_RESOLUTION_TOO_HIGH: "Die Auflösung des hochgeladenen Videos ist zu hoch. Die maximal unterstützte Auflösung für Videos ist 1920 x 1080.",
     DATABASE_FULL: "Die Resourcen des Experiments sind bereits zu groß um weitere hochzuladen.",
     LOADING_RESOURCE_FAILED: "Die Ressource der aktuellen Instruktion konnte leider nicht geladen werden. Bitte erneut hochladen.",
-
-    // Web Worker messages
-    WORKER_MESSAGE_GET_RESOURCE: "getResource",
+    NO_COPY_OF_EXPERIMENT: "Nur einzelne Teilschritte des Experiments können kopiert werden. Falls das Experiment selber kopiert werden soll kann es einfach gespeichert werden.",
+    SURVEY_TIME_CHANGED: "Eine oder mehrere der wiederholenden Befragungen überlappen mit bereits bestehenden. Um das zu verhindern wurden sie stündlich angepasst.",
 };
 
 Object.freeze(Config);
