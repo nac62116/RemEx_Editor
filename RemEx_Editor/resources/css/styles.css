@@ -152,7 +152,7 @@ body {
 
 .input-header {
     position: relative;
-    width: 100%;
+    width: 90%;
     text-align: center;
     margin-top: 2%;
 }
@@ -242,8 +242,22 @@ body {
     left: 32%;
     width: 68%;
     height: 30%;
-    background-color: black;
+    background-color:rgb(44, 44, 44);
     box-shadow: 0 -8px 8px 0px rgba(0, 0, 0, 0.5);
+}
+
+.remex-logo-container {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    width: 70px;
+    height: 70px;
+}
+
+.remex-logo-container img {
+    width: 100%;
+    height: 100%;
+    margin: auto;
 }
 
 .loading-screen {

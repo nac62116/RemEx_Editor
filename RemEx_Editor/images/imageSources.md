@@ -1,5 +1,8 @@
 # Image Sources:
 
+Self created Icons by Colin Nash:
+* remex_logo_white.png
+
 Icon created by Freepik at Flaticon "https://www.flaticon.com/de/autoren/freepik":
 * delete_button.png
 * new_button.png

@@ -17,11 +17,9 @@ import Config from "../utils/Config.js";
 // -> Test phase: Test the RemExEditor functionality
 // -> Create .exe file for install
 // -> MIT Licence: Licence text on top of each file and after that the contibutors
-// -> RemEx Logo in the top left corner
 // -> InfoView
 // APP:
 // -> Test phase: Test fully grown experiment on RemExApp
-// -> RemEx Logo as App icon
 
 // ENHANCEMENT:
 // EDITOR:
