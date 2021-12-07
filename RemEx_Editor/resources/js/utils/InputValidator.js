@@ -14,50 +14,52 @@ class InputValidator {
                 this.experimentIsValid(group, data, beforeSaving);
             }
         }
-        if (data.type === Config.TYPE_EXPERIMENT_GROUP) {
-            result = this.validateExperimentGroup(data, parentData, beforeSaving);
-            if (result !== true) {
-                return result;
-            }
-            for (let survey of data.surveys) {
-                this.experimentIsValid(survey, data, beforeSaving);
-            }
-        }
-        if (data.type === Config.TYPE_SURVEY) {
-            result = this.validateSurvey(data, parentData, beforeSaving);
-            if (result !== true) {
-                return result;
-            }
-            for (let step of data.steps) {
-                this.experimentIsValid(step, data, beforeSaving);
-            }
-        }
-        if (parentData.type === Config.TYPE_SURVEY) {
-            result = this.validateStep(data, beforeSaving);
-            if (result !== true) {
-                return result;
-            }
-            if (data.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-                for (let question of data.questions) {
-                    this.experimentIsValid(question, data, beforeSaving);
+        if (parentData !== undefined) {
+            if (data.type === Config.TYPE_EXPERIMENT_GROUP) {
+                result = this.validateExperimentGroup(data, parentData, beforeSaving);
+                if (result !== true) {
+                    return result;
+                }
+                for (let survey of data.surveys) {
+                    this.experimentIsValid(survey, data, beforeSaving);
                 }
             }
-        }
-        if (parentData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-            result = this.validateQuestion(data, parentData, beforeSaving);
-            if (result !== true) {
-                return result;
-            }
-            if (data.type === Config.QUESTION_TYPE_CHOICE) {
-                for (let answer of data.answers) {
-                    this.experimentIsValid(answer, data, beforeSaving);
+            if (data.type === Config.TYPE_SURVEY) {
+                result = this.validateSurvey(data, parentData, beforeSaving);
+                if (result !== true) {
+                    return result;
+                }
+                for (let step of data.steps) {
+                    this.experimentIsValid(step, data, beforeSaving);
                 }
             }
-        }
-        if (data.type === Config.TYPE_ANSWER) {
-            result = this.validateAnswer(data, parentData);
-            if (result !== true) {
-                return result;
+            if (parentData.type === Config.TYPE_SURVEY) {
+                result = this.validateStep(data, beforeSaving);
+                if (result !== true) {
+                    return result;
+                }
+                if (data.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                    for (let question of data.questions) {
+                        this.experimentIsValid(question, data, beforeSaving);
+                    }
+                }
+            }
+            if (parentData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+                result = this.validateQuestion(data, parentData, beforeSaving);
+                if (result !== true) {
+                    return result;
+                }
+                if (data.type === Config.QUESTION_TYPE_CHOICE) {
+                    for (let answer of data.answers) {
+                        this.experimentIsValid(answer, data, beforeSaving);
+                    }
+                }
+            }
+            if (data.type === Config.TYPE_ANSWER) {
+                result = this.validateAnswer(data, parentData);
+                if (result !== true) {
+                    return result;
+                }
             }
         }
         return result;

@@ -2,6 +2,7 @@
 
 Self created Icons by Colin Nash:
 * remex_logo_white.png
+* remex_logo_black.ico
 
 Icon created by Freepik at Flaticon "https://www.flaticon.com/de/autoren/freepik":
 * delete_button.png

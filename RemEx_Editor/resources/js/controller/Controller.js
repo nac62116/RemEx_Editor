@@ -15,7 +15,6 @@ import Config from "../utils/Config.js";
 // TODO:
 // -> Code cleaning
 // -> Test phase: Test the RemExEditor functionality
-// -> Create .exe file for install
 // -> MIT Licence: Licence text on top of each file and after that the contibutors
 // -> InfoView
 // APP:
@@ -31,6 +30,7 @@ import Config from "../utils/Config.js";
 // - Show survey time windows on the timeline (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
 // - Calculate the optimal duration for a survey depending on its content
 // - Survey time randomization
+// - Create linux batch equivalent to windows batch file "starter.bat"
 // APP:
 // - Important: If the device is turned off, the current experiment is finished and can't be resumed (Issues with receiving a boot completed action from the system, to resume the experiment)
 // - Important: Same problem when the user kills the app (swipes it away in the recent apps list) during an experiment between two surveys (not during a survey). If the user kills the app during a survey the survey gets properly finished and the next survey alarm is set
