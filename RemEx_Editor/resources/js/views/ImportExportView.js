@@ -74,7 +74,8 @@ class ImportExportView extends Observable {
             experiment: undefined,
             resources: [],
             success: false,
-        };
+        },
+        x;
         
         this.uploadInputElement.addEventListener("change", function(event) {
             controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOAD_STARTED, null);

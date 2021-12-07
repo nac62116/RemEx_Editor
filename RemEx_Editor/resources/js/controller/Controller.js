@@ -22,6 +22,7 @@ import Config from "../utils/Config.js";
 
 // ENHANCEMENT:
 // EDITOR:
+// - Issues on Chrome Browser: 1. "ImportExportView.js line 160" -> Experiment Upload not working. Could be the programmatical click on the uploadElement. 2. Input element with type time has a clock on the right to pick the time -> When using this the data model is not updated.
 // - Move IndexedDB transactions to a seperate Thread (Web Worker) to avoid UI Blocking
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
 // - Improve adding the svg elements to the dom. The layers (z-index) are not correct. Nodes should be shown on top of the timeline not under it.
