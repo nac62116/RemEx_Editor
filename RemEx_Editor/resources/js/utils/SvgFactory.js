@@ -17,7 +17,8 @@ class SvgFactory {
     createRootNodeElements(iconSrc) {
         let rootNodeElements = createMinimumNode(false, iconSrc);
         
-        rootNodeElements.addChildButton = createAddOrMoveNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+        rootNodeElements.addChildButton = createAddOrSwitchNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+        rootNodeElements.addChildIcon = createAddIcon(Config.NODE_ADD_CHILD_ICON_ID);
 
         return rootNodeElements;
     }
@@ -27,11 +28,14 @@ class SvgFactory {
 
         standardNodeElements.inputPath = createNodeInputPath();
         if (hasAddNeighbourButtons) {
-            standardNodeElements.addNextButton = createAddOrMoveNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
-            standardNodeElements.addPreviousButton = createAddOrMoveNodeButton(Config.NODE_ADD_PREV_BUTTON_ID);
+            standardNodeElements.addNextButton = createAddOrSwitchNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
+            standardNodeElements.addNextIcon = createAddIcon(Config.NODE_ADD_NEXT_ICON_ID);
+            standardNodeElements.addPreviousButton = createAddOrSwitchNodeButton(Config.NODE_ADD_PREV_BUTTON_ID);
+            standardNodeElements.addPreviousIcon = createAddIcon(Config.NODE_ADD_PREV_ICON_ID);
         }
         if (hasAddChildButton) {
-            standardNodeElements.addChildButton = createAddOrMoveNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+            standardNodeElements.addChildButton = createAddOrSwitchNodeButton(Config.NODE_ADD_CHILD_BUTTON_ID);
+            standardNodeElements.addChildIcon = createAddIcon(Config.NODE_ADD_CHILD_ICON_ID);
         }
 
         return standardNodeElements;
@@ -55,13 +59,15 @@ class SvgFactory {
         return deflateableNodeElements;
     }
 
-    createMoveableNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
-        let moveableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc);
+    createSwitchableNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
+        let switchableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc);
 
-        moveableNodeElements.moveRightButton = createAddOrMoveNodeButton(Config.NODE_MOVE_RIGHT_BUTTON_ID);
-        moveableNodeElements.moveLeftButton = createAddOrMoveNodeButton(Config.NODE_MOVE_LEFT_BUTTON_ID);
+        switchableNodeElements.switchRightButton = createAddOrSwitchNodeButton(Config.NODE_SWITCH_RIGHT_BUTTON_ID);
+        switchableNodeElements.switchRightIcon = createSwitchIcon(Config.NODE_SWITCH_RIGHT_ICON_ID);
+        switchableNodeElements.switchLeftButton = createAddOrSwitchNodeButton(Config.NODE_SWITCH_LEFT_BUTTON_ID);
+        switchableNodeElements.switchLeftIcon = createSwitchIcon(Config.NODE_SWITCH_LEFT_ICON_ID);
 
-        return moveableNodeElements;
+        return switchableNodeElements;
     }
 
     createTimelineLabel(labelPosition, descriptionLines, isGreater) {
@@ -166,7 +172,7 @@ function createNodeInputPath() {
     return inputPath;
 }
 
-function createAddOrMoveNodeButton(id /*TODO: Icon*/) {
+function createAddOrSwitchNodeButton(id) {
     let addButton = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     addButton.setAttribute("id", id);
     addButton.setAttribute("r", Config.NODE_ADD_BUTTON_RADIUS);
@@ -177,6 +183,28 @@ function createAddOrMoveNodeButton(id /*TODO: Icon*/) {
     addButton.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
     addButton.setAttribute("display", "none");
     return addButton;
+}
+
+function createAddIcon(id) {
+    let addIcon = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    addIcon.setAttribute("id", id);
+    addIcon.setAttribute("width", Config.NODE_ADD_ICON_WIDTH);
+    addIcon.setAttribute("height", Config.NODE_ADD_ICON_HEIGHT);
+    addIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
+    addIcon.setAttribute("href", Config.NODE_ADD_ICON_SRC);
+
+    return addIcon;
+}
+
+function createSwitchIcon(id) {
+    let switchIcon = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    switchIcon.setAttribute("id", id);
+    switchIcon.setAttribute("width", Config.NODE_SWITCH_ICON_WIDTH);
+    switchIcon.setAttribute("height", Config.NODE_SWITCH_ICON_HEIGHT);
+    switchIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
+    switchIcon.setAttribute("href", Config.NODE_SWITCH_ICON_SRC);
+
+    return switchIcon;
 }
 
 function createTimelineElements() {

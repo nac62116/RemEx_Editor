@@ -10,6 +10,9 @@ class RootNode extends NodeView {
         this.nodeElements.addChildButton.addEventListener("click", onAddChildNodeClicked.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
         this.nodeElements.addChildButton.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
+        this.nodeElements.addChildIcon.addEventListener("click", onAddChildNodeClicked.bind(this));
+        this.nodeElements.addChildIcon.addEventListener("mouseenter", onAddButtonMouseEnter.bind(this));
+        this.nodeElements.addChildIcon.addEventListener("mouseleave", onAddButtonMouseLeave.bind(this));
         // This property is only defined when the add buttons are triggered programmatically
         // and we want to add already defined data (e.g. onPasteNode)
         this.nodeData = undefined;
@@ -34,6 +37,8 @@ class RootNode extends NodeView {
         super.updatePosition(centerX, centerY);
         this.nodeElements.addChildButton.setAttribute("cx", this.center.x);
         this.nodeElements.addChildButton.setAttribute("cy", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y);
+        this.nodeElements.addChildIcon.setAttribute("x", this.center.x - Config.NODE_ADD_ICON_WIDTH * 1 / 2); // eslint-disable-line no-magic-numbers
+        this.nodeElements.addChildIcon.setAttribute("y", this.center.y + Config.NODE_ADD_CHILD_BUTTON_CENTER_OFFSET_Y - Config.NODE_ADD_ICON_HEIGHT * 1 / 2); // eslint-disable-line no-magic-numbers
     }
 
     clickAddChildButton(nodeData) {
@@ -48,10 +53,12 @@ class RootNode extends NodeView {
 
     hideAddChildButton() {
         this.nodeElements.addChildButton.setAttribute("display", "none");
+        this.nodeElements.addChildIcon.setAttribute("display", "none");
     }
 
     showAddChildButton() {
         this.nodeElements.addChildButton.removeAttribute("display");
+        this.nodeElements.addChildIcon.removeAttribute("display");
     }
 }
 
@@ -69,17 +76,19 @@ function onAddChildNodeClicked() {
     this.nodeData = undefined;
 }
 
-function onAddButtonMouseEnter(event) {
+function onAddButtonMouseEnter() {
     if (this.isClickable) {
-        event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED);
-        event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED);
+        this.nodeElements.addChildButton.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_EMPHASIZED);
+        this.nodeElements.addChildButton.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_EMPHASIZED);
+        this.nodeElements.addChildIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_EMPHASIZED);
     }
 }
 
-function onAddButtonMouseLeave(event) {
+function onAddButtonMouseLeave() {
     if (this.isClickable) {
-        event.target.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
-        event.target.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+        this.nodeElements.addChildButton.setAttribute("fill-opacity", Config.NODE_ADD_BUTTON_FILL_OPACITY_DEEMPHASIZED);
+        this.nodeElements.addChildButton.setAttribute("stroke-opacity", Config.NODE_ADD_BUTTON_STROKE_OPACITY_DEEMPHASIZED);
+        this.nodeElements.addChildIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
     }
 }
 

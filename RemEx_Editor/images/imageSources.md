@@ -16,3 +16,9 @@ Icon created by Eucalyp at Flaticon "https://www.flaticon.com/authors/eucalyp":
 * breathing_exercise_icon.png
 * questionnaire_icon.png
 * answer_icon.png
+
+Icon created by Royyan Wijaya at Flaticon "https://www.flaticon.com/authors/royyan-wijaya":
+* add_icon.png
+
+Icon created by Smashicons at Flaticon "https://www.flaticon.com/authors/smashicons":
+* switch_icon.png

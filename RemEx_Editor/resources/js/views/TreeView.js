@@ -2,7 +2,7 @@ import RootNode from "../views/nodeView/RootNode.js";
 import TimelineNode from "../views/nodeView/TimelineNode.js";
 import DeflateableNode from "../views/nodeView/DeflateableNode.js";
 import StandardNode from "../views/nodeView/StandardNode.js";
-import MoveableNode from "../views/nodeView/MoveableNode.js";
+import SwitchableNode from "./nodeView/SwitchableNode.js";
 import SvgFactory from "../utils/SvgFactory.js";
 import Config from "../utils/Config.js";
 
@@ -228,26 +228,26 @@ function createNodes(that, nodeData) {
         childrenData = nodeData.steps;
     }
     else if (nodeData.type === Config.STEP_TYPE_INSTRUCTION) {
-        elements = SvgFactory.createMoveableNodeElements(true, false, Config.INSTRUCTION_ICON_SRC);
-        newNode = new MoveableNode(elements, id, nodeData.type, description);
+        elements = SvgFactory.createSwitchableNodeElements(true, false, Config.INSTRUCTION_ICON_SRC);
+        newNode = new SwitchableNode(elements, id, nodeData.type, description);
     }
     else if (nodeData.type === Config.STEP_TYPE_BREATHING_EXERCISE) {
-        elements = SvgFactory.createMoveableNodeElements(true, false, Config.BREATHING_EXERCISE_ICON_SRC);
-        newNode = new MoveableNode(elements, id, nodeData.type, description);
+        elements = SvgFactory.createSwitchableNodeElements(true, false, Config.BREATHING_EXERCISE_ICON_SRC);
+        newNode = new SwitchableNode(elements, id, nodeData.type, description);
     }
     else if (nodeData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
-        elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTIONNAIRE_ICON_SRC);
-        newNode = new MoveableNode(elements, id, nodeData.type, description);
+        elements = SvgFactory.createSwitchableNodeElements(true, true, Config.QUESTIONNAIRE_ICON_SRC);
+        newNode = new SwitchableNode(elements, id, nodeData.type, description);
         childrenData = nodeData.questions;
     }
     else if (nodeData.type === Config.QUESTION_TYPE_CHOICE) {
-        elements = SvgFactory.createMoveableNodeElements(true, true, Config.QUESTION_ICON_SRC);
-        newNode = new MoveableNode(elements, id, nodeData.type, description);
+        elements = SvgFactory.createSwitchableNodeElements(true, true, Config.QUESTION_ICON_SRC);
+        newNode = new SwitchableNode(elements, id, nodeData.type, description);
         childrenData = nodeData.answers;
     }
     else if (nodeData.type !== Config.QUESTION_TYPE_CHOICE && questionTypes.includes(nodeData.type)) {
-        elements = SvgFactory.createMoveableNodeElements(true, false, Config.QUESTION_ICON_SRC);
-        newNode = new MoveableNode(elements, id, nodeData.type, description);
+        elements = SvgFactory.createSwitchableNodeElements(true, false, Config.QUESTION_ICON_SRC);
+        newNode = new SwitchableNode(elements, id, nodeData.type, description);
     }
     else if (nodeData.type === Config.TYPE_ANSWER) {
         description = nodeData.text;

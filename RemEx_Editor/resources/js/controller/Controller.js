@@ -13,7 +13,6 @@ import Config from "../utils/Config.js";
 // It is the communication layer between the views and the data model.
 
 // TODO:
-// -> Survey frequency buttons
 // -> Code cleaning
 // -> Test phase: Test the RemExEditor functionality
 // -> Create .exe file for install
@@ -92,11 +91,11 @@ class Controller {
                 callback: onTimelineClicked,
             },
             {
-                eventType: Config.EVENT_MOVE_NODE_RIGHT,
+                eventType: Config.EVENT_SWITCH_NODE_RIGHT,
                 callback: onSwitchNodes,
             },
             {
-                eventType: Config.EVENT_MOVE_NODE_LEFT,
+                eventType: Config.EVENT_SWITCH_NODE_LEFT,
                 callback: onSwitchNodes,
             },
         ],
@@ -235,10 +234,6 @@ function onSaveExperiment() {
     validationResult,
     // Writing a nameCodeTable, which provides the answer codes to the corresponding questions/answers to simplify the csv understanding after an experiment.
     nameCodeTable = ModelManager.getNameCodeTable(experiment);
-    
-    
-    // TODO: Validate whole Experiment
-    
     
     // Checking for a valid experiment
     validationResult = InputValidator.experimentIsValid(experiment, undefined, true);
@@ -572,7 +567,7 @@ function onSwitchNodes(event) {
     nextNodeData,
     nextFocusedNode = event.data.target;
 
-    if (event.type === Config.EVENT_MOVE_NODE_LEFT) {
+    if (event.type === Config.EVENT_SWITCH_NODE_LEFT) {
         rightNode = event.data.target;
         leftNode = rightNode.previousNode;
     }
