@@ -4,14 +4,16 @@ class InputValidator {
 
     experimentIsValid(data, parentData, beforeSaving) {
         let result;
-
         if (data.type === Config.TYPE_EXPERIMENT) {
             result = this.validateExperiment(data, beforeSaving);
             if (result !== true) {
                 return result;
             }
             for (let group of data.groups) {
-                this.experimentIsValid(group, data, beforeSaving);
+                result = this.experimentIsValid(group, data, beforeSaving);
+                if (result !== true) {
+                    return result;
+                }
             }
         }
         if (parentData !== undefined) {
@@ -21,7 +23,10 @@ class InputValidator {
                     return result;
                 }
                 for (let survey of data.surveys) {
-                    this.experimentIsValid(survey, data, beforeSaving);
+                    result = this.experimentIsValid(survey, data, beforeSaving);
+                    if (result !== true) {
+                        return result;
+                    }
                 }
             }
             if (data.type === Config.TYPE_SURVEY) {
@@ -30,7 +35,10 @@ class InputValidator {
                     return result;
                 }
                 for (let step of data.steps) {
-                    this.experimentIsValid(step, data, beforeSaving);
+                    result = this.experimentIsValid(step, data, beforeSaving);
+                    if (result !== true) {
+                        return result;
+                    }
                 }
             }
             if (parentData.type === Config.TYPE_SURVEY) {
@@ -40,7 +48,10 @@ class InputValidator {
                 }
                 if (data.type === Config.STEP_TYPE_QUESTIONNAIRE) {
                     for (let question of data.questions) {
-                        this.experimentIsValid(question, data, beforeSaving);
+                        result = this.experimentIsValid(question, data, beforeSaving);
+                        if (result !== true) {
+                            return result;
+                        }
                     }
                 }
             }
@@ -51,7 +62,10 @@ class InputValidator {
                 }
                 if (data.type === Config.QUESTION_TYPE_CHOICE) {
                     for (let answer of data.answers) {
-                        this.experimentIsValid(answer, data, beforeSaving);
+                        result = this.experimentIsValid(answer, data, beforeSaving);
+                        if (result !== true) {
+                            return result;
+                        }
                     }
                 }
             }
