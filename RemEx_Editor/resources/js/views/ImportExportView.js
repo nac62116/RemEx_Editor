@@ -12,6 +12,10 @@ class ImportExportView extends Observable {
         this.newButton = importExportContainer.querySelector("#" + Config.NEW_EXPERIMENT_BUTTON_ID);
         this.saveButton.addEventListener("click", onSaveExperiment.bind(this));
         this.uploadButton.addEventListener("click", onUploadExperiment.bind(this));
+        this.uploadInputElement.addEventListener("click", function() {
+            this.uploadInputElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
+        }.bind(this));
+        this.uploadInputElement.addEventListener("change", onUploadInputChanged.bind(this));
         this.newButton.addEventListener("click", onNewExperiment.bind(this));
         this.resources = [];
         this.zipFolder = null;
@@ -61,103 +65,8 @@ class ImportExportView extends Observable {
         }
     }
 
-    importExperiment() {
-        let controllerEvent,
-        zipPromises = [],
-        fileNames = [],
-        experimentJSON,
-        resourceFile,
-        fileNameTypeMap = new Map(),
-        fileNameBlobMap = new Map(),
-        type,
-        experimentData = {
-            experiment: undefined,
-            resources: [],
-            success: false,
-        },
-        x;
-        
-        this.uploadInputElement.addEventListener("change", function(event) {
-            controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOAD_STARTED, null);
-            this.notifyAll(controllerEvent);
-
-            new Promise(function(resolve, reject) {
-                var reader = new FileReader();
-                reader.onload = function() { resolve(reader.result); };
-                reader.onerror = function() { reject(reader.result); };
-                reader.readAsArrayBuffer(event.target.files[0]);
-                
-            }).then(function(zipFile) {
-                this.zipFolder = new JSZip(); // eslint-disable-line no-undef
-                this.zipFolder.loadAsync(zipFile).then(function(zip) {
-                    Object.keys(zip.files).forEach(function (fileName) {
-                        if (fileName.includes(".txt")
-                            && !fileName.includes("_Code_Tabelle")) {
-                                zipPromises.push(zip.files[fileName].async("string"));
-                                fileNames.push(fileName);
-                            }
-                        if (fileName.includes("resources/")
-                            && !zip.files[fileName].dir) {
-                                zipPromises.push(zip.files[fileName].async("blob"));
-                                zipPromises.push(zip.files[fileName].async("array"));
-                                fileNames.push(fileName);
-                                fileNames.push(fileName);
-                        }
-                    });
-                    Promise.all(zipPromises).then(function (fileData) {
-                        for (let i = 0; i < fileData.length; i++) {
-                            if (typeof(fileData[i]) === "string") {
-                                experimentJSON = fileData[i];
-                                // JSZip escapes the " with \" and shows new lines with \n
-                                // We dont want this for the JSON parser
-                                experimentJSON = experimentJSON.replaceAll(/\n/g, "");
-                                experimentJSON = experimentJSON.replaceAll(/\\/g, "");
-                                // Type property is declared as an enum for the android json library "com.fasterxml.jackson"
-                                // In this environment we need the normal property name "type":
-                                experimentJSON = experimentJSON.replaceAll(/"@type"/g, "\"type\"");
-                                experimentData.experiment = JSON.parse(experimentJSON);
-                            }
-                            else if (fileData[i] instanceof Blob) {
-                                fileNameBlobMap.set(fileNames[i], fileData[i]);
-                            }
-                            else {
-                                // MIME sniffing of byte header to prevent corrupted file load 
-                                type = getMIMEType(fileData[i]);
-                                fileNameTypeMap.set(fileNames[i], type);
-                            }
-                        }
-                        for (let fileName of fileNameBlobMap.keys()) {
-                            if (fileNameTypeMap.get(fileName) !== undefined) {
-                                resourceFile = new File([fileNameBlobMap.get(fileName)], fileName.replace("resources/", ""), {type: fileNameTypeMap.get(fileName)});
-                                experimentData.resources.push(resourceFile);
-                            }
-                            else {
-                                alert(Config.FILE_TYPE_INSIDE_ZIP_NOT_SUPPORTED + "(" + fileName + ")");
-                            }
-                        }
-                        experimentData.success = true;
-                        controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
-                        this.notifyAll(controllerEvent);
-                    }.bind(this),
-                    function (error) {
-                        alert(Config.READ_ZIP_ALERT + "\n" + error);
-                        controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
-                        this.notifyAll(controllerEvent);
-                    }.bind(this));
-                }.bind(this),
-                function (error) {
-                    alert(Config.READ_ZIP_ALERT + "\n" + error);
-                    controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
-                    this.notifyAll(controllerEvent);
-                }.bind(this));
-            }.bind(this),
-            function (error) {
-                alert(Config.READ_ZIP_ALERT + "\n" + error);
-                controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
-                this.notifyAll(controllerEvent);
-            }.bind(this));
-        }.bind(this));
-        this.uploadInputElement.click();
+    showImportExperimentElement() {
+        this.uploadInputElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
     }
 
     enableSaveButton() {
@@ -204,6 +113,105 @@ function zipFilesAndDownload(that, zipFileName) {
         that.downloadLinkElement.setAttribute("download", zipFileName + ".zip");
         that.downloadLinkElement.click();
     });
+}
+
+function onUploadInputChanged(event) {
+    let controllerEvent,
+    zipPromises = [],
+    fileNames = [],
+    experimentJSON,
+    resourceFile,
+    fileNameTypeMap = new Map(),
+    fileNameBlobMap = new Map(),
+    type,
+    experimentData = {
+        experiment: undefined,
+        resources: [],
+        success: false,
+    };
+
+    controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOAD_STARTED, null);
+    this.notifyAll(controllerEvent);
+
+    new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function() { resolve(reader.result); };
+        reader.onerror = function() { reject(reader.result); };
+        reader.readAsArrayBuffer(event.target.files[0]);
+        
+    }).then(function(zipFile) {
+        this.zipFolder = new JSZip(); // eslint-disable-line no-undef
+        this.zipFolder.loadAsync(zipFile).then(function(zip) {
+            Object.keys(zip.files).forEach(function (fileName) {
+                if (fileName.includes(".txt")
+                    && !fileName.includes("_Code_Tabelle")) {
+                        zipPromises.push(zip.files[fileName].async("string"));
+                        fileNames.push(fileName);
+                    }
+                if (fileName.includes("resources/")
+                    && !zip.files[fileName].dir) {
+                        zipPromises.push(zip.files[fileName].async("blob"));
+                        zipPromises.push(zip.files[fileName].async("array"));
+                        fileNames.push(fileName);
+                        fileNames.push(fileName);
+                }
+            });
+            Promise.all(zipPromises).then(function (fileData) {
+                for (let i = 0; i < fileData.length; i++) {
+                    if (typeof(fileData[i]) === "string") {
+                        experimentJSON = fileData[i];
+                        // JSZip escapes the " with \" and shows new lines with \n
+                        // We dont want this for the JSON parser
+                        experimentJSON = experimentJSON.replaceAll(/\n/g, "");
+                        experimentJSON = experimentJSON.replaceAll(/\\/g, "");
+                        // Type property is declared as an enum for the android json library "com.fasterxml.jackson"
+                        // In this environment we need the normal property name "type":
+                        experimentJSON = experimentJSON.replaceAll(/"@type"/g, "\"type\"");
+                        experimentData.experiment = JSON.parse(experimentJSON);
+                    }
+                    else if (fileData[i] instanceof Blob) {
+                        fileNameBlobMap.set(fileNames[i], fileData[i]);
+                    }
+                    else {
+                        // MIME sniffing of byte header to prevent corrupted file load 
+                        type = getMIMEType(fileData[i]);
+                        fileNameTypeMap.set(fileNames[i], type);
+                    }
+                }
+                for (let fileName of fileNameBlobMap.keys()) {
+                    if (fileNameTypeMap.get(fileName) !== undefined) {
+                        resourceFile = new File([fileNameBlobMap.get(fileName)], fileName.replace("resources/", ""), {type: fileNameTypeMap.get(fileName)});
+                        experimentData.resources.push(resourceFile);
+                    }
+                    else {
+                        alert(Config.FILE_TYPE_INSIDE_ZIP_NOT_SUPPORTED + "(" + fileName + ")");
+                    }
+                }
+                experimentData.success = true;
+                this.uploadInputElement.value = null;
+                controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
+                this.notifyAll(controllerEvent);
+            }.bind(this),
+            function (error) {
+                alert(Config.READ_ZIP_ALERT + "\n" + error);
+                this.uploadInputElement.value = null;
+                controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
+                this.notifyAll(controllerEvent);
+            }.bind(this));
+        }.bind(this),
+        function (error) {
+            alert(Config.READ_ZIP_ALERT + "\n" + error);
+            this.uploadInputElement.value = null;
+            controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
+            this.notifyAll(controllerEvent);
+        }.bind(this));
+    }.bind(this),
+    function (error) {
+        alert(Config.READ_ZIP_ALERT + "\n" + error);
+        this.uploadInputElement.value = null;
+        controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
+        this.notifyAll(controllerEvent);
+    }.bind(this));
 }
 
 function getMIMEType(fileData) {
@@ -303,8 +311,9 @@ function onSaveExperiment() {
 }
 
 function onUploadExperiment() {
-    let controllerEvent = new ControllerEvent(Config.EVENT_UPLOAD_EXPERIMENT, null);
-    this.notifyAll(controllerEvent);
+    if (confirm(Config.LOAD_EXPERIMENT_ALERT)) {
+        this.uploadInputElement.classList.remove(Config.HIDDEN_CSS_CLASS_NAME);
+    }
 }
 
 function onNewExperiment() {

@@ -15,7 +15,7 @@ const Config = {
     MAX_VIDEO_WIDTH: 1920,
     MAX_ID_SIZE: 65535,
     MAX_ID_ALERT: "Du kannst maximal 10.000 Schritte auf einer Ebene erstellen. Kontaktiere den Support falls du die Grenze erweitern möchtest.",
-    LOAD_EXPERIMENT_ALERT: "Wenn du ein neues Experiment lädtst, musst du das aktuelle Experiment speichern und herunterladen, damit es nicht verloren geht. Möchtest du ein neues Experiment laden?",
+    LOAD_EXPERIMENT_ALERT: "Wenn du ein neues Experiment lädtst, musst du das aktuelle Experiment speichern und herunterladen, damit es nicht verloren geht. Möchtest du ein neues Experiment laden? Falls ja erscheint jetzt ein \"Durchsuchen\" Button über den die Experiment.zip Datei ausgewählt werden kann.",
     READ_ZIP_ALERT: "Die .zip Datei konnte nicht richtig gelesen werden. Bitte erneut versuchen oder den Support kontaktieren.",
     NEW_EXPERIMENT_ALERT: "Wenn du ein neues Experiment erstellst, musst du das aktuelle Experiment speichern und herunterladen, damit es nicht verloren geht. Möchtest du ein neues Experiment erstellen?",
     STEP_CONSTRUCTOR_ERROR: "Cannot construct Step instances directly. Please construct subclasses of Step.",

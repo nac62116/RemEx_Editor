@@ -44,6 +44,14 @@ body {
     box-shadow: 8px 0 8px 0px rgba(0, 0, 0, 0.5);
 }
 
+.import-export-container input {
+    position: absolute;
+    width: 100px;
+    height: 10%;
+    right: 15%;
+    top: 8%;
+}
+
 .import-export-container img {
     margin-top: 25%;
     height: 40%;
