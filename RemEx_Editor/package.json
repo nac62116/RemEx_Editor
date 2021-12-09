@@ -12,7 +12,7 @@
     "url": "git+https://github.com/nac62116/RemEx_Editor.git"
   },
   "author": "Colin Nash",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/nac62116/RemEx_Editor/issues"
   },
