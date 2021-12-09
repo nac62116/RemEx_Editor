@@ -18,12 +18,6 @@
   },
   "homepage": "https://github.com/nac62116/RemEx_Editor#Readme",
   "dependencies": {
-    "browserify": "^17.0.0",
     "http-server": "^0.12.3"
-  },
-  "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.24.2"
   }
 }
