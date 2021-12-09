@@ -25,7 +25,6 @@ class SvgFactory {
 
     createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
         let standardNodeElements = createMinimumNode(false, iconSrc);
-
         standardNodeElements.inputPath = createNodeInputPath();
         if (hasAddNeighbourButtons) {
             standardNodeElements.addNextButton = createAddOrSwitchNodeButton(Config.NODE_ADD_NEXT_BUTTON_ID);
@@ -43,7 +42,6 @@ class SvgFactory {
 
     createTimelineNodeElements(iconSrc) {
         let timelineNodeElements = this.createStandardNodeElements(true, false, iconSrc);
-
         timelineNodeElements.timelineElements = createTimelineElements();
 
         return timelineNodeElements;
@@ -51,7 +49,6 @@ class SvgFactory {
 
     createDeflateableNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
         let deflateableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc);
-
         deflateableNodeElements.nodeBody.setAttribute("width", Config.NODE_BODY_WIDTH_DEFLATED);
         deflateableNodeElements.nodeBody.setAttribute("height", Config.NODE_BODY_HEIGHT_DEFLATED);
         deflateableNodeElements.nodeDescription.setAttribute("display", "none");
@@ -61,7 +58,6 @@ class SvgFactory {
 
     createSwitchableNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc) {
         let switchableNodeElements = this.createStandardNodeElements(hasAddNeighbourButtons, hasAddChildButton, iconSrc);
-
         switchableNodeElements.switchRightButton = createAddOrSwitchNodeButton(Config.NODE_SWITCH_RIGHT_BUTTON_ID);
         switchableNodeElements.switchRightIcon = createSwitchIcon(Config.NODE_SWITCH_RIGHT_ICON_ID);
         switchableNodeElements.switchLeftButton = createAddOrSwitchNodeButton(Config.NODE_SWITCH_LEFT_BUTTON_ID);
@@ -152,11 +148,14 @@ function createNodeDescription(isDeflateable) {
 
 function createNodeIcon(iconSrc) {
     let nodeIcon = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    
     nodeIcon.setAttribute("id", Config.NODE_ICON_ID);
     nodeIcon.setAttribute("width", Config.NODE_ICON_WIDTH);
     nodeIcon.setAttribute("height", Config.NODE_ICON_HEIGHT);
     nodeIcon.setAttribute("opacity", Config.NODE_ICON_OPACITY_DEEMPHASIZED);
-    nodeIcon.setAttribute("href", iconSrc);
+    if (iconSrc !== undefined) {
+        nodeIcon.setAttribute("href", iconSrc);
+    }
 
     return nodeIcon;
 }

@@ -24,7 +24,7 @@ class WhereAmIView {
         this.representationMap.clear();
         if (currentSelection !== undefined) {
             for (let i = currentSelection.length - 1; i >= 0; i--) {
-                representingNodeElements = SvgFactory.createRootNodeElements();
+                representingNodeElements = SvgFactory.createRootNodeElements(undefined);
                 representingNodeElements.nodeBody.setAttribute("height", Config.WHERE_AM_I_NODE_HEIGHT);
                 representingNode = new RootNode(representingNodeElements, undefined, undefined, currentSelection[i].description);
                 representingNode.updatePosition(this.rootPoint.x, this.rootPoint.y + rootPointOffsetY);

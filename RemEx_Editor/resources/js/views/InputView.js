@@ -1,6 +1,7 @@
 import Config from "../utils/Config.js";
 import {Observable, Event as ControllerEvent} from "../utils/Observable.js";
 import RootNode from "./nodeView/RootNode.js";
+import UserAgentDetector from "../utils/UserAgentDetector.js";
 
 const INPUT_FIELD_TEMPLATE_STRING = document.querySelector("#" + Config.INPUT_FIELD_TEMPLATE_ID).innerHTML.trim();
 
@@ -345,7 +346,6 @@ function createInputField(that, label, type, values, modelProperty, currentModel
                 else {
                     inputElement.addEventListener("click", onInputChanged.bind(that));
                     inputElement.addEventListener("mouseenter", function(event) {
-                        console.log(event.target.classList);
                         event.target.classList.add("button-emphasized");
                     });
                     inputElement.addEventListener("mouseleave", function(event) {
@@ -387,7 +387,9 @@ function createInputField(that, label, type, values, modelProperty, currentModel
                 videoElement.setAttribute("width", that.inputViewContainer.clientWidth * Config.INPUT_RESOURCE_CONTAINER_WIDTH_RATIO);
                 videoElement.setAttribute("height", "auto");
                 videoElement.setAttribute("controls", "");
-                
+                videoElement.addEventListener("ended", function() {
+                    videoElement.currentTime = 0;
+                });
             }
             inputElement.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
         }
@@ -465,6 +467,7 @@ function onInputChanged(event) {
     inputChangeEvent,
     repeatSurveyEvent,
     uploadResourceEvent,
+    resourceLoadedEvent,
     properties = {},
     correspondingModelProperty = event.target.getAttribute("name"),
     checkboxElements,
@@ -474,6 +477,8 @@ function onInputChanged(event) {
     videoElement,
     sourceElement,
     repeatCountElement,
+    maxFileSize,
+    alertMessage,
     reader = new FileReader();
 
     if (event.target.value !== "") {
@@ -579,16 +584,25 @@ function onInputChanged(event) {
         else {
             if (data.resourceFile !== undefined) {
                 event.target.classList.add(Config.HIDDEN_CSS_CLASS_NAME);
-                if (data.resourceFile.size >= Config.MAX_RESOURCE_FILE_SIZE) {
-                    alert(Config.FILE_TOO_LARGE + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
-                    this.currentFileName = null;
+
+                if (!UserAgentDetector.isGeckoEngine) {
+                    maxFileSize = Config.MAX_RESOURCE_FILE_SIZE_NOT_GECKO;
+                    alertMessage = Config.FILE_TOO_LARGE_NOT_GECKO;
+                }
+                else {
+                    maxFileSize = Config.MAX_RESOURCE_FILE_SIZE;
+                    alertMessage = Config.FILE_TOO_LARGE;
+                }
+                if (data.resourceFile.size >= maxFileSize) {
+                    alert(alertMessage + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
                     this.clearFileInputs();
+                    this.enableInputs();
                     return;
                 }
                 if (!Config.ACCEPTED_RESOURCE_MIME_TYPES.includes(data.resourceFile.type)) {
                     alert(Config.FILE_TYPE_NOT_SUPPORTED + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
-                    this.currentFileName = null;
                     this.clearFileInputs();
+                    this.enableInputs();
                     return;
                 }
                 if (properties.imageFileName !== undefined) {
@@ -625,6 +639,9 @@ function onInputChanged(event) {
                             videoElement.setAttribute("width", this.inputViewContainer.clientWidth * Config.INPUT_RESOURCE_CONTAINER_WIDTH_RATIO);
                             videoElement.setAttribute("height", "auto");
                             videoElement.setAttribute("controls", "");
+                            videoElement.addEventListener("ended", function() {
+                                videoElement.currentTime = 0;
+                            });
                             sourceElement = document.createElement("source");
                             sourceElement.setAttribute("type", event.target.files[0].type);
                             sourceElement.setAttribute("src", fileReaderEvent.target.result);
@@ -643,8 +660,10 @@ function onInputChanged(event) {
                             if (videoElement.videoHeight > Config.MAX_VIDEO_HEIGHT
                                 || videoElement.videoWidth > Config.MAX_VIDEO_WIDTH) {
                                     alert(Config.VIDEO_RESOLUTION_TOO_HIGH + " (" + data.resourceFile.name + ")"); // eslint-disable-line no-alert
-                                    this.currentFileName = null;
                                     this.clearFileInputs();
+                                    this.enableInputs();
+                                    resourceLoadedEvent = new ControllerEvent(Config.EVENT_RESOURCE_LOADED, null);
+                                    this.notifyAll(resourceLoadedEvent);
                                     return;
                             }
                             inputChangeEvent = new ControllerEvent(Config.EVENT_INPUT_CHANGED, data);

@@ -16,10 +16,6 @@ import TimeIntervalQuestion from "../model/questionnaire/TimeIntervalQuestion.js
 import Answer from "../model/questionnaire/Answer.js";
 
 class ModelManager {
-
-    constructor() {
-        this.usedResourceFileNames = [];
-    }
     
     initExperiment() {
         let experiment,
@@ -46,7 +42,6 @@ class ModelManager {
         IdManager.removeIds();
         Storage.clear();
         IndexedDB.clearDatabase();
-        this.usedResourceFileNames = [];
     }
 
     getExperiment() {
@@ -114,7 +109,7 @@ class ModelManager {
             parentData.answers.splice(index, 1);
         }
         else {
-            console.log("The model data was not shorten properly.");
+            //console.log("The model data was not shorten properly.");
         }
         removeIds(nodeData);
         Storage.save(experiment);
@@ -127,11 +122,6 @@ class ModelManager {
         for (let key in properties) {
             if (Object.prototype.hasOwnProperty.call(properties, key)) {
                 nodeData[key] = properties[key];
-                if (key === "imageFileName" || key === "videoFileName") {
-                    if (!this.usedResourceFileNames.includes(properties[key])) {
-                        this.usedResourceFileNames.push(properties[key]);
-                    }
-                }
             }
         }
         Storage.save(experiment);
@@ -252,7 +242,6 @@ class ModelManager {
         if (parentNodeData.type === Config.QUESTION_TYPE_CHOICE) {
             parentNodeData.answers.push(newData);
         }
-        console.log(parentNodeData);
 
         this.updateExperiment(parentNodeData);
 
@@ -470,21 +459,47 @@ class ModelManager {
             }
         }
         IndexedDB.deleteResource(fileName);
-        this.usedResourceFileNames.splice(this.usedResourceFileNames.indexOf(fileName), 1);
     }
 
     getResource(fileName) {
         return IndexedDB.getResource(fileName);
     }
 
-    getAllResources() {
-        let resources = [],
+    getAllResources(experiment) {
+        let usedResourceFileNames = [],
+        errorFileNames = "",
+        resources = [],
         resource;
-        for (let fileName of this.usedResourceFileNames) {
+
+        for (let group of experiment.groups) {
+            for (let survey of group.surveys) {
+                for (let step of survey.steps) {
+                    if (step.type === Config.STEP_TYPE_INSTRUCTION) {
+                        if (step.imageFileName !== null) {
+                            if (!usedResourceFileNames.includes(step.imageFileName)) {
+                                usedResourceFileNames.push(step.imageFileName);
+                            }
+                        }
+                        if (step.videoFileName !== null) {
+                            if (!usedResourceFileNames.includes(step.videoFileName)) {
+                                usedResourceFileNames.push(step.videoFileName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (let fileName of usedResourceFileNames) {
             resource = IndexedDB.getResource(fileName);
-            if (resource !== null) {
+            if (resource !== undefined) {
                 resources.push(resource);
             }
+            else {
+                errorFileNames = errorFileNames + "; " + fileName;
+            }
+        }
+        if (errorFileNames.length !== 0) {
+            alert(Config.MISSING_RESOURCES_IN_DB + " (" + errorFileNames.substr(0, errorFileNames.length - 1) + ")");
         }
         return resources;
     }
@@ -785,7 +800,7 @@ function createNewStep(properties, parentNode) {
         step = new Questionnaire(properties.id);
     }
     else {
-        console.log("The step type " + properties.type + " is not defined.");
+        //console.log("The step type " + properties.type + " is not defined.");
     }
     for (let key in properties) {
         if (Object.prototype.hasOwnProperty.call(properties, key)) {
@@ -827,7 +842,7 @@ function createNewQuestion(properties, parentNode) {
         question = new TimeIntervalQuestion(properties.id);
     }
     else {
-        console.log("The question type " + properties.type + " is not defined.");
+        //console.log("The question type " + properties.type + " is not defined.");
     }
     for (let key in properties) {
         if (Object.prototype.hasOwnProperty.call(properties, key)) {

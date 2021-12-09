@@ -8,23 +8,20 @@ class IndexedDB {
 
         return new Promise(function(resolve, reject) {
             db.then(function(result) {
-                if (typeof(result) === "string") {
+                if (typeof(result) === "string" || result === undefined) {
                     reject(result);
                 }
                 else {
                     try {
-                        console.log(resource.name, resource);
                         request = result.transaction(["resources"], "readwrite")
                                 .objectStore("resources")
                                 .add(resource, resource.name);
                 
                         request.onsuccess = function() {
                             resolve();
-                            console.log("resource added");
                         };
                         request.onerror = function(event) {
                             reject(event.target.error);
-                            console.log("resource add error: " + event.target.error);
                         };
                     }
                     catch (error) {
@@ -41,8 +38,8 @@ class IndexedDB {
         request;
 
         db.then(function(result) {
-            if (typeof(result) === "string") {
-                console.log(result);
+            if (typeof(result) !== "string") {
+                //console.log(result);
             }
             else {
                 request = result.transaction(["resources"], "readwrite")
@@ -50,7 +47,7 @@ class IndexedDB {
                         .delete(fileName);
         
                 request.onsuccess = function() {
-                    console.log("Resource deleted");
+                    //console.log("Resource deleted");
                 };
             }
         });
@@ -65,7 +62,7 @@ class IndexedDB {
         if (fileName !== null) {
             promise = db.then(function(result) {
                 if (typeof(result) === "string" || result === undefined) {
-                    console.log(result);
+                    //console.log(result);
                 }
                 else {
                     promise = new Promise(function(resolve, reject) {
@@ -77,7 +74,6 @@ class IndexedDB {
                         };
                         request.onsuccess = function() {
                             resolve(request.result);
-                            console.log("Resource fetched");
                         };
                     });
                 }
@@ -85,7 +81,7 @@ class IndexedDB {
             });
             return promise;
         }
-        return null;
+        return undefined;
     }
 
     // TODO: Handle errors like above
@@ -95,7 +91,7 @@ class IndexedDB {
 
         db.then(function(result) {
             if (typeof(result) === "string" || result === undefined) {
-                console.log(result);
+                //console.log(result);
             }
             else {
                 request = result.transaction(["resources"], "readwrite")
@@ -103,7 +99,7 @@ class IndexedDB {
                         .clear();
         
                 request.onsuccess = function() {
-                    console.log("Database cleared");
+                    //console.log("Database cleared");
                 };
             }
         });

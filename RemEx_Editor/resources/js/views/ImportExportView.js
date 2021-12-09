@@ -1,5 +1,6 @@
 import Config from "../utils/Config.js";
 import {Observable, Event as ControllerEvent} from "../utils/Observable.js";
+import UserAgentDetector from "../utils/UserAgentDetector.js";
 
 class ImportExportView extends Observable {
 
@@ -38,20 +39,30 @@ class ImportExportView extends Observable {
                 // Gathering resources out of the ModelManager promises array
                 if (resourcePromises.indexOf(resourcePromise) !== resourcePromises.length - 1) {
                     resourcePromise.then(function(result) {
-                        this.resources.push(result);
+                        if (result !== undefined) {
+                            this.resources.push(result);
+                        }
                     }.bind(this));
                 }
                 // When the last promise is fullfilled all relevant data gets zipped and downloaded via the downloadLinkElement
                 else {
                     resourcePromise.then(function(result) {
+                        let addResourceResult;
 
                         this.resources.push(result);
 
                         addExperimentToZip(this, experiment);
                         addNameCodeTableToZip(this, nameCodeTable, experiment);
-                        addResourcesToZip(this);
+                        addResourceResult = addResourcesToZip(this);
                         
-                        zipFilesAndDownload(this, experiment.name);
+                        if (addResourceResult) {
+                            zipFilesAndDownload(this, experiment.name);
+                        }
+                        else {
+                            this.resources = [];
+                            this.zipFolder = null;
+                            this.notifyAll(savingFinishedEvent);
+                        }
                     }.bind(this));
                 }
             }
@@ -95,14 +106,24 @@ function addNameCodeTableToZip(that, nameCodeTable, experiment) {
 }
 
 function addResourcesToZip(that) {
+    let size = 0;
     // Adding all resources (Videos and images)
     for (let resource of that.resources) {
         that.zipFolder.folder("resources").file(resource.name, resource);
+        size += resource.size;
     }
+    if (UserAgentDetector.isEdge
+        || UserAgentDetector.isChrome
+        || UserAgentDetector.isOperaAboveV15) {
+        if (size >= Config.MAX_ZIP_SIZE) {
+            alert(Config.ZIP_TOO_LARGE);
+            return false;
+        }
+    }
+    return true;
 }
 
 function zipFilesAndDownload(that, zipFileName) {
-    // Zipping all files
     that.zipFolder.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 9}}, 
     function updateCallback(metaData) {
         let savingProgressEvent = new ControllerEvent(Config.EVENT_SAVING_PROGRESS, metaData);
@@ -123,12 +144,21 @@ function onUploadInputChanged(event) {
     resourceFile,
     fileNameTypeMap = new Map(),
     fileNameBlobMap = new Map(),
+    newFileName,
     type,
     experimentData = {
         experiment: undefined,
         resources: [],
         success: false,
     };
+
+    if (!UserAgentDetector.isGeckoEngine) {
+        if (event.target.files[0].size >= Config.MAX_ZIP_SIZE) {
+            alert(Config.ZIP_TOO_LARGE + " (" + event.target.files[0].name + ")");
+            this.uploadInputElement.value = null;
+            return;
+        }
+    }
 
     controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOAD_STARTED, null);
     this.notifyAll(controllerEvent);
@@ -151,7 +181,7 @@ function onUploadInputChanged(event) {
                 if (fileName.includes("resources/")
                     && !zip.files[fileName].dir) {
                         zipPromises.push(zip.files[fileName].async("blob"));
-                        zipPromises.push(zip.files[fileName].async("array"));
+                        zipPromises.push(zip.files[fileName].async("uint8array"));
                         fileNames.push(fileName);
                         fileNames.push(fileName);
                 }
@@ -173,20 +203,23 @@ function onUploadInputChanged(event) {
                         fileNameBlobMap.set(fileNames[i], fileData[i]);
                     }
                     else {
-                        // MIME sniffing of byte header to prevent corrupted file load 
+                        // MIME sniffing of byte header to prevent corrupted or not supported file load 
                         type = getMIMEType(fileData[i]);
                         fileNameTypeMap.set(fileNames[i], type);
                     }
                 }
                 for (let fileName of fileNameBlobMap.keys()) {
                     if (fileNameTypeMap.get(fileName) !== undefined) {
-                        resourceFile = new File([fileNameBlobMap.get(fileName)], fileName.replace("resources/", ""), {type: fileNameTypeMap.get(fileName)});
+                        newFileName = fileName.split("/");
+                        newFileName = newFileName[newFileName.length - 1];
+                        resourceFile = new File([fileNameBlobMap.get(fileName)], newFileName, {type: fileNameTypeMap.get(fileName)});
                         experimentData.resources.push(resourceFile);
                     }
                     else {
                         alert(Config.FILE_TYPE_INSIDE_ZIP_NOT_SUPPORTED + "(" + fileName + ")");
                     }
                 }
+                fileNameBlobMap = null;
                 experimentData.success = true;
                 this.uploadInputElement.value = null;
                 controllerEvent = new ControllerEvent(Config.EVENT_EXPERIMENT_UPLOADED, experimentData);
@@ -215,89 +248,63 @@ function onUploadInputChanged(event) {
 }
 
 function getMIMEType(fileData) {
-    let shortestHeader = "",
-    shortHeader = "",
+    let shortHeader = "",
     midHeader = "",
-    midHeaderWithOffset = "",
     longHeader = "",
     longHeaderWithOffset = "",
     type;
 
     for (let i = 0; i < Config.MIME_SNIFFING_HEADER_LENGTH_IN_BYTES; i++) {
-        if (i < 2) {
-            shortestHeader += "" + fileData[i];
-        }
-        if (i < 4) {
+        if (i < 2) { // eslint-disable-line no-magic-numbers
             shortHeader += "" + fileData[i];
         }
-        if (i < 6) {
+        if (i < 3) { // eslint-disable-line no-magic-numbers
             midHeader += "" + fileData[i];
         }
-        if (i < 8) {
+        if (i < 4) { // eslint-disable-line no-magic-numbers
             longHeader += "" + fileData[i];
         }
-        if (i >= 4 && i < 10) {
-            midHeaderWithOffset += "" + fileData[i];
-        }
-        if (i >= 4) {
+        if (i >= 4 && i < 8) { // eslint-disable-line no-magic-numbers
             longHeaderWithOffset += "" + fileData[i];
         }
     }
 
-    switch (shortestHeader) {
+    switch (shortHeader) {
         case "6677":
             type = "image/bmp";
-            break;
-        
-        default:
-            break;
-    }
-    switch (shortHeader) {
-        case "2669223163":
-            type = "video/webm";
-            break;
-        
-        case "255216255219":
-        case "255216255238":
-            type = "image/jpeg";
-            break;
+            return type;
         
         default:
             break;
     }
     switch (midHeader) {
-        case "717370565597":
-        case "717370565797":
-            type = "image/gif";
-            break;
-        
-        default:
-            break;
-    }
-    switch (midHeaderWithOffset) {
-        case "10211612111251103":
-            type = "video/3gpp";
-            break;
+        case "255216255":
+            type = "image/jpeg";
+            return type;
         
         default:
             break;
     }
     switch (longHeader) {
-        case "2552162552240167470":
-            type = "image/jpeg";
-            break;
-
-        case "13780787113102610":
+        case "137807871":
             type = "image/png";
-            break;
+            return type;
+
+        case "2669223163":
+            type = "video/webm";
+            return type;
+
+        case "71737056":
+            type = "image/gif";
+            return type;
         
         default:
             break;
     }
     switch (longHeaderWithOffset) {
-        case "102116121112105115111109":
+        case "102116121112":
             type = "video/mp4";
-            break;
+            return type;
 
         default:
             break;

@@ -7,6 +7,7 @@ import ImportExportView from "../views/ImportExportView.js";
 import InputValidator from "../utils/InputValidator.js";
 import ShortcutManager from "../utils/ShortcutManager.js";
 import SvgFactory from "../utils/SvgFactory.js";
+import UserAgentDetector from "../utils/UserAgentDetector.js";
 import Config from "../utils/Config.js";
 
 // App controller controls the program flow. It has instances of all views and the model.
@@ -22,8 +23,10 @@ import Config from "../utils/Config.js";
 
 // ENHANCEMENT:
 // EDITOR:
-// - Issues on Chrome Browser: Input element with type time has a clock on the right to pick the time -> When using this the data model is not updated.
-// - Move IndexedDB transactions to a seperate Thread (Web Worker) to avoid UI Blocking
+// - Issues on Chrome/Opera/MSEdge Browser: Input element with type time has a clock on the right to pick the time -> When using this the data model is not updated.
+// - Issue on Opera: Two errors are thrown when putting a video source into the videoElement in InputView. They are not affecting the video functionality
+// - Move IndexedDB transactions and zip compression/extraction to a seperate Thread (Web Worker) to avoid UI Blocking -> That also makes LoadingScreen obsolete -> Change it to a small loading field in the corner to keep the user up to date
+// - Optimize MIME-Sniffing extracting zip after upload: Dont roll out the whole file, find a way to just read the first bytes needed for MIME-Sniffing (Maybe JSZip has a stream solution, etc.)
 // - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
 // - Improve adding the svg elements to the dom. The layers (z-index) are not correct. Nodes should be shown on top of the timeline not under it.
 // - Visualising the question links of answer nodes inside the TreeView
@@ -209,11 +212,9 @@ class Controller {
             ShortcutManager.addEventListener(listener.eventType, listener.callback);
         }
 
-
 //###
         // TODO: InfoView
 //###
-
 
         TreeView.clickNode(newNode, undefined);
     }
@@ -225,7 +226,7 @@ class Controller {
 
 function onSaveExperiment() {
     let experiment = ModelManager.getExperiment(),
-    resourcePromises = ModelManager.getAllResources(),
+    resourcePromises = ModelManager.getAllResources(experiment),
     validationResult,
     // Writing a nameCodeTable, which provides the answer codes to the corresponding questions/answers to simplify the csv understanding after an experiment.
     nameCodeTable = ModelManager.getNameCodeTable(experiment);
@@ -301,11 +302,9 @@ function onNodeMouseEnter(event) {
         hoveredNode.emphasize();
     }
 
-
 //###
     // TODO: InfoView
 //###
-
 
 }
 
@@ -318,11 +317,9 @@ function onNodeMouseLeave(event) {
         hoveredNode.deemphasize();
     }
 
-
 //###
     // TODO: InfoView
 //###
-
 
 }
 
@@ -382,21 +379,51 @@ function onNodeClicked(event) {
                 promise.then(function(result) {
                     if (typeof(result) === "string" || result === undefined) {
                         alert(Config.LOADING_RESOURCE_FAILED + " (" + result + ")"); // eslint-disable-line no-alert
+                        LoadingScreenView.hide();
                         InputView.clearFileInputs();
+                        InputView.enableInputs();
                     }
                     else {
-                        if (result.type.includes("image/")) {
-                            if (nodeData.imageFileName !== null) {
-                                InputView.setImageResource(result, nodeData.id);
+                        if (!UserAgentDetector.isGeckoEngine) {
+                            if (result.size >= Config.MAX_RESOURCE_FILE_SIZE_NOT_GECKO) {
+                                alert(Config.RESOURCE_NOT_SHOWABLE + " (" + result.name + ")"); // eslint-disable-line no-alert
+                                LoadingScreenView.hide();
+                            }
+                            else {
+                                if (result.type.includes("image/")) {
+                                    if (nodeData.imageFileName !== null) {
+                                        InputView.setImageResource(result, nodeData.id);
+                                    }
+                                }
+                                if (result.type.includes("video/")) {
+                                    if (nodeData.videoFileName !== null) {
+                                        InputView.setVideoResource(result, nodeData.id);
+                                    }
+                                }
                             }
                         }
-                        if (result.type.includes("video/")) {
-                            if (nodeData.videoFileName !== null) {
-                                InputView.setVideoResource(result, nodeData.id);
+                        else {
+                            if (result.type.includes("image/")) {
+                                if (nodeData.imageFileName !== null) {
+                                    InputView.setImageResource(result, nodeData.id);
+                                }
+                            }
+                            if (result.type.includes("video/")) {
+                                if (nodeData.videoFileName !== null) {
+                                    InputView.setVideoResource(result, nodeData.id);
+                                }
                             }
                         }
                     }
                 });
+            }
+            else {
+                if (nodeData.imageFileName !== null) {
+                    alert(Config.LOADING_RESOURCE_FAILED + " (" + nodeData.imageFileName + ")");
+                }
+                if (nodeData.videoFileName !== null) {
+                    alert(Config.LOADING_RESOURCE_FAILED + " (" + nodeData.videoFileName + ")");
+                }
             }
         }
         if (clickedNode.type === Config.TYPE_EXPERIMENT_GROUP) {
@@ -524,7 +551,6 @@ function onAddNode(event) {
         }
     }
     newNodeData = ModelManager.getDataById(newNodeData.id);
-    console.log("After add:", ModelManager.getExperiment());
     
     // Second step:
     // Updating the views
@@ -593,7 +619,6 @@ function onSwitchNodes(event) {
         leftNodeData = ModelManager.getDataById(leftNode.id);
         ModelManager.updateQuestionLinks(leftNodeData, rightNodeData, nextNodeData, rightNodeData, true);
     }
-    console.log("After switch:", ModelManager.getExperiment());
 
     // Second step:
     // Updating the views
@@ -626,7 +651,6 @@ function onTimelineClicked(event) {
     timelineNodeData = ModelManager.getDataById(timelineNode.id);
     lastSurveyData = ModelManager.updateSurveyLinks(timelineNodeData);
     newSurveyData = ModelManager.getDataById(newSurveyData.id);
-    console.log("After timeline add", ModelManager.getExperiment());
 
     // Second step:
     // Updating the views
@@ -736,7 +760,6 @@ function onRemoveNode(event) {
             }
         }
     }
-    console.log("After removal:", ModelManager.getExperiment());
 
     // Second step:
     // Updating the views
@@ -804,7 +827,6 @@ function onChangeNode(event) {
         ModelManager.updateQuestionLinks(newNodeData, previousNodeData, nextNodeData, undefined, false);
     }
     newNodeData = ModelManager.getDataById(newNodeData.id);
-    console.log("After change", ModelManager.getExperiment());
 
     // Second step:
     // Updating the views
@@ -866,6 +888,7 @@ function onInputChanged(event) {
                     newDataProperties.videoFileName = null;
                     ModelManager.updateExperiment(newDataProperties);
                     InputView.clearFileInputs();
+                    InputView.enableInputs();
                     LoadingScreenView.hide();
                     if (error.toString().includes("The serialized value is too large")) {
                         alert(Config.FILE_TOO_LARGE + " (" + fileName + ")"); // eslint-disable-line no-alert
@@ -894,7 +917,6 @@ function onInputChanged(event) {
     if (parentNode !== undefined) {
         parentNodeData = ModelManager.getDataById(parentNode.id);
     }
-    console.log("After input change:", ModelManager.getExperiment());
 
     // Second step:
     // Updating the views
@@ -985,7 +1007,6 @@ function onRepeatSurvey(event) {
         validationResult = InputValidator.validateSurvey(surveyData, timelineNodeData, false);
         while (validationResult.invalidInput === "absoluteStartDaysOffset"
                 || validationResult.invalidInput === "absoluteStartAtHour") {
-                    console.log("survey Time Changed");
                     adjustmentCount += 1;
                     if (surveyData.absoluteStartAtHour === 23) { // eslint-disable-line no-magic-numbers
                         surveyData.absoluteStartAtHour = 0;
