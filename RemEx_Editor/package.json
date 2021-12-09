@@ -12,18 +12,12 @@
     "url": "git+https://github.com/nac62116/RemEx_Editor.git"
   },
   "author": "Colin Nash",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/nac62116/RemEx_Editor/issues"
   },
   "homepage": "https://github.com/nac62116/RemEx_Editor#Readme",
   "dependencies": {
-    "browserify": "^17.0.0",
-    "http-server": "^0.12.3"
-  },
-  "devDependencies": {
-    "eslint": "^7.32.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.24.2"
+    "http-server": "^14.0.0"
   }
 }
