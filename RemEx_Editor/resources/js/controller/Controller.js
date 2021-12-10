@@ -37,6 +37,14 @@ SOFTWARE.
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
 
+// TODO:
+// -> Code cleaning
+// - Group svg elements together
+// - Look for an equivalent to css z-index for svg elements -> else create a low prio future enhancement in RemEx_Editor
+// -> InfoView
+// APP:
+// -> Test phase: Test fully grown experiment on RemExApp
+
 class Controller {
 
     init() {
