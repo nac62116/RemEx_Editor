@@ -10,40 +10,32 @@ import SvgFactory from "../utils/SvgFactory.js";
 import UserAgentDetector from "../utils/UserAgentDetector.js";
 import Config from "../utils/Config.js";
 
+/*
+MIT License
+
+Copyright (c) 2021 Colin Nash
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
-
-// TODO:
-// -> Code cleaning
-// -> Test phase: Test the RemExEditor functionality
-// -> MIT Licence: Licence text on top of each file and after that the contibutors
-// -> InfoView
-// APP:
-// -> Test phase: Test fully grown experiment on RemExApp
-
-// ENHANCEMENT:
-// EDITOR:
-// - Issues on Chrome/Opera/MSEdge Browser: Input element with type time has a clock on the right to pick the time -> When using this the data model is not updated.
-// - Issue on Opera: Two errors are thrown when putting a video source into the videoElement in InputView. They are not affecting the video functionality
-// - Move IndexedDB transactions and zip compression/extraction to a seperate Thread (Web Worker) to avoid UI Blocking -> That also makes LoadingScreen obsolete -> Change it to a small loading field in the corner to keep the user up to date
-// - Optimize MIME-Sniffing extracting zip after upload: Dont roll out the whole file, find a way to just read the first bytes needed for MIME-Sniffing (Maybe JSZip has a stream solution, etc.)
-// - Group node svg elements together in SvgFactory so that NodeView.updatePosition only needs to update the group element position
-// - Improve adding the svg elements to the dom. The layers (z-index) are not correct. Nodes should be shown on top of the timeline not under it.
-// - Visualising the question links of answer nodes inside the TreeView
-// - Add key movement (Shortcuts (e.g. Arrows -> navigating through tree, Ctrl + ArrowRight -> addNextNode, Shift + ArrowLeft -> moveNodeLeft, Strg + S -> Save experiment, ...))
-// - Show survey time windows on the timeline (survey.startTimeInMin |-------| survey.startTimeInMin + survey.maxDurationInMin + survey.notificationDurationInMin)
-// - Calculate the optimal duration for a survey depending on its content
-// - Survey time randomization
-// - Create linux batch equivalent to windows batch file "starter.bat"
-// APP:
-// - Important: If the device is turned off, the current experiment is finished and can't be resumed (Issues with receiving a boot completed action from the system, to resume the experiment)
-// - Important: Same problem when the user kills the app (swipes it away in the recent apps list) during an experiment between two surveys (not during a survey). If the user kills the app during a survey the survey gets properly finished and the next survey alarm is set
-// - Logging user interactions that are relevant for the researchers
-// BOTH:
-// - Special characters like german "Umlaute" (äöü) are not represented correctly -> Encoding changes during zip compression are the problem
-// - Add new survey steps like distraction games, etc...
-// - Add new question types
-// - Upload experiment to server (EDITOR) / Download experiment from server (APP) (Keep offline functionality (save experiment to client) -> Server communication is only needed for up/downloading experiment)
 
 class Controller {
 
