@@ -37,6 +37,15 @@ SOFTWARE.
 // App controller controls the program flow. It has instances of all views and the model.
 // It is the communication layer between the views and the data model.
 
+// TODO:
+// -> Code cleaning
+// - Group svg elements together
+// - Look for an equivalent to css z-index for svg elements -> else create a low prio future enhancement in RemEx_Editor
+// -> English version
+// -> InfoView
+// APP:
+// -> Test phase: Test fully grown experiment on RemExApp
+
 class Controller {
 
     init() {
@@ -1119,7 +1128,7 @@ function onPasteNode(event) {
                 }
                 clipboardNodeData.id = id;
                 clipboardNodeData.name = name;
-                newData = ModelManager.extendExperimentWithCopy(clipboardNodeData, insertionParentNodeData, undefined);
+                newData = ModelManager.extendExperimentWithCopy(clipboardNodeData, insertionParentNodeData, Config.NODE_COPY_SUFFIX);
                 if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
                     TreeView.clickTimeline(insertionParentNode, newData);
                 }

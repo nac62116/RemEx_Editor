@@ -486,6 +486,7 @@ const Config = {
     // NodeView 
     NODE_DISTANCE_HORIZONTAL: 140,
     NODE_DISTANCE_VERTICAL: 140,
+    NODE_COPY_SUFFIX: "(Kopie)",
     
     // NodeView input path
     NODE_INPUT_PATH_STROKE_WIDTH: "2",

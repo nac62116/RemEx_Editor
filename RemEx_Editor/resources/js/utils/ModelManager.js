@@ -231,24 +231,11 @@ class ModelManager {
         idLinkMap = new Map();
 
         idLinkMap = getIdLinkMap(nodeData, idLinkMap);
-        newData = getNewCopy(nodeData, idLinkMap, suffix);
+        newData = getNewCopy(nodeData, idLinkMap);
 
         newData.id = IdManager.getUnusedId();
-        if (newData.type === Config.TYPE_ANSWER) {
-            if (suffix === undefined) {
-                newData.code = newData.code + " (Kopie)";
-            }
-            else {
-                newData.code = newData.code + " " + suffix;
-            }
-        }
-        else {
-            if (suffix === undefined) {
-                newData.name = newData.name + " (Kopie)";
-            }
-            else {
-                newData.name = newData.name + " " + suffix;
-            }
+        if (suffix !== undefined) {
+            newData.name = newData.name + " " + suffix;
         }
         
         if (parentNodeData.type === Config.TYPE_EXPERIMENT) {
@@ -659,7 +646,7 @@ function getIdLinkMap(nodeData, idLinkMap) {
     return idLinkMap;
 }
 
-function getNewCopy(nodeData, idLinkMap, suffix) {
+function getNewCopy(nodeData, idLinkMap) {
     let newData = nodeData,
     id;
 
@@ -672,12 +659,6 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
                 id = IdManager.getUnusedId();
             }
             survey.id = id;
-            if (suffix === undefined) {
-                survey.name = survey.name + " (Kopie)";
-            }
-            else {
-                survey.name = survey.name + " " + suffix;
-            }
             getNewCopy(survey, idLinkMap);
         }
     }
@@ -690,12 +671,6 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
                 id = IdManager.getUnusedId();
             }
             step.id = id;
-            if (suffix === undefined) {
-                step.name = step.name + " (Kopie)";
-            }
-            else {
-                step.name = step.name + " " + suffix;
-            }
             getNewCopy(step, idLinkMap);
         }
     }
@@ -708,12 +683,6 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
                 id = IdManager.getUnusedId();
             }
             question.id = id;
-            if (suffix === undefined) {
-                question.name = question.name + " (Kopie)";
-            }
-            else {
-                question.name = question.name + " " + suffix;
-            }
             getNewCopy(question, idLinkMap);
         }
     }
@@ -726,15 +695,32 @@ function getNewCopy(nodeData, idLinkMap, suffix) {
                 id = IdManager.getUnusedId();
             }
             answer.id = id;
-            if (suffix === undefined) {
-                answer.code = answer.code + " (Kopie)";
-            }
-            else {
-                answer.code = answer.code + " " + suffix;
-            }
         }
     }
     return newData;
+}
+
+function changeChildSuffix(nodeData, suffix) {
+
+    if (nodeData.type === Config.TYPE_EXPERIMENT_GROUP) {
+        for (let survey of nodeData.surveys) {
+            survey.name = survey.name + " " + suffix;
+            changeChildSuffix(survey, suffix);
+        }
+    }
+    if (nodeData.type === Config.TYPE_SURVEY) {
+        console.log(nodeData.steps);
+        for (let step of nodeData.steps) {
+            step.name = step.name + " " + suffix;
+            changeChildSuffix(step, suffix);
+        }
+    }
+    if (nodeData.type === Config.STEP_TYPE_QUESTIONNAIRE) {
+        for (let question of nodeData.questions) {
+            question.name = question.name + " " + suffix;
+            changeChildSuffix(question, suffix);
+        }
+    }
 }
 
 function removeWaitForStepLinks(that, stepData, stepToWaitForData, experiment) {
