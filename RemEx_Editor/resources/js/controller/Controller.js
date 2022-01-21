@@ -1128,7 +1128,7 @@ function onPasteNode(event) {
                 }
                 clipboardNodeData.id = id;
                 clipboardNodeData.name = name;
-                newData = ModelManager.extendExperimentWithCopy(clipboardNodeData, insertionParentNodeData, undefined);
+                newData = ModelManager.extendExperimentWithCopy(clipboardNodeData, insertionParentNodeData, Config.NODE_COPY_SUFFIX);
                 if (insertionParentNode.type === Config.TYPE_EXPERIMENT_GROUP) {
                     TreeView.clickTimeline(insertionParentNode, newData);
                 }
