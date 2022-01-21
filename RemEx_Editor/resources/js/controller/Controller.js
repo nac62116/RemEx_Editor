@@ -41,6 +41,7 @@ SOFTWARE.
 // -> Code cleaning
 // - Group svg elements together
 // - Look for an equivalent to css z-index for svg elements -> else create a low prio future enhancement in RemEx_Editor
+// -> English version
 // -> InfoView
 // APP:
 // -> Test phase: Test fully grown experiment on RemExApp
